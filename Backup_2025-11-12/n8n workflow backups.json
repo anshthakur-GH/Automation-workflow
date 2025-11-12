@@ -1,0 +1,278 @@
+{
+  "updatedAt": "2025-11-12T17:52:13.000Z",
+  "createdAt": "2025-11-12T17:22:21.504Z",
+  "id": "yMMunswIvMmA8n9h",
+  "name": "n8n workflow backups",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "400c349a-6694-4ebc-8cc8-4b36b30cdd05",
+              "name": "folderName",
+              "type": "string",
+              "value": "=Backup_{{ $now.format('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1773ca11-102e-4fb3-95f3-c7c182062cec",
+      "name": "Set Variables",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -448,
+        272
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6866c003-6be3-4e50-836f-0b97fdb0103b",
+      "name": "Split Workflows",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        -80,
+        272
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "workflow-content",
+              "name": "nodes",
+              "type": "string",
+              "value": "={{ JSON.stringify($json, null, 2) }}"
+            },
+            {
+              "id": "workflow-filename",
+              "name": "fileName",
+              "type": "string",
+              "value": "={{ $json.name }}.json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bd098851-1104-467d-ba68-21fae9307ac3",
+      "name": "Prepare File Content",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        128,
+        288
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "anshthakur-GH",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n-workflow-backup",
+          "mode": "list",
+          "cachedResultName": "n8n-workflow-backup",
+          "cachedResultUrl": "https://github.com/anshthakur-GH/n8n-workflow-backup"
+        },
+        "filePath": "={{ $('Set Variables').item.json.folderName }}/{{ $('Prepare File Content').item.json.fileName }}",
+        "binaryData": true,
+        "commitMessage": "={{ $now.setZone('Asia/Kolkata').format('yyyy-MM-dd hh:mm:ss') }} Backup completed"
+      },
+      "id": "97c5fb9e-6480-4deb-aca9-a0e6ccb0945f",
+      "name": "Upload to GitHub",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        464,
+        288
+      ],
+      "webhookId": "20f36eee-6bfe-4264-9490-d76d5c1ef46d",
+      "notesInFlow": true,
+      "typeVersion": 1,
+      "alwaysOutputData": false,
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "gFybTdyChokv9uO3",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "nodes",
+        "options": {
+          "fileName": "={{ $json.fileName }}"
+        }
+      },
+      "id": "1f8f286c-3f75-495f-973b-3c0f2149455c",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        304,
+        288
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "afda257f-8cf5-4535-a2f2-f3091168a609",
+      "name": "Get many workflows1",
+      "type": "n8n-nodes-base.n8n",
+      "position": [
+        -272,
+        272
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "n8nApi": {
+          "id": "c5XewM9hCOfuq9oN",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 18
+            }
+          ]
+        }
+      },
+      "id": "3f2b4179-c176-4c9a-9f5a-bd0e8b5b0e17",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.cron",
+      "position": [
+        -640,
+        272
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "Get many workflows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Workflows": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Prepare File Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare File Content": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to GitHub": {
+      "main": [
+        [
+          {
+            "node": "Split Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many workflows1": {
+      "main": [
+        [
+          {
+            "node": "Split Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "93dd12ba-c5eb-47d0-8fa3-7016b9a3b389",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-12T17:22:21.536Z",
+      "createdAt": "2025-11-12T17:22:21.536Z",
+      "role": "workflow:owner",
+      "workflowId": "yMMunswIvMmA8n9h",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-11-12T17:33:58.584Z",
+      "createdAt": "2025-11-12T17:33:58.584Z",
+      "id": "HBR6mZ5sbzfSTXPf",
+      "name": "backup"
+    }
+  ]
+}
