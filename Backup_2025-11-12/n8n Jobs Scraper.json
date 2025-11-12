@@ -1,0 +1,1457 @@
+{
+  "updatedAt": "2025-11-12T17:21:06.000Z",
+  "createdAt": "2025-10-10T08:07:01.804Z",
+  "id": "Rap8uGE3Iycs5mAL",
+  "name": "n8n Jobs Scraper",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -768,
+        240
+      ],
+      "id": "f778adba-53af-4f49-a384-ab7297a5b322",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:linkedin.com/posts (\n    \"hiring n8n expert\" OR \n    \"looking for n8n automation\" OR \n    \"n8n developer job\" OR \n    \"n8n specialist\" OR \n    \"n8n freelancer\" OR \n    \"need help with n8n\" OR \n    \"workflow automation consultant\"\n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "ebdcc9f3-d159-46ab-87f3-598facc91542",
+      "name": "Linkedin Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        -240
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:facebook.com (\n    \"need n8n expert\" OR \n    \"hire automation expert\" OR \n    \"looking for a n8n dev\" OR \n    \"n8n consultant\" OR \n    \"freelancer needed for n8n\"\n) AND (group OR job)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "5bae42d5-825d-4402-978c-59e8c72fbfe9",
+      "name": "Facebook Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        -400
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:reddit.com/r/n8n OR site:reddit.com/r/nocode OR site:reddit.com/r/automations (\n    \"hiring n8n\" OR \n    \"paying for n8n help\" OR \n    \"n8n workflow built\" OR \n    \"who can build automation\"\n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "d0a9e832-5fce-4247-9ef8-439bbdd937bb",
+      "name": "Reddit Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        -80
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 9
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -288,
+        128
+      ],
+      "id": "3f22ff08-daad-452e-a6c4-2227e0ff17f7",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site: fiverr.com\n(\n    \"who can build n8n workflow\" OR \n    \"best n8n expert to hire\" OR \n    \"n8n consultant recommendations\" OR \n    \"n8n vs Zapier expert\" OR \n    \"need expert help with n8n\"\n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "676ac76c-65dd-4e1c-bb7d-518171400031",
+      "name": "Fiverr",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        80
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Connect this node directly after your Merge All Results node.\n\nconst allLeadsList = [];\n\n// 1. Loop through each item coming from the Merge node.\nfor (const item of $input.all()) {\n    const rawData = item.json;\n\n    // 2. Access the 'organic' array, which holds the actual search results.\n    const organicResults = rawData.organic;\n\n    if (Array.isArray(organicResults)) {\n\n        // 3. Iterate over each individual lead object.\n        for (const lead of organicResults) {\n\n            // 4. Construct the clean, desired object structure for each lead.\n            if (lead.title && lead.link && lead.snippet) {\n                allLeadsList.push({\n                    Title: lead.title,\n                    Link: lead.link,\n                    Snippet: lead.snippet,\n                    // Use a fallback for date, as it's often optional\n                    Date_String: lead.date || 'Date not available',\n                });\n            }\n        }\n    }\n}\n\n// 5. **CRITICAL FIX: Stringify the aggregated list.**\n//    We return ONE output item. The 'all_leads_data' value is the stringified array.\nconst stringifiedLeads = JSON.stringify(allLeadsList, null, 2); \n\nreturn [\n    {\n        json: {\n            // The value is now a clean string of JSON data.\n            all_leads_data: stringifiedLeads \n        }\n    }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        240
+      ],
+      "id": "29fdc817-3006-40ac-9991-35981a5ce090",
+      "name": "Normalize Search Results"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=INPUT LEAD DATA (JSON ARRAY): \n{{ $json.all_leads_data }}\nToday's Date: {{ $now }}\n\nREQUIRED FINAL JSON OUTPUT FORMAT (ARRAY OF OBJECTS):\nFor each qualified lead in the input data (where \"hiring\" is true), extract and map the following fields into a new JSON array:\n- **Title:** Map from 'title' field.\n- **Details:** Map from 'description' field.\n- **Platform:** Map from 'platform' field.\n- **Post Url**: The original post URL (from 'Link' field - keep it exactly as provided)\n- **Account_url:** Extract the exact user handle from the post url present, otherwise use null.\n- **Budget:** Map from 'budget' field.\n- **Contact Info:** Map from 'contact_info' field.\n- **Email** Email of the user if present otherwise null\n- **Date Posted:** Map from 'estimated_post_date' field in YYYY-MM-DD format.\n\nIMPORTANT: Sort the results by Date Posted in descending order (latest first). If date is missing or unclear, estimate based on context or use today's date.",
+        "options": {
+          "systemMessage": "You are a highly specialized Lead Data Transformation and Extraction Agent.\n\nRULES:\n1. **Date Handling:** \n   - Dates must be in YYYY-MM-DD format\n   - Sort results by date, latest first\n   - If date is not available, estimate from \"Xw\" (weeks), \"Xd\" (days), \"Xm\" (months) in snippets\n   - \"11w\" means 11 weeks ago from today\n   - If no date info exists, use null\n2. **Profile Extraction:** If the 'Post Url' contains 'linkedin.com/posts/', extract the LinkedIn profile path and place it in 'Account_url'\n3. **Filtering:** Only process leads where \"hiring\" is true\n4. **Format:** Return ONLY a valid JSON array, no markdown, no code blocks, no explanations"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        240
+      ],
+      "id": "6e24de28-714f-4f9e-b133-08f6f1e2dd1a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        48,
+        400
+      ],
+      "id": "f74e4a84-0ae8-4525-bd62-201db9885171",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        896,
+        240
+      ],
+      "id": "6b9088bc-18f1-46e3-bffb-715f8be32c26",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        256
+      ],
+      "id": "f6755f24-dabc-41a0-8d6c-6ebbfb80e8b3",
+      "name": "Wait",
+      "webhookId": "ec217a2a-d352-4fe1-99cb-b9cc25c1f163"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE",
+          "mode": "list",
+          "cachedResultName": "n8n Job Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "details": "={{ $json.details }}",
+            "platform": "={{ $json.platform }}",
+            "handle": "={{ $json.handle }}",
+            "date_posted": "={{ $json.date_posted }}",
+            "post_url": "={{ $json.post_url }}",
+            "Account_url": "={{ $json.account_url }}"
+          },
+          "matchingColumns": [
+            "post_url"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "post_url",
+              "displayName": "post_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Account_url",
+              "displayName": "Account_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "contact",
+              "displayName": "contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "handle",
+              "displayName": "handle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Cold Email Message ",
+              "displayName": "Cold Email Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_posted",
+              "displayName": "date_posted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        256
+      ],
+      "id": "6d806f5a-dcfe-4f0c-b90b-372cc4e84d68",
+      "name": "Append Lead Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\nlet allRecords = [];\n\nfor (let i = 0; i < inputData.length; i++) {\n  const item = inputData[i];\n  \n  try {\n    let outputText = item.json.output;\n    \n    if (!outputText) {\n      console.error(`Item ${i + 1}: No output field found`);\n      continue;\n    }\n    \n    // Remove markdown code blocks\n    outputText = outputText.trim()\n      .replace(/```json\\n?/g, '')\n      .replace(/```\\n?/g, '')\n      .trim();\n    \n    let parsedData = JSON.parse(outputText);\n    \n    if (!Array.isArray(parsedData)) {\n      console.error(`Item ${i + 1}: Not an array`);\n      continue;\n    }\n    \n    // Process each record\n    for (const record of parsedData) {\n      const formattedRecord = {\n        title: record.Title || record.title || '',\n        details: record.Details || record.details || '',\n        platform: record.Platform || record.platform || '',\n        post_url: record['Post_Url'] || record.post_url || record['Post Url'] || '',\n        account_url: record['Account_url'] || record.account_url || '',\n        contact: record['Contact_Info'] || record.contact_info || '',\n        budget: record.Budget || record.budget || '',\n        handle: record.Handle || record.handle || '',\n        date_posted: record['Date_Posted'] || record.date_posted || record.Date_String || ''\n      };\n      \n      if (formattedRecord.title && formattedRecord.post_url) {\n        allRecords.push(formattedRecord);\n      }\n    }\n    \n  } catch (error) {\n    console.error(`Error processing item ${i + 1}:`, error.message);\n  }\n}\n\n// If no records parsed, return empty array instead of throwing error\nif (allRecords.length === 0) {\n  console.log('No records parsed - returning empty array');\n  return [];\n}\n\n// Sort by date (latest first)\nallRecords.sort((a, b) => {\n  const dateA = a.date_posted ? new Date(a.date_posted) : new Date(0);\n  const dateB = b.date_posted ? new Date(b.date_posted) : new Date(0);\n  return dateB - dateA;\n});\n\nreturn allRecords.map(record => ({ json: record }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        240
+      ],
+      "id": "6026e214-ad97-40f7-ac05-79f161066951",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "==site:linkedin.com/posts (\n    \"hiring n8n\" OR \n    \"n8n developer needed\" OR \n    \"n8n automation expert\" OR \n    \"n8n specialist required\" OR \n    \"n8n freelancer wanted\" OR \n    \"n8n consultant opportunity\" OR\n    \"n8n job opening\" OR\n    \"n8n position available\" OR\n    \"n8n developer job\" OR\n    \"n8n automation job\"\n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "eeecc528-e3d1-40f5-9835-e0b4d0b6e123",
+      "name": "Direct N8N Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        240
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={\n  \"nodes\": [\n    {\n      \"parameters\": {\n        \"method\": \"POST\",\n        \"url\": \"https://google.serper.dev/search\",\n        \"sendHeaders\": true,\n        \"headerParameters\": {\n          \"parameters\": [\n            {\n              \"name\": \"X-API-KEY\",\n              \"value\": \"7c41f959a151d6c5f4ddab119389b780b0224573\"\n            }\n          ]\n        },\n        \"sendBody\": true,\n        \"bodyParameters\": {\n          \"parameters\": [\n            {\n              \"name\": \"q\",\n              \"value\": \"==site:linkedin.com/posts (\\n    \\\"Make.com developer\\\" OR\\n    \\\"Integromat developer\\\" OR\\n    \\\"automation platform\\\" OR\\n    \\\"webhook integration\\\" OR\\n    \\\"REST API integration\\\" OR\\n    \\\"cloud automation\\\" OR\\n    \\\"business automation developer\\\" OR\\n    \\\"integration platform developer\\\" OR\\n    \\\"workflow orchestration\\\" OR\\n    \\\"automation architect\\\"\\n)\"\n            }\n          ]\n        },\n        \"options\": {\n          \"timeout\": 30000\n        }\n      },\n      \"id\": \"f2649fa5-4c92-49af-8bfe-346e1215e263\",\n      \"name\": \"Linkedin Scraper2\",\n      \"type\": \"n8n-nodes-base.httpRequest\",\n      \"typeVersion\": 4,\n      \"position\": [\n        0,\n        688\n      ],\n      \"onError\": \"continueErrorOutput\"\n    }\n  ],\n  \"connections\": {},\n  \"pinData\": {},\n  \"meta\": {\n    \"instanceId\": \"ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948\"\n  }\n}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "ee080187-8954-481b-a463-327c7db180d4",
+      "name": "Job Type Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        960
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "==site:linkedin.com/posts (\n    \"Make.com developer\" OR\n    \"Integromat developer\" OR\n    \"automation platform\" OR\n    \"webhook integration\" OR\n    \"REST API integration\" OR\n    \"cloud automation\" OR\n    \"business automation developer\" OR\n    \"integration platform developer\" OR\n    \"workflow orchestration\" OR\n    \"automation architect\"\n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "01cb6413-4f79-4800-a540-b004326fd5fc",
+      "name": "Technology Stack Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        768
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "==site:linkedin.com/posts (\n    \"workflow automation developer\" OR \n    \"automation engineer hiring\" OR \n    \"iPaaS developer\" OR \n    \"integration specialist\" OR \n    \"API automation expert\" OR\n    \"low-code developer\" OR\n    \"no-code automation\" OR\n    \"workflow engineer\" OR\n    \"process automation specialist\" OR\n    \"Zapier alternative developer\"\n)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "62387170-1544-494f-b798-e878dd0be8b6",
+      "name": "Workflow & Automation Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        576
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:linkedin.com/posts (\n    \"hiring n8n\" OR \n    \"n8n developer\" OR \n    \"n8n automation\" OR \n    \"n8n expert\" OR \n    \"n8n specialist\" OR \n    \"n8n freelancer\" OR \n    \"n8n consultant\" OR \n    \"workflow automation\" OR \n    \"looking for n8n\" OR \n    \"need n8n\" OR \n    \"n8n professional\" OR \n    \"n8n engineer\" OR \n    \"seeking n8n\" OR \n    \"hiring workflow automation\" OR \n    \"automation specialist\" OR \n    \"integration developer\" OR \n    \"low-code developer\" OR \n    \"no-code automation\" OR \n    \"API integration specialist\" OR \n    \"workflow engineer\" OR \n    \"automation engineer n8n\" OR \n    \"remote n8n\" OR \n    \"contract n8n\" OR \n    \"full-time n8n\""
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "66c129d1-2f37-4253-912d-fad16d2f202e",
+      "name": "Linkedin Scraper1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -528,
+        400
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "# Job Posts Details Scraper             ",
+        "height": 1616,
+        "width": 2256,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -816,
+        -496
+      ],
+      "typeVersion": 1,
+      "id": "81498cca-b6b4-4066-90ab-46151a455e04",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE",
+          "mode": "list",
+          "cachedResultName": "n8n Job Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 746662635,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit#gid=746662635"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "platform_url": "={{ $json.platform_url }}",
+            "Email": "={{ $json.Email }}",
+            "title": "={{ $('Loop Items').item.json.title }}",
+            "details": "={{ $('Loop Items').item.json.details }}",
+            "handle": "={{ $('Loop Items').item.json.handle }}",
+            "date_posted": "={{ $('Loop Items').item.json.date_posted }}"
+          },
+          "matchingColumns": [
+            "platform_url"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "platform_url",
+              "displayName": "platform_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "handle",
+              "displayName": "handle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_posted",
+              "displayName": "date_posted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1248,
+        896
+      ],
+      "id": "c6cb47c4-6298-4fed-81da-7dde0945de0b",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d76f0c04-0362-4a49-9b4b-35edcd1a1194",
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "LinkedIn",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        880
+      ],
+      "id": "cb76ff66-f6fb-4a7e-be07-8d6ac49bf440",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE",
+          "mode": "list",
+          "cachedResultName": "n8n Job Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        288,
+        880
+      ],
+      "id": "f89350ce-832e-4875-a821-f96d4cb5bc27",
+      "name": "Check Updates or Added",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "pe24oT1gPM40hL7p",
+          "name": "Google Sheets Trigger account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "# FInds email of linkedin Job Posts Leads",
+        "height": 320,
+        "width": 1184,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        768
+      ],
+      "typeVersion": 1,
+      "id": "d100c86e-dd1a-4a24-8cae-8de036cbf437",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE",
+          "mode": "list",
+          "cachedResultName": "n8n Job Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "platform_url": "={{ $('Loop Items').item.json.platform_url }}",
+            "Email": "={{ $json.basic_info.email }}"
+          },
+          "matchingColumns": [
+            "platform_url"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "platform_url",
+              "displayName": "platform_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact",
+              "displayName": "contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "handle",
+              "displayName": "handle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_posted",
+              "displayName": "date_posted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        896
+      ],
+      "id": "23892b29-c4e6-4030-97e5-29de6161b36b",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "VhxlqQXRwhW8H5hNV",
+          "mode": "list",
+          "cachedResultName": "Linkedin Profile Details Scraper + EMAIL (No Cookies Required) (apimaestro/linkedin-profile-detail)",
+          "cachedResultUrl": "https://console.apify.com/actors/VhxlqQXRwhW8H5hNV/input"
+        },
+        "customBody": "={\n    \"includeEmail\": true,\n    \"username\": \"{{ $json.platform_url }}\"\n}",
+        "timeout": {},
+        "memory": "={{ 1024 }}"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        880,
+        896
+      ],
+      "id": "42145914-6a94-4e06-ad96-9fa6140e0fb9",
+      "name": "Run an Actor and get dataset",
+      "credentials": {
+        "apifyApi": {
+          "id": "7no9nMelsUKXoEkt",
+          "name": "Apify account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        656,
+        880
+      ],
+      "id": "92c98705-35dc-4d7f-88c0-93859faeac1c",
+      "name": "Loop Items"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE",
+          "mode": "list",
+          "cachedResultName": "n8n Job Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_j8eYAmLBClXUUhpaxCkauB1JME7X8tcZl_FmzAMIHE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        496,
+        240
+      ],
+      "id": "135a9f81-b3c0-4467-a5f2-bc787f5d2e3e",
+      "name": "Get row(s) in sheet",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const newLeads = $input.all();\nconst existingLeads = $('Get row(s) in sheet').all();\n\n// Extract existing post URLs\nconst existingUrls = new Set(\n  existingLeads.map(item => item.json.post_url?.trim().toLowerCase())\n);\n\n// Filter out duplicates\nconst uniqueLeads = newLeads.filter(item => {\n  const postUrl = item.json.post_url?.trim().toLowerCase();\n  return postUrl && !existingUrls.has(postUrl);\n});\n\nconsole.log(`Total scraped: ${newLeads.length}`);\nconsole.log(`Existing in sheet: ${existingUrls.size}`);\nconsole.log(`New unique leads: ${uniqueLeads.length}`);\n\nreturn uniqueLeads;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        240
+      ],
+      "id": "ab216eee-2909-4e10-9545-bf491ca1a45b",
+      "name": "Separate New Jobs"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Linkedin Scraper",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit Scraper",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fiverr",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Scraper",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Direct N8N Keywords",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Linkedin Scraper1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Workflow & Automation Keywords",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Technology Stack Keywords",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Job Type Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Scraper": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Facebook Scraper": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkedin Scraper": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fiverr": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Normalize Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Search Results": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Append Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Direct N8N Keywords": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Linkedin Scraper1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Workflow & Automation Keywords": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Technology Stack Keywords": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "Job Type Keywords": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 8
+          }
+        ]
+      ]
+    },
+    "Check Updates or Added": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run an Actor and get dataset": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Loop Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Run an Actor and get dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Separate New Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separate New Jobs": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": [
+        12
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2025-11-12T00:00:18.012+00:00",
+          "Readable date": "November 12th 2025, 12:00:18 am",
+          "Readable time": "12:00:18 am",
+          "Day of week": "Wednesday",
+          "Year": "2025",
+          "Month": "November",
+          "Day of month": "12",
+          "Hour": "00",
+          "Minute": "00",
+          "Second": "18",
+          "Timezone": "UTC (UTC+00:00)"
+        }
+      }
+    ],
+    "AI Agent": [
+      {
+        "json": {
+          "output": "```json\n[\n  {\n    \"Title\": \"Need n8n expert for consult call?\",\n    \"Details\": \"Need n8n expert for consult call? N8N Developers. Jakub Remiszewski ... Gina Rocco Dotson ▻ Pompano Beach Florida Residents Group. 11w ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/n8ndevelopers/posts/1735304573718165/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-29\"\n  },\n  {\n    \"Title\": \"Need n8n expert for project optimization?\",\n    \"Details\": \"... Need n8n expert. Public group. . 21K Members · Join group. n8n - AI Agents & Automation: Help, Collaboration, Tutorials. Shahzaib Siddiqui ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/1433838711374395/posts/1539755717449360/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-29\"\n  },\n  {\n    \"Title\": \"Hiring: N8N Automation Specialist for AI SaaS Startup\",\n    \"Details\": \"Hiring: N8N Automation Specialist for AI SaaS Startup · Type: Full Time. · Location: Remote. · Start Date: ASAP. · Hours: 30+ hours/week to start, ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1ohsygu/hiring_n8n_automation_specialist_for_ai_saas/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-29\"\n  },\n  {\n    \"Title\": \"Need n8n expert for workflow training?\",\n    \"Details\": \"Atleast a week of service? pls DM me your rate and we need N8N expert please. Thanks. Mohammad ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/2036320650235064/posts/2105256056674856/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": \"pls DM me your rate\",\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-22\"\n  },\n  {\n    \"Title\": \"Looking for a n8n consultant (start asap)\",\n    \"Details\": \"Looking for a n8n consultant (start asap) ... Job Opening: AI App Developer We are looking for a skilled AI App ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/aichatbotsaivoice/posts/2016229962477624/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-15\"\n  },\n  {\n    \"Title\": \"Need n8n expert for content engine\",\n    \"Details\": \"n8n Builders | Need n8n expert for content engine. Public group ... job for 3+ years, it's time to stop trading time for money — and ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/n8nbuilders/posts/837148068986406/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-12\"\n  },\n  {\n    \"Title\": \"Willson Ursia's Post\",\n    \"Details\": \"We're Hiring: n8n Expert @ Automate Solutions Automate Solutions lagi buka lowongan untuk n8n Expert yang bisa bantu kami bangun & scale ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/willson-ursia-107804171_hiring-n8n-automationengineer-activity-7379062580062928896-qMuE\",\n    \"Account_url\": \"willson-ursia-107804171\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-12\"\n  },\n  {\n    \"Title\": \"#ai #automation #hiring #n8n #retellai #startups #nocode # ...\",\n    \"Details\": \"... Hiring #N8N #RetellAI #Startups #NoCode #WorkflowAutomation #HR #Workflows. ... Hiring #N8N #RetellAI #Startups #NoCode #WorkflowAutomation ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/rishit-gupta-4b18841b1_ai-automation-hiring-activity-7380814071119618048-YkBP\",\n    \"Account_url\": \"rishit-gupta-4b18841b1\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-10-12\"\n  },\n  {\n    \"Title\": \"Victor Sowers' Post\",\n    \"Details\": \"Anyone have a good n8n freelancer they've used? I have 3-4 very tightly scoped workflows I know I want to build and don't have the time to hack ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/victorsowers_anyone-have-a-good-n8n-freelancer-theyve-activity-7369367285142138880-b45E\",\n    \"Account_url\": \"victorsowers\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-09-12\"\n  },\n  {\n    \"Title\": \"MissionHires - n8n Automation Expert\",\n    \"Details\": \"Position: n8n Automation Expert – Remote (Philippines) Location: Remote (Philippines) Full-Time | Contract | 9:00 AM – 6:00 PM ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/missionhires_missionhires-n8n-automation-expert-activity-7362270750046662656-4tkR\",\n    \"Account_url\": \"missionhires\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-09-12\"\n  },\n  {\n    \"Title\": \"need n8n automation expert for various tasks?\",\n    \"Details\": \"I need n8n Expert For My Upcoming YouTube Automation Project Let me know if anyone expert available ? Qayyum Khan and 9 others. 10 reactions ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/1022601539657682/posts/1168220885095746/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-08-12\"\n  },\n  {\n    \"Title\": \"Hi Experts! Our community Clients are looking for 3 N8N ...\",\n    \"Details\": \"Our group is designed specifically for AI freelancers and ... need n8n expert for permanent job? Summarized by AI from the post ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/1930125667814487/posts/1982100112617042/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-08-12\"\n  },\n  {\n    \"Title\": \"Automation Expert Needed (N8N or Make.com) for Content ...\",\n    \"Details\": \"I need n8n Expert For My Upcoming YouTube Automation Project Let me know if anyone expert available ? Habib Hab and 10 others. 11 reactions ...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/886741009807878/posts/1189033459578630/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-08-12\"\n  },\n  {\n    \"Title\": \"Hiring: n8n workflow builder\",\n    \"Details\": \"Hiring n8n Expert (Bonus if Full Stack w/ Node.js + React). 30 ... Hiring: N8N Automation Specialist for AI SaaS Startup. 13 upvotes · 16 ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1mkmvhh/hiring_n8n_workflow_builder/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-08-12\"\n  },\n  {\n    \"Title\": \"WeblineIndia's Post - Hiring n8n Software Engineers\",\n    \"Details\": \"Get this complete guide to find, evaluate and work with skilled n8n experts for seamless automation workflows. Hiring n8n Software Engineers – A ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/weblineindia_hiring-n8n-software-engineers-a-complete-activity-7358898094312202240-gXWf\",\n    \"Account_url\": \"weblineindia\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-08-12\"\n  },\n  {\n    \"Title\": \"Salman Baig's Post\",\n    \"Details\": \"I am looking for a no-code automation expert, with experience in Make.com, GPT's, Zapier and Google sheets. Plus if you have experience in SEO ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/salmanb_i-am-looking-for-a-no-code-automation-expert-activity-7357912796044419072-KDXM\",\n    \"Account_url\": \"salmanb\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-08-12\"\n  },\n  {\n    \"Title\": \"Looking for a n8n dev to fix a workflow, that has some ...\",\n    \"Details\": \"Join · Looking for a n8n dev to fix a workflow, that has some issues. DM for more details. n8n Philippines.\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/886741009807878/posts/1174538421028134/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": \"DM for more details\",\n    \"Email\": null,\n    \"Date_Posted\": \"2025-07-12\"\n  },\n  {\n    \"Title\": \"Hiring n8n Expert (Bonus if Full Stack w/ Node.js + React)\",\n    \"Details\": \"Hiring n8n Expert (Bonus if Full Stack w/ Node.js + React). Now ... Hiring n8n expert for AI automation system (Remote, Freelance). 15 ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1lzrdyu/hiring_n8n_expert_bonus_if_full_stack_w_nodejs/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-07-12\"\n  },\n  {\n    \"Title\": \"Hiring: n8n Expert for Long-Term Automation Projects\",\n    \"Details\": \"Hiring: n8n Expert for Long-Term Automation Projects ... I'm looking for a skilled n8n expert to help build and maintain automations for my ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1kojm2m/hiring_n8n_expert_for_longterm_automation_projects/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-06-12\"\n  },\n  {\n    \"Title\": \"[HIRING] n8n Help Wanted – AI + File Automation Project\",\n    \"Details\": \"Hiring: N8N Automation Specialist for AI SaaS Startup · Hiring Full-Time n8n Developers (Remote) · Looking for n8n developers // 100% Remote & ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1kxhdnd/hiring_n8n_help_wanted_ai_file_automation_project/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-06-12\"\n  },\n  {\n    \"Title\": \"Hiring n8n Consultant\",\n    \"Details\": \"Hiring n8n Consultant · Receive a list of leads from a client for chargeback. · Identify the origin of each lead using our internal platform.\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1kyhhps/hiring_n8n_consultant/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-06-12\"\n  },\n  {\n    \"Title\": \"Hiring n8n Developer for Internal Automation Projects ...\",\n    \"Details\": \"Hiring n8n Developer for Internal Automation Projects (India Preferred) ... Hiring: N8N Automation Specialist for AI SaaS Startup. 13 ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1l4kzp4/hiring_n8n_developer_for_internal_automation/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-06-12\"\n  },\n  {\n    \"Title\": \"Sahil Godara - hiring #n8n #automation #nocode #techjobs\",\n    \"Details\": \"We're Hiring N8N Automation Experts at Creatr Built some badass workflows using N8N? Let's talk. 🛠️ Drop links to your best builds, GitHub, ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/sahil-godara_hiring-n8n-automation-activity-7331233554284138498--NW5\",\n    \"Account_url\": \"sahil-godara\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-06-12\"\n  },\n  {\n    \"Title\": \"Hiring n8n expert for AI automation system (Remote, ...\",\n    \"Details\": \"Hiring n8n expert for AI automation system (Remote, Freelance) · Advanced automations in n8n · Integrations with Notion, Trello, Google Calendar, ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1k49i9k/hiring_n8n_expert_for_ai_automation_system_remote/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-05-12\"\n  },\n  {\n    \"Title\": \"Hiring n8n Workflow engineer\",\n    \"Details\": \"Hiring n8n Workflow engineer · What You'll Do Design and build robust n8n workflows (looping, batching, error‑handling) Integrate with REST ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1k577we/hiring_n8n_workflow_engineer/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-05-12\"\n  },\n  {\n    \"Title\": \"Hiring n8n experts : r/n8n\",\n    \"Details\": \"Hiring n8n experts ... I have been blessed to find some great talents on Reddit . I already have one successful and an expert that I actually ...\",\n    \"Platform\": \"Reddit\",\n    \"Post_Url\": \"https://www.reddit.com/r/n8n/comments/1j9fu18/hiring_n8n_experts/\",\n    \"Account_url\": null,\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": \"2025-03-12\"\n  },\n  {\n    \"Title\": \"I need n8n expert for 1 client project budget $250\",\n    \"Details\": \"I need n8n expert for 1 client project budget $250 WhatsApp for more details +92 323 1718784 The post is about finding an n8n expert for a client...\",\n    \"Platform\": \"Facebook\",\n    \"Post_Url\": \"https://www.facebook.com/groups/1300795051666904/posts/1342886620791080/\",\n    \"Account_url\": null,\n    \"Budget\": \"$250\",\n    \"Contact_Info\": \"WhatsApp for more details +92 323 1718784\",\n    \"Email\": null,\n    \"Date_Posted\": null\n  },\n  {\n    \"Title\": \"Adarsh kumar's Post\",\n    \"Details\": \"#HiringAlert: I am looking for experienced n8n specialist to help us automate our systems internally, specifically experienced in Sales, RevOps, and Marketing.\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/bishuadarsh_hiringalert-activity-7333198936142172161-STH6\",\n    \"Account_url\": \"bishuadarsh\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": null\n  },\n  {\n    \"Title\": \"Zachary A. Phillips (ZAP)⚡'s Post\",\n    \"Details\": \"... when you need to bring in new talent. This is me, making that decision. #AIAutomation #Hiring #n8n #VoiceAgents #TechTalent #Delegation.\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/zack-ap_aiautomation-hiring-n8n-activity-7312819127939747840-yVWI\",\n    \"Account_url\": \"zack-ap\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": null\n  },\n  {\n    \"Title\": \"Ashwin Gopinath's Post\",\n    \"Details\": \"hiring n8n workflow automation developer immediately for a large project at Digiligo Plus point: You also have basic knowledge on Microsoft power automate!\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/ashwin-gopinath_hiring-activity-7341317187451658242-am47\",\n    \"Account_url\": \"ashwin-gopinath\",\n    \"Budget\": null,\n    \"Contact_Info\": null,\n    \"Email\": null,\n    \"Date_Posted\": null\n  },\n  {\n    \"Title\": \"Moksh Tech's Post\",\n    \"Details\": \"We're Hiring: ETL Integration Specialist & iPaaS Developer (NetSuite & Quickbase) Click here to apply: https://lnkd.in/dq5hvNBs Or send your CV ...\",\n    \"Platform\": \"LinkedIn\",\n    \"Post_Url\": \"https://www.linkedin.com/posts/mokshtech_were-hiring-etl-integration-specialist-activity-7363534563081359360-DQdc\",\n    \"Account_url\": \"mokshtech\",\n    \"Budget\": null,\n    \"Contact_Info\": \"https://lnkd.in/dq5hvNBs Or send your CV\",\n    \"Email\": null,\n    \"Date_Posted\": null\n  }\n]\n```"
+        }
+      }
+    ]
+  },
+  "versionId": "6bcef83a-b1b9-4163-b9d7-8b6c2d860b7d",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-10T08:07:01.810Z",
+      "createdAt": "2025-10-10T08:07:01.810Z",
+      "role": "workflow:owner",
+      "workflowId": "Rap8uGE3Iycs5mAL",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
