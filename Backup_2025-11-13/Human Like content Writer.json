@@ -1,0 +1,497 @@
+{
+  "updatedAt": "2025-10-05T16:59:46.000Z",
+  "createdAt": "2025-10-05T09:10:35.107Z",
+  "id": "BPWrMJrt7DxcEpmA",
+  "name": "Human Like content Writer",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "YOUR_SERPER_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.topic }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 21
+            }
+          },
+          "response": {}
+        }
+      },
+      "id": "c6d7553d-fb19-43c3-b0b8-0c3bc8cf20b2",
+      "name": "SERP Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        -96
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/news",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "YOUR_SERPER_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.topic }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        80
+      ],
+      "id": "8a5962bd-5472-4fe0-b733-0881fc683bcb",
+      "name": "SERP NEWS",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Extract the main topic from the following unstructured social media content. Reply strictly in the format shown below, without any extra text.\n\ntopic: [main topic, keep it concise—example: ai tool]\n\nraw data: [exact raw user input, unedited]\n\nContent:\nInput: \"{{ $json.body.raw_input }}\"\n\nOnly output the above format—do not add other lines, summary, intro, or explanation. Ignore any specified tone for topic extraction.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        0
+      ],
+      "id": "69870656-84de-475b-a42e-f0953280e285",
+      "name": "Identify Topic for Research",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        976,
+        -16
+      ],
+      "id": "4751cd3e-f591-426a-bc3b-2178f915e64e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e3356b9-fdc2-4b53-a682-629544a2a537",
+              "name": "originalText",
+              "value": "={{ $json.originalInput.originalText }}",
+              "type": "string"
+            },
+            {
+              "id": "b6a80562-0995-4d6f-becc-15b202613db9",
+              "name": "searchResults",
+              "value": "={{ $json.searchResults }}",
+              "type": "array"
+            },
+            {
+              "id": "fef24c7b-7ef0-45f5-b9d3-3d7c86841f67",
+              "name": "newsResults",
+              "value": "={{ $json.newsResults }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        400
+      ],
+      "id": "cd4a7566-cd91-4b60-b6d6-1c196033eb7d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all input items from the merge node\nconst items = $input.all();\n\n// Initialize the result object\nlet result = {\n  originalInput: {\n    topic: \"\",\n    originalText: \"\"\n  },\n  searchResults: \"\",\n  newsResults: \"\"\n};\n\n// Temporary arrays to hold the data\nlet searchArray = [];\nlet newsArray = [];\n\n// Process each item\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i].json;\n  \n  // Check if this item has the topic field (from Code node)\n  if (item.topic && item.originalText) {\n    result.originalInput.topic = item.topic;\n    result.originalInput.originalText = item.originalText;\n  }\n  \n  // Check if this item has organic search results\n  if (item.organic && Array.isArray(item.organic)) {\n    searchArray = item.organic.slice(0, 5).map(r => ({\n      title: r.title,\n      snippet: r.snippet\n    }));\n  }\n  \n  // Check if this item has news results\n  if (item.news && Array.isArray(item.news)) {\n    newsArray = item.news.slice(0, 5).map(r => ({\n      title: r.title,\n      snippet: r.snippet\n    }));\n  }\n}\n\n// Stringify the arrays with pretty formatting for better AI readability\nresult.searchResults = JSON.stringify(searchArray, null, 2);\nresult.newsResults = JSON.stringify(newsArray, null, 2);\n\n// Return as a single item\nreturn [{\n  json: result\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        112
+      ],
+      "id": "6fb9793f-4f33-4ff7-a8d4-3f49cf3dc07f",
+      "name": "Preserve Context"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data from the previous node\nconst inputData = $input.all();\n\n// Process each item\nconst outputData = inputData.map(item => {\n  // Get the text content from the Gemini response\n  const text = item.json.content.parts[0].text;\n  \n  // Extract the topic using regex\n  const topicMatch = text.match(/topic:\\s*(.+?)(?:\\n|$)/i);\n  \n  // Get the topic value or return null if not found\n  const topic = topicMatch ? topicMatch[1].trim() : null;\n  \n  return {\n    json: {\n      topic: topic,\n      originalText: text  // Optional: include original text for reference\n    }\n  };\n});\n\nreturn outputData;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "62a15461-048c-42e6-b522-f3c53b3dfe92",
+      "name": "Extract Topic"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an advanced AI Content Strategist trained to create human-like, high-performing social media content across platforms.  \nYour mission: transform messy, raw user input into optimized, emotionally resonant, and platform-specific posts that sound authentically human and maintain consistent brand voice.\n\n---\n\n### INPUT CONTEXT\n\nRaw unprocessed notes or ideas: {{ $json.originalText }}\n\nTopic summary or research insights: \nSearch Results: $json.searchResults\nNews research: $json.newsResults\nDesired tone and brand voice (strictly maintain this):\n{tone}\n\n---\n\n### TASK\n\nFor each platform — **Instagram**, **LinkedIn**, and **Twitter/X** — generate **two distinct, fully optimized versions** of content.  \nEach version should feel uniquely crafted, not reworded or templated.\n\nKeep all language natural, conversational, and emotionally aware — as if written by a thoughtful human creator.\n\n---\n\n### PLATFORM RULES\n\n**Instagram**\n- Create a **short caption** (2–4 lines) that hooks attention quickly.  \n- Include **fitting emojis** (no overuse).  \n- Use **3–6 relevant hashtags** placed naturally at the end.  \n- Add a **story/reel script** written in a more casual, spoken tone.\n\n**LinkedIn**\n- Write a **professional yet human post** that shares insight, reflection, or value.  \n- Use **line breaks** and structure for readability.  \n- Avoid overusing emojis (max 2 if at all).  \n- Maintain thought leadership, humility, and natural storytelling.\n\n**Twitter/X**\n- Write a **thread (2–5 tweets)**, each ≤280 characters.  \n- Begin with a **strong hook** tweet.  \n- Keep pacing tight and human.  \n- Use **1–3 natural hashtags** only where relevant.\n\n---\n\n### QUALITY & SCORING CRITERIA\n\nFor each content version (content1 and content2), you must internally evaluate and return these numeric scores (1–10):\n\n- **\"quality_score\"** → overall coherence, clarity, and polish  \n- **\"engagement_potential\"** → how likely it is to attract likes, shares, or replies  \n- **\"human_likeness_score\"** → how natural, emotional, and non-AI it feels\n\nUse realistic, data-driven scoring — not arbitrary numbers.\n\n---\n\n### OUTPUT FORMAT (STRICT)\n\nReturn ONLY the JSON below.  \nNo text before or after. No explanations. No markdown formatting.\n\n[\n  {\n    \"platform\": \"Instagram\",\n    \"tone\": \"{tone}\",\n    \"content1\": {\n      \"text\": \"Full Instagram caption + story script (complete with emojis and hashtags)\",\n      \"quality_score\": 0-10,\n      \"engagement_potential\": 0-10,\n      \"human_likeness_score\": 0-10\n    },\n    \"content2\": {\n      \"text\": \"Distinctly different version (unique phrasing, tone, and hashtag/emojis)\",\n      \"quality_score\": 0-10,\n      \"engagement_potential\": 0-10,\n      \"human_likeness_score\": 0-10\n    }\n  },\n  {\n    \"platform\": \"LinkedIn\",\n    \"tone\": \"{tone}\",\n    \"content1\": {\n      \"text\": \"Full LinkedIn post (formatted, clear insights, natural flow)\",\n      \"quality_score\": 0-10,\n      \"engagement_potential\": 0-10,\n      \"human_likeness_score\": 0-10\n    },\n    \"content2\": {\n      \"text\": \"Distinct second version (different structure, tone, or focus)\",\n      \"quality_score\": 0-10,\n      \"engagement_potential\": 0-10,\n      \"human_likeness_score\": 0-10\n    }\n  },\n  {\n    \"platform\": \"Twitter/X\",\n    \"tone\": \"{tone}\",\n    \"content1\": {\n      \"text\": \"Thread 1 (Tweet 1\\\\nTweet 2\\\\nTweet 3...) — complete and formatted\",\n      \"quality_score\": 0-10,\n      \"engagement_potential\": 0-10,\n      \"human_likeness_score\": 0-10\n    },\n    \"content2\": {\n      \"text\": \"Thread 2 (distinct structure, hook, and flow)\",\n      \"quality_score\": 0-10,\n      \"engagement_potential\": 0-10,\n      \"human_likeness_score\": 0-10\n    }\n  }\n]\n\n---\n\n### FINAL RULES\n\n1. Strictly maintain the `{tone}` and brand voice throughout all versions.  \n2. Do NOT reuse the same hashtags, emojis, or sentence structures between content1 and content2 for any platform.  \n3. Use **organic, non-AI phrasing** — the reader should never suspect machine generation.  \n4. Output must be valid JSON and contain no additional text, notes, or commentary.\n ",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        400
+      ],
+      "id": "a2b78d77-1978-4603-afe4-12a05da25626",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        528,
+        560
+      ],
+      "id": "840c23ac-a966-4f70-91e2-f14805958606",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safely get the output string\nlet outputString = '';\n\nif (items[0]?.output) {\n  outputString = items[0].output;\n} else if (items[0]?.json?.output) {\n  outputString = items[0].json.output;\n} else {\n  throw new Error('No output found in input data');\n}\n\n// Try to extract JSON from various formats\nlet cleanJson = outputString;\n\n// Check if wrapped in markdown code fences\nconst markdownMatch = outputString.match(/```(?:json)?\\s*(\\[[\\s\\S]*?\\])\\s*```/);\nif (markdownMatch) {\n  cleanJson = markdownMatch[1];\n} else {\n  // Try to find JSON array directly in the string\n  const directMatch = outputString.match(/(\\[[\\s\\S]*\\])/);\n  if (directMatch) {\n    cleanJson = directMatch[1];\n  }\n}\n\n// Remove any leading/trailing whitespace and potential BOM\ncleanJson = cleanJson.trim().replace(/^\\uFEFF/, '');\n\n// Parse the cleaned JSON\nlet outputArr;\ntry {\n  outputArr = JSON.parse(cleanJson);\n} catch (e) {\n  // If parsing fails, log the problematic string for debugging\n  console.error('Failed to parse JSON. Raw output:', outputString);\n  console.error('Cleaned JSON attempt:', cleanJson);\n  throw new Error('Failed to parse AI agent output: ' + e.message + '\\n\\nRaw output: ' + outputString.substring(0, 500));\n}\n\n// Validate that we have an array\nif (!Array.isArray(outputArr)) {\n  throw new Error('Expected an array of platform content objects');\n}\n\n// Map each platform to a flat MongoDB document\nreturn outputArr.map(entry => ({\n  json: {\n    platform: entry.platform,\n    tone: entry.tone,\n    content1: entry.content1?.text || '',\n    quality_score1: entry.content1?.quality_score || 0,\n    engagement_potential1: entry.content1?.engagement_potential || 0,\n    human_likeness_score1: entry.content1?.human_likeness_score || 0,\n    content2: entry.content2?.text || '',\n    quality_score2: entry.content2?.quality_score || 0,\n    engagement_potential2: entry.content2?.engagement_potential || 0,\n    human_likeness_score2: entry.content2?.human_likeness_score || 0\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        400
+      ],
+      "id": "2b09563c-173c-4b59-8620-92024a8314df",
+      "name": "Parse json"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "ContentCreated",
+        "fields": "platform, tone, content1, quality_score1, engagement_potential1, human_likeness_score1, content2, quality_score2, engagement_potential2, human_likeness_score2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        400
+      ],
+      "id": "3ae4888c-9e27-43c4-946f-4f0a690c6d57",
+      "name": "Insert documents",
+      "credentials": {
+        "mongoDb": {
+          "id": "lfTd6ehSTQQ5sC4E",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Research Workflow",
+        "height": 384,
+        "width": 1600,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "d4c8d67c-8569-461b-b57b-b282d1822413",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Content Generation Workflow",
+        "height": 400,
+        "width": 1600,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "e37ca687-1bd2-4fe9-8983-a119ffdf66e8",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## AI Agent",
+        "height": 368,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        464,
+        336
+      ],
+      "typeVersion": 1,
+      "id": "52e231fb-d19b-48a4-b1ff-a17549496954",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Database ",
+        "height": 224,
+        "width": 256,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1088,
+        336
+      ],
+      "typeVersion": 1,
+      "id": "80480e28-1d9a-4edb-806b-b3ab9c239388",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "884c7971-9cde-4204-9f1d-6dfc0269435f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "b747a842-2efa-4374-8789-60656b568c2c",
+      "name": "Webhook",
+      "webhookId": "884c7971-9cde-4204-9f1d-6dfc0269435f"
+    }
+  ],
+  "connections": {
+    "Identify Topic for Research": {
+      "main": [
+        [
+          {
+            "node": "Extract Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Research": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP NEWS": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Preserve Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Context": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Topic": {
+      "main": [
+        [
+          {
+            "node": "SERP Research",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SERP NEWS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse json": {
+      "main": [
+        [
+          {
+            "node": "Insert documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Identify Topic for Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "170f11bf-a413-4d45-a5ff-5ff917037e06",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-05T09:10:35.114Z",
+      "createdAt": "2025-10-05T09:10:35.114Z",
+      "role": "workflow:owner",
+      "workflowId": "BPWrMJrt7DxcEpmA",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
