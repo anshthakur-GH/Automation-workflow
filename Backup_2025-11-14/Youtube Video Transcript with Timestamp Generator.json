@@ -1,0 +1,406 @@
+{
+  "updatedAt": "2025-10-10T06:27:07.000Z",
+  "createdAt": "2025-10-10T06:19:22.039Z",
+  "id": "mmK7mgCqZU4TrqNy",
+  "name": "Youtube Video Transcript with Timestamp Generator",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 14
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -768,
+        112
+      ],
+      "id": "f3836f1b-0c64-4360-95d4-138609db1c00",
+      "name": "⏰ Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1we10HtzBDuSBeLOOGPPwe5bvAoXlXl5hLLO2TC2nG50",
+          "mode": "list",
+          "cachedResultName": "Youtube Video Transription Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1we10HtzBDuSBeLOOGPPwe5bvAoXlXl5hLLO2TC2nG50/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1we10HtzBDuSBeLOOGPPwe5bvAoXlXl5hLLO2TC2nG50/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Ready"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -592,
+        112
+      ],
+      "id": "15c074a9-a8ca-4479-a4ee-034ae052d644",
+      "name": "📊 Get Ready Videos from Sheet ",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9dba7679-09b8-43d3-8562-5e139d2a28a8",
+              "leftValue": "={{ $json.Transcript }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -416,
+        112
+      ],
+      "id": "3593bad2-5d90-44ec-bf9b-0484d497e3b7",
+      "name": "❓ Check Transcript Exist or Not "
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1we10HtzBDuSBeLOOGPPwe5bvAoXlXl5hLLO2TC2nG50",
+          "mode": "list",
+          "cachedResultName": "Youtube Video Transription Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1we10HtzBDuSBeLOOGPPwe5bvAoXlXl5hLLO2TC2nG50/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1we10HtzBDuSBeLOOGPPwe5bvAoXlXl5hLLO2TC2nG50/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('❓ Check Transcript Exist or Not ').item.json.row_number }}",
+            "Transcript": "={{ $('Code').item.json.Transcript }}",
+            "Status": "Completed",
+            "Timestamp": "={{ $json.content.parts[0].text }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Youtube Video Link",
+              "displayName": "Youtube Video Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Video Title",
+              "displayName": "Video Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Video Thumbnail",
+              "displayName": "Video Thumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Video Id",
+              "displayName": "Video Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        384,
+        96
+      ],
+      "id": "0d88a960-dfe9-41d8-8482-5b5e3050c6ed",
+      "name": "💾 Store Transcript",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://youtube-transcript3.p.rapidapi.com/api/transcript",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "videoId",
+              "value": "={{ $json['Video Id'] }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-host",
+              "value": "youtube-transcript3.p.rapidapi.com"
+            },
+            {
+              "name": "x-rapidapi-key",
+              "value": "05524f56d8msh14c1e4571b1a256p1683c5jsn3f291b843e54"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        96
+      ],
+      "id": "f93f6102-0818-4ffc-b75d-f610b464e907",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the transcript data from the previous node\nconst transcriptData = $input.first().json;\n\n// Initialize variable to store clean transcript\nlet cleanTranscript = '';\n\n// Check if transcript exists and is an array\nif (transcriptData.transcript && Array.isArray(transcriptData.transcript)) {\n  \n  // Extract only the text from each segment and join them\n  cleanTranscript = transcriptData.transcript\n    .map(segment => {\n      // Decode HTML entities (like &#39; to ')\n      let text = segment.text || '';\n      \n      // Replace common HTML entities\n      text = text\n        .replace(/&#39;/g, \"'\")\n        .replace(/&quot;/g, '\"')\n        .replace(/&amp;/g, '&')\n        .replace(/&lt;/g, '<')\n        .replace(/&gt;/g, '>')\n        .replace(/&nbsp;/g, ' ');\n      \n      return text;\n    })\n    .join(' ')  // Join all text segments with a space\n    .trim();    // Remove leading/trailing whitespace\n    \n} else if (typeof transcriptData.transcript === 'string') {\n  // If transcript is already a string, just clean it\n  cleanTranscript = transcriptData.transcript\n    .replace(/&#39;/g, \"'\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&nbsp;/g, ' ')\n    .trim();\n}\n\n// Return the formatted data with clean transcript\nreturn [{\n  json: {\n    ...($json),  // Keep all existing fields\n    'Transcript': cleanTranscript,  // Add/update the clean transcript\n    transcriptLength: cleanTranscript.length,  // Optional: track length\n    transcriptWordCount: cleanTranscript.split(' ').length  // Optional: track word count\n  }\n}];\n\n// Log for debugging\nconsole.log('Transcript extracted successfully');\nconsole.log('Character count:', cleanTranscript.length);\nconsole.log('Word count:', cleanTranscript.split(' ').length);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        96
+      ],
+      "id": "fef5bc4c-89d2-4964-9e44-1d0c61d7c7c3",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert content writer who specializes in converting YouTube video transcripts into well-structured YouTube Timestamps with engaging titles.\n\nTASK: Transform the provided clean YouTube transcript into a well-structured YouTube Timestamps list.\n\nREQUIREMENTS:\n\n1. Create 5-10 timestamp entries (depending on video length)\n\n2. Each timestamp should have a descriptive, engaging title (3-8 words)\n\n3. Timestamps should mark significant topic changes, key points, or important moments\n\n4. Use proper timestamp format: MM:SS or HH:MM:SS\n\n5. Titles should be specific and actionable (avoid generic phrases like \"Introduction\" or \"Conclusion\")\n\n6. Focus on the most valuable and searchable content segments\n\n7. *ALL TIMESTAMPS MUST BE UNDER actual video length NO EXCEPTIONS*\n\nIMPORTANT: Do NOT include any headers like \"# YouTube Timestamps\" or similar. Start directly with the first timestamp.\n\nTIMING GUIDELINES:\n\nPosition timestamps at the START of topic transitions, not in the middle\n\nIf a topic begins at 3:45, use 3:45 as the timestamp\n\nErr on the side of being early rather than late\n\nThink about when a viewer would want to jump to that section\n\nOUTPUT FORMAT:\n00:00 Video title or main topic introduction\nMM:SS Specific topic or key point title MM:SS Another important segment title [Continue for all major segments]\nEXAMPLE OUTPUT:\n00:00 Why most people fail at productivity\n02:45 The 3-step morning routine that changed everything\n05:20 How to eliminate decision fatigue completely\n08:15 The productivity app setup I actually use\n12:30 Common mistakes that kill your momentum\n15:45 Building systems that work on autopilot\n\nINPUT: You'll receive a clean, continuous YouTube transcript below\n",
+              "role": "model"
+            },
+            {
+              "content": "=Input: {{ $json.Transcript }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        96
+      ],
+      "id": "6a753b19-6b21-4770-9d3a-bd3a726553e2",
+      "name": "Create Timestamp",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "⏰ Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "📊 Get Ready Videos from Sheet ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Get Ready Videos from Sheet ": {
+      "main": [
+        [
+          {
+            "node": "❓ Check Transcript Exist or Not ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ Check Transcript Exist or Not ": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Create Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Timestamp": {
+      "main": [
+        [
+          {
+            "node": "💾 Store Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "f0dd5c7e-91d8-404f-bd1a-2dabdaaf214e",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-10T06:19:22.046Z",
+      "createdAt": "2025-10-10T06:19:22.046Z",
+      "role": "workflow:owner",
+      "workflowId": "mmK7mgCqZU4TrqNy",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
