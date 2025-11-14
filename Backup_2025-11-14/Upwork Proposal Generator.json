@@ -1,0 +1,1066 @@
+{
+  "updatedAt": "2025-10-29T10:50:19.000Z",
+  "createdAt": "2025-10-08T10:59:39.291Z",
+  "id": "9Qq9ofxy4oUw7G5H",
+  "name": "Upwork Proposal Generator",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc",
+          "mode": "list",
+          "cachedResultName": "Upwork Scraped Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Is Applicable",
+              "lookupValue": "Fit"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -304,
+        48
+      ],
+      "id": "bda8d5ab-ccc2-490a-a2f5-1a69fed1be35",
+      "name": "Filters Fit Work",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze the following job post and provide the requested JSON output:\nRow Number: {{ $json.row_number }}\nDescription: {{ $json.Description }}\nReason: {{ $json.Reason }}"
+            },
+            {
+              "content": "You are a classification model designed for an n8n workflow. Your task is to analyze job posts and determine if they are from a \"Client\" or an \"Agency\". The output must be a JSON object containing two fields: \"type\" with the classification result and \"row_number\" with the original row number provided in the input. Do not include any other text, conversation, or reasoning.",
+              "role": "model"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        48
+      ],
+      "id": "f7d7f255-dd8e-4aee-8173-7e352cc7eac3",
+      "name": "Checks for client work",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        48
+      ],
+      "id": "3e05527b-bac3-4e97-a521-d1cc3b84c1f5",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "06baa048-723c-4ceb-8547-40e7882f51ae",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "Client",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        304,
+        48
+      ],
+      "id": "69c6f4e1-933d-4778-b3bc-777039cc34bc",
+      "name": "Filters Client only Work"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc",
+          "mode": "list",
+          "cachedResultName": "Upwork Scraped Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        496,
+        -48
+      ],
+      "id": "bd8c4116-17da-473e-996a-b1e3e5d3d405",
+      "name": "Get all data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the output from the previous Gemini node.\nconst geminiOutput = $input.first().json.content.parts[0].text;\n\n// Use a regular expression to extract the JSON string.\n// This handles the newlines and \"```json...```\" formatting.\nconst jsonMatch = geminiOutput.match(/```json\\n([\\s\\S]*?)\\n```/);\n\nif (jsonMatch && jsonMatch[1]) {\n  // Parse the extracted JSON string into a JavaScript object.\n  const parsedData = JSON.parse(jsonMatch[1]);\n\n  // Create a new item to output the extracted fields.\n  return [{\n    json: {\n      type: parsedData.type,\n      row_number: parsedData.row_number,\n    },\n  }];\n} else {\n  // If the JSON is not found, return an error or handle accordingly.\n  throw new Error(\"Could not find valid JSON in the Gemini output.\");\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        48
+      ],
+      "id": "c165e4dc-0955-467f-99e2-fe9e1c21d8da",
+      "name": "Extracts Type & Row"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This tool provides access to a database of past client work, case studies, and proposal templates. Use this tool when you need to find relevant experience to showcase in a proposal or to retrieve a specific proposal template. You can search for client references based on industry or find the correct template for a Google Ads-related job.",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "raagchatbot",
+          "mode": "list",
+          "cachedResultName": "raagchatbot"
+        },
+        "options": {
+          "pineconeNamespace": "Upwork Proposal Reference"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1504,
+        256
+      ],
+      "id": "08a3e4ab-ff72-4406-8c9a-8eca190a056e",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "bMjdjFlWEvRZ1L71",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Use the following job data to generate the proposal:\nAnalyzed Job Data: {{ $json.content.parts[0].text }}"
+            },
+            {
+              "content": "You are an expert Google Ads proposal writer for an agency. Your task is to draft a highly personalized and compelling Upwork proposal based on the client's needs. You have access to a Pinecone vector store via a tool to retrieve two types of documents: relevant proposal templates and past client work (case studies or references).\n\nFollow these steps:\n\nRetrieve Proposal Template: Use the Pinecone tool to retrieve the most suitable proposal template. The search query should be based on the analyzed job details received in the input.\n\nRetrieve Past Client Work: Check the needs_industry_reference field from the input. If it is \"T\" (True), use the Pinecone tool to retrieve relevant past client work or case studies that match the industry_category to highlight our relevant experience.\n\nDraft the Proposal: Combine the retrieved template with the analyzed job data to dynamically write the proposal. The proposal should be concise and easy to read. It must include the following components:\n\nIntroduction: A compelling opening that shows you understand the client's problem. Use the core_problem from the input.\n\nProblem Statement: Briefly restate your understanding of the problem the client wants to solve.\n\nProposed Solution: Describe how you would approach the project using the proposed_first_steps and technical_experience_required from the input.\n\nRelevant Experience: If available, incorporate the retrieved past client work and case studies to highlight relevant experience.\n\nAnswer Questions: Answer the questions listed in questions_to_answer.\n\nCall to Action: End with a clear call to action based on the call_to_action field.\n\nFinal Polish: Ensure the final proposal is professional, persuasive, and tailored to the job description.\n\nDo not include any conversational text, explanations, greetings, or commentary of any kind. Your output must be only the proposal text. Begin the output directly with the subject line of the proposal."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        -48
+      ],
+      "id": "938920db-c390-497d-82b7-bef27277d17c",
+      "name": "Draft Proposal",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert in analyzing upwork job posting for a Google Ads agency.\n\nYour task is to analyze the job posting and determine:\n1. Does this job require specific industry experience or references?\n2. What technical Google Ads experience is needed?\n3. Are there additional questions that need to be answered?\n\nJob Details:\nTitle: {{ $json.Title }}\nJob Description: {{ $json.Description }}\nDuration: {{ $json.Duration }}\nRequired Experience Level: {{ $json['Experience Level'] }}\nCategory: {{ $json.Category }} \nSub Category: {{ $json.SubCategory }}\nReason: {{ $json.Reason }}\n\nClient Questions:\n1.{{ $json['Question 1'] }}\n2.{{ $json['Question 2'] }}\n3.{{ $json['Question 3'] }}\n4.{{ $json['Question 4'] }}\n5.{{ $json['Question 5'] }}\n6.{{ $json['Other Questions'] }}\n\nHourly min budget:{{ $json.hourlyBudgetMin }}\nHourly max budgt:{{ $json.hourlyBudgetMax }}\nWeekly Budget:{{ $json.weeklyBudget }}\n\nProvide your analysis output in this JSON format:\n{\n  \"needs_industry_reference\": \"T/F\",\n  \"industry_category\": \"specific industry if identified\",\n  \"technical_experience_required\": \"list of technical skills needed\",\n  \"questions_to_answer\": [\"question1\", \"question2\"],\n  \"core_problem\": \"brief statement of the client's problem\",\n  \"proposed_first_steps\": \"a short list of initial actions\",\n  \"call_to_action\": \"a clear closing statement\"\n}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -48
+      ],
+      "id": "9ef19805-26a9-4f97-baa5-72eec75fae8c",
+      "name": "Analyze Job Data",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the output from the previous Gemini node.\nconst rawOutputText = $input.first().json.content.parts[0].text;\n\n// Use a regular expression to find the actual proposal text,\n// which starts with the \"Subject:\" line.\nconst proposalMatch = rawOutputText.match(/Subject:[\\s\\S]*/);\n\nif (proposalMatch && proposalMatch[0]) {\n  // Return a new item with only the clean proposal text.\n  return [{\n    json: {\n      proposal_text: proposalMatch[0].trim(),\n    },\n  }];\n} else {\n  // If the proposal is not found, return an error.\n  throw new Error(\"Could not find the start of the proposal in the Gemini output.\");\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -48
+      ],
+      "id": "8f3ee94b-2185-4430-a52d-26c2f557100c",
+      "name": "Parse Json"
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n# Analyzes Job Posting and Designs Proposal using RAG",
+        "height": 496,
+        "width": 2496,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -512,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "e1e128d8-6229-4143-9262-fc20c79e9317",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1Rx3GLM5u5N4RQI38OGdoEkNxAdKWSPHt",
+          "mode": "list",
+          "cachedResultName": "Upwork Proposal Reference Data'",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Rx3GLM5u5N4RQI38OGdoEkNxAdKWSPHt"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        368,
+        560
+      ],
+      "id": "8cd0baeb-5310-474e-8214-c1329ae8c4a5",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "00IFHMksL8NUEI5v",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        544,
+        560
+      ],
+      "id": "d46c86dc-717e-4120-adb3-1a92318dafa4",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "00IFHMksL8NUEI5v",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        704
+      ],
+      "id": "010ad274-d8f7-4b76-9f75-8f9cb6a26e1e",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        832,
+        832
+      ],
+      "id": "0c044521-d280-4885-b831-52b57745401e",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "content": "# Saves Reference data for RAG",
+        "height": 512,
+        "width": 864,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        464
+      ],
+      "typeVersion": 1,
+      "id": "5bf545c5-afa5-496f-8436-62559f51cd71",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "raagchatbot",
+          "mode": "list",
+          "cachedResultName": "raagchatbot"
+        },
+        "options": {
+          "pineconeNamespace": "Upwork Proposal Reference"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        560
+      ],
+      "id": "d03e6cc5-0cf1-4dd7-83fa-d3fe406d7cdb",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "bMjdjFlWEvRZ1L71",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        832
+      ],
+      "id": "355cae93-c429-460f-b9a8-c3d2eab4393d",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9be573ef-da9a-4057-93c2-52387a97254b",
+              "leftValue": "={{ $json.row_number }}",
+              "rightValue": "={{ $('Filters Client only Work').item.json.row_number }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "0bcac608-32af-42bb-ba54-7691fb16407d",
+      "name": "Filter the required one"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc",
+          "mode": "list",
+          "cachedResultName": "Upwork Scraped Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_v7AJf6n5VJ5tqJJDDKXPVnBDfmuFXjumQUGX0h1MNc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1EyqhQ9WEeuq0shMHDUZdpWMx32Ns7ioLkSqT2ecYf60/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Filter the required one').item.json.row_number }}",
+            "Proposal Link": "={{ $json.url }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Datum I Vreme Pokretanja Aplikacije",
+              "displayName": "Datum I Vreme Pokretanja Aplikacije",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Duration",
+              "displayName": "Duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Experience Level",
+              "displayName": "Experience Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SubCategory",
+              "displayName": "SubCategory",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Client.TotalHires",
+              "displayName": "Client.TotalHires",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Client.TotalPostedJobs",
+              "displayName": "Client.TotalPostedJobs",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Client.TotalReviews",
+              "displayName": "Client.TotalReviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Client.TotalFeedback",
+              "displayName": "Client.TotalFeedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Is Applicable",
+              "displayName": "Is Applicable",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question 1",
+              "displayName": "Question 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question 2",
+              "displayName": "Question 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question 3",
+              "displayName": "Question 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question 4",
+              "displayName": "Question 4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question 5",
+              "displayName": "Question 5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Other Questions",
+              "displayName": "Other Questions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Publish Date",
+              "displayName": "Publish Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Client.TotalSpent",
+              "displayName": "Client.TotalSpent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "hourlyBudgetMin",
+              "displayName": "hourlyBudgetMin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "hourlyBudgetMax",
+              "displayName": "hourlyBudgetMax",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "weeklyBudget",
+              "displayName": "weeklyBudget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Proposal Link",
+              "displayName": "Proposal Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        -48
+      ],
+      "id": "9866a60c-b515-4139-9368-f04a8270f038",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": " https://md2doc.n8n.aemalsayer.com",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fileName",
+              "value": "=Proposal for {{ $('Filter the required one').item.json.Title }}"
+            },
+            {
+              "name": "output",
+              "value": "={{ $json.proposal_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1616,
+        -48
+      ],
+      "id": "49d122dd-9a1d-4d56-b987-3d78aa8e34ba",
+      "name": "DOC CREATOR",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "00IFHMksL8NUEI5v",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Filters Fit Work": {
+      "main": [
+        [
+          {
+            "node": "Checks for client work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checks for client work": {
+      "main": [
+        [
+          {
+            "node": "Extracts Type & Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filters Fit Work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filters Client only Work": {
+      "main": [
+        [
+          {
+            "node": "Get all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all data": {
+      "main": [
+        [
+          {
+            "node": "Filter the required one",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracts Type & Row": {
+      "main": [
+        [
+          {
+            "node": "Filters Client only Work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Draft Proposal",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Job Data": {
+      "main": [
+        [
+          {
+            "node": "Draft Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Proposal": {
+      "main": [
+        [
+          {
+            "node": "Parse Json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Json": {
+      "main": [
+        [
+          {
+            "node": "DOC CREATOR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter the required one": {
+      "main": [
+        [
+          {
+            "node": "Analyze Job Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DOC CREATOR": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "3048a1e5-d460-49be-a202-44418785d49f",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-08T10:59:39.334Z",
+      "createdAt": "2025-10-08T10:59:39.334Z",
+      "role": "workflow:owner",
+      "workflowId": "9Qq9ofxy4oUw7G5H",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
