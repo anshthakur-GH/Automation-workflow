@@ -1,0 +1,225 @@
+{
+  "updatedAt": "2025-11-10T11:13:04.000Z",
+  "createdAt": "2025-10-25T11:20:17.990Z",
+  "id": "zkvtcbrLYZajqsUF",
+  "name": "Unfazed Form Workflow",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "1bf7db4a-6c96-4dec-97a1-157353d45941",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -320,
+        -80
+      ],
+      "id": "7901f7c7-99d7-467c-8890-f0c1703e6ef1",
+      "name": "Webhook",
+      "webhookId": "1bf7db4a-6c96-4dec-97a1-157353d45941"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_WRtoq-boRoEmq6EGlRZYerGspyWQcXevCw02W3fmCw",
+          "mode": "list",
+          "cachedResultName": "Unfazed CTA Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_WRtoq-boRoEmq6EGlRZYerGspyWQcXevCw02W3fmCw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_WRtoq-boRoEmq6EGlRZYerGspyWQcXevCw02W3fmCw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.body.name }}",
+            "Work Email": "={{ $json.body.email }}",
+            "Phone Number": "={{ $json.body.phone }}",
+            "Company Name": "={{ $json.body.company }}",
+            "Challenge": "={{ $json.body.challenge }}",
+            "Specific Needs": "={{ $json.body.message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Work Email",
+              "displayName": "Work Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Challenge",
+              "displayName": "Challenge",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Specific Needs",
+              "displayName": "Specific Needs",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -144,
+        -80
+      ],
+      "id": "df382dda-387f-414f-852d-ce0d6b9c8be6",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6581035289",
+        "text": "=CTA form was filled by  {{ $json.Name }}, needs- {{ $json['Specific Needs'] }}, challenge- {{ $json.Challenge }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        0
+      ],
+      "id": "11501435-4aaa-4e00-9c62-83cf28feada5",
+      "name": "Send a text message",
+      "webhookId": "500c7440-296e-4c9e-88cd-9594af6232a3",
+      "credentials": {
+        "telegramApi": {
+          "id": "Fp3U0bOBQ2D9IsLh",
+          "name": "Unfazed_CT_Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Work Email'] }}",
+        "subject": "Strategy Request Received - Unfazed AI ",
+        "emailType": "text",
+        "message": "=Hi {{ $json.Name }},  \n\nWe've received your request for an Automation Strategy Session.\n\nYour details are recorded!  \nChallenge: {{ $json.Challenge }}\nSpecific Needs: {{ $json['Specific Needs'] }}\n\nOur team is reviewing your challenge and will contact you within 12-24 hours to schedule your free ROI Audit. \n\nWe're ready to help your business run, Unfazed.  \n\nBest regards,  \nTeam Unfazed\n(unfazed-ai.online)\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        -176
+      ],
+      "id": "090bbf00-e676-4037-9f85-e9de6352c086",
+      "name": "Send a message",
+      "webhookId": "d563f298-689d-4b99-9be2-3b975a7e9094",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GnwBugge5Hbo8HjB",
+          "name": "Unfazed Gmail"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "e528b51b-516b-47e3-ae05-b8a4f75ea9d2",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-25T11:20:18.018Z",
+      "createdAt": "2025-10-25T11:20:18.018Z",
+      "role": "workflow:owner",
+      "workflowId": "zkvtcbrLYZajqsUF",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
