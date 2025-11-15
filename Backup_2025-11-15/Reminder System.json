@@ -1,0 +1,1170 @@
+{
+  "updatedAt": "2025-09-14T11:24:20.000Z",
+  "createdAt": "2025-08-27T13:51:10.318Z",
+  "id": "siCECIIrsefyaUvy",
+  "name": "Reminder System",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        784
+      ],
+      "id": "9f34f82b-fffa-41e6-869c-0dcc736a0dab",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA",
+          "mode": "list",
+          "cachedResultName": "Prospects Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -48,
+        784
+      ],
+      "id": "b0578f2b-41a9-4ffb-8feb-315906fd38cf",
+      "name": "Check for Reminder",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "fees reminder ",
+        "message": "={{ $json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1216,
+        784
+      ],
+      "id": "7d41a69a-12f2-40ae-bca8-6a0236412c3f",
+      "name": "Send Email",
+      "webhookId": "ac667806-995b-4a30-aa6f-a53c48df0d7d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GnwBugge5Hbo8HjB",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 3,
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -496,
+        144
+      ],
+      "id": "2663e109-b149-47f7-b14a-88e7f6bc7fd4",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nreturn items.filter(item => {\n  const [day, month, year] = item.json[\"Due Date\"].split(\"-\");\n  const dueDate = new Date(`${year}-${month}-${day}`);\n\n  return dueDate < today && item.json[\"Payment Status\"].toLowerCase() === \"unpaid\";\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        144
+      ],
+      "id": "32372fff-c27d-42b9-bc4e-e4fdcd441d36",
+      "name": "Filter Data for Admin"
+    },
+    {
+      "parameters": {
+        "jsCode": "let report = \"🚨 Defaulter Report 🚨\\n\\n\";\n\nitems.forEach(item => {\n  report += `• ${item.json.Name} | ${item.json.Course} | ₹${item.json[\"Amount Due\"]} (Due: ${item.json[\"Due Date\"]})\\n`;\n});\n\nreturn [{ json: { adminMessage: report } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        144
+      ],
+      "id": "72841fe3-d794-4aaf-b4ad-b9be46045804",
+      "name": "Design List for Admin"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "778357092027912",
+        "recipientPhoneNumber": "+917393800862",
+        "textBody": "={{ $json.adminMessage }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        384,
+        48
+      ],
+      "id": "60cc9a60-5ea0-4425-9e63-f197f8648616",
+      "name": "Send message",
+      "webhookId": "5c802acf-7334-4e21-bd04-ba41eb78bf82",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "d0TOl0YHfDacvyDu",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@example.com",
+        "subject": "🚨 Defaulter List 🚨 ",
+        "message": "={{ $json.adminMessage }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        384,
+        224
+      ],
+      "id": "3e173f5c-1b3a-4933-bee1-dcdd1150f1a7",
+      "name": "Send a message",
+      "webhookId": "13fa73f7-6f40-4b43-9cd1-2a4d3efb204d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GnwBugge5Hbo8HjB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Send's List of defaulters to Admmin Directly ",
+        "height": 400,
+        "width": 1184,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -592,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "eb362ae5-10fa-4f1f-b069-bdbb2b3c5925",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Send Reminder to Defaulters on whatsapp, Email, SMS and update the due date, due amount.",
+        "height": 784,
+        "width": 2544,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        448
+      ],
+      "typeVersion": 1,
+      "id": "82523c2e-d23c-4438-824e-0254f3361a17",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json[\"reminderStage\"]}}",
+                    "rightValue": "gentle",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c9d9c433-3ffd-4b60-bf80-aaabc8ff9b64"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "due date in 2 days "
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "607775c0-b375-433e-80e6-2e36d84e9b8f",
+                    "leftValue": "={{$json[\"reminderStage\"]}}",
+                    "rightValue": "firm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "due today"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f795ebc8-78f5-43e5-8f73-c5fa7685eaf5",
+                    "leftValue": "={{$json[\"reminderStage\"]}}",
+                    "rightValue": "urgent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "due date is passed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        416,
+        1008
+      ],
+      "id": "e9c59e7f-fe21-482d-84e0-e6f36f84988f",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const name = item.json[\"Name\"];\n  const amountDue = item.json[\"Amount Due\"];\n  const course = item.json[\"Course\"];\n  const dueDate = item.json[\"Due Date\"];\n  const institute = item.json[\"Institute Name\"];\n  const institutePhone = item.json[\"Institute Phone\"] || \"\";\n  const instituteEmail = item.json[\"Institute Email\"] || \"\";\n\n  // Format phone numbers\n  let phoneFormatted = \"\";\n  if (institutePhone) {\n    const phones = institutePhone.split(\",\").map(p => p.trim());\n    phoneFormatted = phones.map(p => `📞 ${p}`).join(\"\\n\");\n  }\n\n  let contactInfo = \"\";\n  if (phoneFormatted) contactInfo += phoneFormatted + \"\\n\";\n  if (instituteEmail) contactInfo += `✉️ ${instituteEmail}`;\n\n  const message = `⚠️ Fee Reminder  \n\nDear ${name},  \n\nOur records show that your fee of ₹${amountDue} for the course *${course}* was due today.  \n\nWe kindly request you to complete the payment immediately to avoid further reminders or late fees.  \n\nRegards,  \n${institute}  \n${contactInfo}`;\n\n  return {\n    json: {\n      ...item.json,\n      message,\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        784
+      ],
+      "id": "97d0e121-0228-47bf-a8ca-d14d50d7bb9b",
+      "name": "Firm Reminder"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const name = item.json[\"Name\"];\n  const amountDue = item.json[\"Amount Due\"];\n  const course = item.json[\"Course\"];\n  const dueDate = item.json[\"Due Date\"];\n  const institute = item.json[\"Institute Name\"];\n  const institutePhone = item.json[\"Institute Phone\"] || \"\";\n  const instituteEmail = item.json[\"Institute Email\"] || \"\";\n\n  // Format phone numbers\n  let phoneFormatted = \"\";\n  if (institutePhone) {\n    const phones = institutePhone.split(\",\").map(p => p.trim());\n    phoneFormatted = phones.map(p => `📞 ${p}`).join(\"\\n\");\n  }\n\n  let contactInfo = \"\";\n  if (phoneFormatted) contactInfo += phoneFormatted + \"\\n\";\n  if (instituteEmail) contactInfo += `✉️ ${instituteEmail}`;\n\n  const message = `🚨 URGENT NOTICE  \n\n${name}, your fee of ₹${amountDue} for *${course}* was due on ${dueDate} and remains unpaid.  \n\nImmediate payment is required to avoid penalties and ensure uninterrupted access to classes.  \n\nFailure to pay promptly may result in suspension of services.  \n\n- ${institute}  \n${contactInfo}`;\n\n  return {\n    json: {\n      ...item.json,\n      message,\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1056
+      ],
+      "id": "3528ee9c-04f7-4519-9b17-bb709d2adb1b",
+      "name": "Urgent Reminder"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const name = item.json[\"Name\"];\n  const amountDue = item.json[\"Amount Due\"];\n  const course = item.json[\"Course\"];\n  const dueDate = item.json[\"Due Date\"];\n  const institute = item.json[\"Institute Name\"];\n\n  // Use the exact key with trailing space\n  const institutePhone = item.json[\"Institute Phone\"] || \"\";\n  const instituteEmail = item.json[\"Institute Email\"] || \"\";\n  \n\n  // Format multiple phone numbers (comma separated)\n  let phoneFormatted = \"\";\n  if (institutePhone) {\n    const phones = institutePhone.split(\",\").map(p => p.trim());\n    phoneFormatted = phones.map(p => `📞 ${p}`).join(\"\\n\");\n  }\n\n  // Collect contact info\n  let contactInfo = \"\";\n  if (phoneFormatted) contactInfo += phoneFormatted + \"\\n\";\n  if (instituteEmail) contactInfo += `✉️ ${instituteEmail}`;\n\n  const message = `Hello ${name},\n\nThis is a friendly reminder that your fee of ₹${amountDue} for *${course}* is due on ${dueDate}.\n\nPlease make the payment at the earliest.\n\nRegards,  \n${institute}  \n${contactInfo}`;\n\n  return {\n    json: {\n      ...item.json,\n      message,\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        528
+      ],
+      "id": "62415e60-bf50-4337-b7e0-2c835149ecee",
+      "name": "Gentle Reminder"
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\ntoday.setHours(0, 0, 0, 0); // reset time for accurate comparison\n\nreturn items.map(item => {\n  let reminderStage = \"\";\n\n  // --- Parse Due Date ---\n  let dueDateStr = (item.json[\"Due Date\"] || \"\").trim();\n  let dueDate;\n\n  // Handle dd-mm-yyyy or dd/mm/yyyy\n  if (/^\\d{2}[-/]\\d{2}[-/]\\d{4}$/.test(dueDateStr)) {\n    const parts = dueDateStr.split(/[-/]/);\n    const day = Number(parts[0]);\n    const month = Number(parts[1]) - 1;\n    const year = Number(parts[2]);\n    dueDate = new Date(year, month, day);\n  } else {\n    // fallback: try default Date parser (handles ISO from Google Sheets)\n    dueDate = new Date(dueDateStr);\n  }\n\n  dueDate.setHours(0, 0, 0, 0);\n\n  // --- Calculate days difference ---\n  const diffMs = dueDate.getTime() - today.getTime();\n  const daysDiff = Math.round(diffMs / (1000 * 60 * 60 * 24));\n\n  // --- Reminder stage logic ---\n  const status = (item.json[\"Payment Status\"] || \"\").trim().toLowerCase();\n\n  if (status === \"unpaid\") {\n    if (daysDiff > 0 && daysDiff <= 2) {\n      reminderStage = \"gentle\";   // due soon\n    } else if (daysDiff === 0) {\n      reminderStage = \"firm\";     // due today\n    } else if (daysDiff < 0) {\n      reminderStage = \"urgent\";   // overdue\n    }\n  }\n\n  // --- Return with reminderStage ---\n  return {\n    json: {\n      ...item.json,\n      reminderStage,\n      daysDiff\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        1024
+      ],
+      "id": "3ed2754c-85d8-46d6-8db1-3d399414abbf",
+      "name": "Filter Student"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA",
+          "mode": "list",
+          "cachedResultName": "Prospects Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Switch').item.json.row_number }}",
+            "Last Reminded Date": "={{ $now.toFormat(\"dd-MM-yyyy\") }}\n"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "WhatsApp",
+              "displayName": "WhatsApp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Course",
+              "displayName": "Course",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Institute Name",
+              "displayName": "Institute Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Institute Phone",
+              "displayName": "Institute Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Institute Email",
+              "displayName": "Institute Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Amount Due",
+              "displayName": "Amount Due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Months Overdue",
+              "displayName": "Months Overdue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last Reminded Date",
+              "displayName": "Last Reminded Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1568,
+        784
+      ],
+      "id": "2a589e04-3cb4-45d6-8c82-a226bc31218b",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA",
+          "mode": "list",
+          "cachedResultName": "Prospects Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -304,
+        144
+      ],
+      "id": "a6eea45f-5a27-4895-a4bd-134915c196c0",
+      "name": "Check List",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA",
+          "mode": "list",
+          "cachedResultName": "Prospects Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json[\"row_number\"] }}",
+            "Months Overdue": "={{ $json['Months Overdue'] }}",
+            "Due Date": "={{ $json['Due Date'] }}",
+            "Amount Due": "={{ $json['Amount Due'] }}",
+            "Payment Status": "={{ $json['Payment Status'] }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "WhatsApp",
+              "displayName": "WhatsApp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Course",
+              "displayName": "Course",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Institute Name",
+              "displayName": "Institute Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Institute Phone",
+              "displayName": "Institute Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Institute Email",
+              "displayName": "Institute Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Base Fees",
+              "displayName": "Base Fees",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Amount Due",
+              "displayName": "Amount Due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Months Overdue",
+              "displayName": "Months Overdue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Reminded Date",
+              "displayName": "Last Reminded Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        544
+      ],
+      "id": "90278313-6fb4-4a72-927d-cecf6d7e16d6",
+      "name": "Due Date Updated",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---- helpers ----\nfunction parseDDMMYYYY(s) {\n  if (!s) return null;\n  const [dd, mm, yyyy] = s.split(\"-\").map(n => parseInt(n, 10));\n  const d = new Date(yyyy, (mm - 1), dd);\n  d.setHours(0, 0, 0, 0);\n  return d;\n}\n\nfunction formatDDMMYYYY(d) {\n  const dd = String(d.getDate()).padStart(2, \"0\");\n  const mm = String(d.getMonth() + 1).padStart(2, \"0\");\n  const yyyy = d.getFullYear();\n  return `${dd}-${mm}-${yyyy}`;\n}\n\n// Add 1 calendar month, clamp to last day if needed\nfunction addOneMonthFrom(date) {\n  const day = date.getDate();\n  const month = date.getMonth();\n  const year = date.getFullYear();\n  const lastDayNextMonth = new Date(year, month + 2, 0).getDate();\n  const newDay = Math.min(day, lastDayNextMonth);\n  const next = new Date(year, month + 1, newDay);\n  next.setHours(0, 0, 0, 0);\n  return next;\n}\n\n// ---- main ----\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nconst out = [];\n\nfor (const item of items) {\n  const row = item.json;\n\n  const status = (row[\"Payment Status\"] || \"\").toLowerCase().trim(); // 'paid' | 'unpaid'\n  const dueStr = row[\"Due Date\"];\n  const baseFee = parseFloat(row[\"Base Fees\"]) || 0;\n\n  const due = parseDDMMYYYY(dueStr);\n  if (!due) continue;\n\n  // Case 1: PAID -> roll to next cycle and reset\n  if (status === \"paid\") {\n    const nextDue = addOneMonthFrom(due);\n    out.push({\n      json: {\n        row_number: row.row_number ?? row[\"row_number\"],\n        \"Due Date\": formatDDMMYYYY(nextDue),\n        \"Payment Status\": \"unpaid\", // start new cycle\n        \"Amount Due\": baseFee,\n        \"Months Overdue\": 0,\n      }\n    });\n    continue;\n  }\n\n  // Case 2: UNPAID & overdue -> accumulate\n  if (status === \"unpaid\" && due < today) {\n    // months difference by calendar months\n    const diffMonths = Math.floor(\n      (today.getFullYear() - due.getFullYear()) * 12 +\n      (today.getMonth() - due.getMonth())\n    );\n\n    // Option A (default): count owed cycles (today overdue -> 1)\n    const monthsOverdue = diffMonths + 1;\n\n    // Option B: if you want 0 until a full month passes, use:\n    // const monthsOverdue = diffMonths;\n\n    const newAmountDue = baseFee * monthsOverdue;\n\n    out.push({\n      json: {\n        row_number: row.row_number ?? row[\"row_number\"],\n        \"Due Date\": formatDDMMYYYY(due), // keep the same to avoid blanks\n        \"Payment Status\": \"unpaid\",\n        \"Amount Due\": newAmountDue,\n        \"Months Overdue\": monthsOverdue,\n      }\n    });\n    continue;\n  }\n\n  // Case 3: UNPAID but not overdue yet -> no change (emit nothing)\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        544
+      ],
+      "id": "e587e426-fac7-4f8f-a4c9-a37795d09631",
+      "name": "Filter to update Due Date"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "778357092027912",
+        "recipientPhoneNumber": "={{ \"+91\" + $json[\"WhatsApp\"].toString() }}\n",
+        "textBody": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        528
+      ],
+      "id": "f1424913-4fb4-4ec1-8cd1-aa26ffd677a4",
+      "name": "Whatsapp Message",
+      "webhookId": "85ad93b2-0711-44db-a63c-fc70c6eb99d9",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "d0TOl0YHfDacvyDu",
+          "name": "WhatsApp account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "Dashboard Node ",
+        "height": 400,
+        "width": 1296,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        656,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "a5d5fe8a-2a12-4982-b27a-139b6d1727c8",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA",
+          "mode": "list",
+          "cachedResultName": "Prospects Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mwjEq0pk0EtLhyIiAeQohJmeMzFDBtFll47qWopw7lA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        176
+      ],
+      "id": "5078d713-5b2e-448b-b3b3-26d608dd147f",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(i => i.json);\nconst toNum = v => isNaN(parseFloat(v)) ? 0 : parseFloat(v);\n\nconst normalized = rows.map(r => ({\n  name: r['Name'] || '',\n  email: r['Email'] || '',\n  phone: r['Phone'] || '',\n  whatsapp: r['WhatsApp'] || '',\n  course: r['Course'] || '',\n  institute: r['Institute Name'] || '',\n  due_date: r['Due Date'] || '',\n  base_fees: toNum(r['Base Fees'] || 0),\n  amount_due: toNum(r['Amount Due'] || 0),\n  months_overdue: toNum(r['Months Overdue'] || 0),\n  payment_status: r['Payment Status'] || '',\n  last_reminded_date: r['Last Reminded Date'] || '',\n  is_defaulter: r['Payment Status'].toLowerCase() === 'unpaid'\n}));\n\nlet totalBaseFees = 0, totalDue = 0, totalSaved = 0, totalDefaulters = 0;\nnormalized.forEach(r => {\n  totalBaseFees += r.base_fees;\n  totalDue += r.amount_due;\n  totalSaved += r.base_fees - r.amount_due;\n  if (r.is_defaulter) totalDefaulters += 1;\n});\n\nreturn {\n  json: {\n    records: normalized,\n    dashboard: {\n      totalBaseFees,\n      totalDue,\n      totalSaved,\n      totalDefaulters\n    }\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        176
+      ],
+      "id": "b32fc42b-fbb3-4cf3-bb09-dc66d8231833",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1280,
+        176
+      ],
+      "id": "a1472b4b-54ac-4ddf-a3c9-8428441b1d5d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "817bf70f-9451-48ff-81ed-5a0d67cd5805",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        704,
+        176
+      ],
+      "id": "9b54896d-ea5d-40d4-a926-40e426848490",
+      "name": "Webhook",
+      "webhookId": "817bf70f-9451-48ff-81ed-5a0d67cd5805"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check for Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Reminder": {
+      "main": [
+        [
+          {
+            "node": "Filter to update Due Date",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Check List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Data for Admin": {
+      "main": [
+        [
+          {
+            "node": "Design List for Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Design List for Admin": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Gentle Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Firm Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Urgent Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firm Reminder": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Whatsapp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Urgent Reminder": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Whatsapp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gentle Reminder": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Whatsapp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Student": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check List": {
+      "main": [
+        [
+          {
+            "node": "Filter Data for Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter to update Due Date": {
+      "main": [
+        [
+          {
+            "node": "Due Date Updated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whatsapp Message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    },
+    "node:Schedule Trigger1": {
+      "recurrenceRules": [
+        244
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "6d72a5c9-3a43-448e-9259-914d6b15f3c4",
+  "triggerCount": 3,
+  "shared": [
+    {
+      "updatedAt": "2025-08-27T13:51:10.348Z",
+      "createdAt": "2025-08-27T13:51:10.348Z",
+      "role": "workflow:owner",
+      "workflowId": "siCECIIrsefyaUvy",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-08-28T18:18:53.835Z",
+      "createdAt": "2025-08-28T18:18:53.835Z",
+      "id": "BLrBOWqyg5cpfC5Z",
+      "name": "Road to first 1lakh"
+    }
+  ]
+}
