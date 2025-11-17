@@ -1,0 +1,1026 @@
+{
+  "updatedAt": "2025-11-16T11:29:13.000Z",
+  "createdAt": "2025-11-16T11:26:48.444Z",
+  "id": "T28jLvspUKT8W4nf",
+  "name": "Daily NS file upload",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "83550d2a-170d-41d0-9139-fef5ea09be98",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "simple": false,
+        "filters": {
+          "q": "subject:\"Ampol NS Report\" has:attachment",
+          "readStatus": "both",
+          "receivedAfter": "={{ $now.minus(1, 'days').toISO() }}"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "e366769b-d07f-4118-a8c0-43c8d1f1bfe6",
+      "name": "Get Gmail Messages",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -400,
+        144
+      ],
+      "webhookId": "a10620ce-e096-4d2c-951d-b89c9a7bf835"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              },
+              "id": "5b618833-ba0b-4eca-9dce-b88406eb29a5"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e745b9da-ad67-4132-8513-a8ac0716d48e",
+      "name": "IF Emails Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "path": "={{ $json.URL }}/{{ $binary[Object.keys($binary).find(key => key.startsWith('attachment_'))].fileName }}",
+        "binaryData": true,
+        "binaryPropertyName": "={{ Object.keys($binary).find(key => key.startsWith('attachment_')) }}"
+      },
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        432,
+        0
+      ],
+      "id": "67364e68-b680-4a22-a3b5-ee5b737ee4b5",
+      "name": "Dropbox upload"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "base": {
+          "__rl": true,
+          "value": "appsJAnMTmI4B98ex",
+          "mode": "list",
+          "cachedResultName": "NS Files",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblnCn7k3AeBsgoQQ",
+          "mode": "list",
+          "cachedResultName": "Dropbox",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex/tblnCn7k3AeBsgoQQ"
+        },
+        "id": "rectdrJLHczAEJW9j",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "aa7de809-da54-405d-80d6-7b1465f9ba12",
+      "name": "Get a record"
+    },
+    {
+      "parameters": {
+        "jsCode": "const previousNodeData = $('IF Emails Found').first();\nconst currentItems = $input.all();\n\n// Return all current items with the previous node data merged in\nreturn currentItems.map(item => ({\n  json: {\n    ...previousNodeData.json,  // Data from previous node\n    ...item.json,              // Data from current node (overwrites if keys conflict)\n  },\n  binary: item.binary || previousNodeData.binary,  // Keep binary data\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "d2713f76-8c15-4f95-b24f-fa63d9ebd832",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "={{ Object.keys($binary).find(item => item.startsWith('attachment_')) }}",
+        "destinationKey": "={{ $binary[Object.keys($binary).find(key => key.startsWith('attachment_'))].fileName.split('.')[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        288
+      ],
+      "id": "b1ab4c06-f3ba-49b4-b321-3fc941b31817",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "/*\n * N8N CODE NODE - INVOICE PARSER (Pure JavaScript - No TypeScript)\n * =================================================================\n * \n * This version uses plain JavaScript without TypeScript types\n * to avoid any type-related errors in n8n.\n * \n * SETUP IN N8N:\n * 1. Read/Binary Files node → Read your CSV/TXT file\n * 2. Code node → Paste this entire script\n * 3. Set \"Mode\" to \"Run Once for All Items\"\n */\n\n// Get input data from n8n\nconst items = $input.all();\nlet csvText = '';\nlet inputFilename = '';\n\n// Extract CSV text and filename from various possible input formats\nif (items[0].json.data) {\n    csvText = items[0].json.data;\n} else if (items[0].binary && items[0].binary.data) {\n    csvText = Buffer.from(items[0].binary.data.data, 'base64').toString('utf-8');\n} else if (items[0].json.content) {\n    csvText = items[0].json.content;\n} else {\n    // Check if data is in object key format (like NS_0200597867_597867_20251105034147)\n    const keys = Object.keys(items[0].json);\n    if (keys.length > 0 && keys[0] !== 'data' && keys[0] !== 'content') {\n        inputFilename = keys[0];\n        csvText = items[0].json[keys[0]];\n    } else {\n        throw new Error('No CSV data found. Expected data in json.data, binary.data, or json.content');\n    }\n}\n\n// Helper function to get day name and month name\nfunction getDateDetails(dateStr) {\n    const parts = dateStr.split('/');\n    const day = parts[0];\n    const month = parts[1];\n    const year = parts[2];\n    \n    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));\n    \n    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];\n    const dayName = dayNames[dateObj.getDay()];\n    \n    const monthNames = [\n        'January', 'February', 'March', 'April', 'May', 'June',\n        'July', 'August', 'September', 'October', 'November', 'December'\n    ];\n    const monthName = monthNames[dateObj.getMonth()];\n    \n    return {\n        day: day,\n        dayName: dayName,\n        month: monthName,\n        monthNumber: month,\n        year: year\n    };\n}\n\n// Parse CSV into array of objects\nfunction parseCSV(text) {\n    const lines = text.trim().split(/\\r?\\n/);\n    const headers = lines[0].split(',').map(function(h) { return h.trim(); });\n    const transactions = [];\n    \n    for (let i = 1; i < lines.length; i++) {\n        if (!lines[i].trim()) continue;\n        \n        const values = lines[i].split(',').map(function(v) { return v.trim(); });\n        const transaction = {};\n        \n        for (let j = 0; j < headers.length; j++) {\n            transaction[headers[j]] = values[j] || '';\n        }\n        \n        transactions.push(transaction);\n    }\n    \n    return transactions;\n}\n\n// Group and calculate totals by invoice date\nfunction calculateInvoices(transactions) {\n    const groups = {};\n    \n    for (let i = 0; i < transactions.length; i++) {\n        const txn = transactions[i];\n        const invoiceDate = txn['INVCE DATE'];\n        \n        if (!Object.prototype.hasOwnProperty.call(groups, invoiceDate)) {\n            groups[invoiceDate] = {\n                transactions: [],\n                productNet: 0,\n                productGST: 0,\n                productTotal: 0,\n                feeNet: 0,\n                feeGST: 0,\n                feeTotal: 0\n            };\n        }\n        \n        groups[invoiceDate].transactions.push(txn);\n        groups[invoiceDate].productNet += parseFloat(txn['PRD EX GST']) || 0;\n        groups[invoiceDate].productGST += parseFloat(txn['GST']) || 0;\n        groups[invoiceDate].productTotal += parseFloat(txn['PRD INCGST']) || 0;\n        groups[invoiceDate].feeNet += parseFloat(txn['TRN FEE']) || 0;\n        groups[invoiceDate].feeGST += parseFloat(txn['FEEGST']) || 0;\n        groups[invoiceDate].feeTotal += parseFloat(txn['FEE+GST']) || 0;\n    }\n    \n    const results = [];\n    const invoiceDates = Object.keys(groups);\n    \n    for (let i = 0; i < invoiceDates.length; i++) {\n        const invoiceDate = invoiceDates[i];\n        const group = groups[invoiceDate];\n        const dateDetails = getDateDetails(invoiceDate);\n        \n        // Net = Product Ex GST + Transaction Fee (no GST)\n        const net = group.productNet + group.feeNet;\n        \n        // GST = Product GST + Fee GST\n        const gst = group.productGST + group.feeGST;\n        \n        // Amount = Net + GST\n        const amount = net + gst;\n        \n        // Get account number from first transaction (all transactions have same account)\n        const account = group.transactions[0]['ACCT#'] || '';\n        \n        // Extract invoice number from input filename if available\n        // Format: NS_0200597867_597867_20251105034147 -> invoice number is 20251105\n        let invoiceNo = 'INV-' + dateDetails.year + dateDetails.monthNumber + dateDetails.day;\n        if (inputFilename) {\n            const parts = inputFilename.split('_');\n            // Invoice number is typically the 4th part (after NS, account prefix, account number)\n            if (parts.length >= 4) {\n                // Extract first 8 digits from the last part (20251105 from 20251105034147)\n                const lastPart = parts[3];\n                const invoiceNumFromFile = lastPart.substring(0, 8);\n                if (invoiceNumFromFile && invoiceNumFromFile.length === 8) {\n                    invoiceNo = invoiceNumFromFile;\n                }\n            }\n        }\n        \n        // Use inputFilename as filename if available, otherwise generate one\n        const filename = inputFilename || 'invoice_' + dateDetails.year + '_' + dateDetails.monthNumber + '_' + dateDetails.day + '.pdf';\n        \n        results.push({\n            inputFilename: inputFilename,\n            account: account,\n            filename: filename,\n            date: invoiceDate,\n            day: dateDetails.day,\n            dayName: dateDetails.dayName,\n            month: dateDetails.month,\n            monthNumber: dateDetails.monthNumber,\n            year: dateDetails.year,\n            invoiceNo: invoiceNo,\n            transactionCount: group.transactions.length,\n            net: parseFloat(net.toFixed(2)),\n            gst: parseFloat(gst.toFixed(2)),\n            amount: parseFloat(amount.toFixed(2)),\n            productNet: parseFloat(group.productNet.toFixed(2)),\n            productGST: parseFloat(group.productGST.toFixed(2)),\n            productTotal: parseFloat(group.productTotal.toFixed(2)),\n            feeNet: parseFloat(group.feeNet.toFixed(2)),\n            feeGST: parseFloat(group.feeGST.toFixed(2)),\n            feeTotal: parseFloat(group.feeTotal.toFixed(2)),\n            transactions: group.transactions\n        });\n    }\n    \n    return results;\n}\n\n// Execute\nconst transactions = parseCSV(csvText);\nconst invoices = calculateInvoices(transactions);\n\n// Return as n8n items\nreturn invoices.map(function(invoice) { \n    return { json: invoice }; \n});"
+      },
+      "id": "9d33784a-2a6e-439e-8d25-ef91106cf75c",
+      "name": "Extract & Calculate Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appsJAnMTmI4B98ex",
+          "mode": "list",
+          "cachedResultName": "NS File Import",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbltzL5qPB1QWKbmQ",
+          "mode": "list",
+          "cachedResultName": "NS Files",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex/tbltzL5qPB1QWKbmQ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        304,
+        288
+      ],
+      "id": "0f93c3a2-ae1a-495a-bdd3-eb55226d0e99",
+      "name": "Search records"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// CHECK PREVIOUS DAY RECORD - Extract Date from Filename\n// ============================================================================\n// Purpose: Check if yesterday's record exists by comparing dates in filenames\n// Logic: Extract date from filename (e.g., NS_...20251105... → 20251105)\n//        Then check if previous day's file exists in Airtable\n// ============================================================================\n\n// Get data from previous nodes\nconst extractedData = $('Extract & Calculate Data').first().json;\nconst searchResults = $input.all();\n\n// ===== HELPER FUNCTIONS =====\n\n// Extract date from filename (e.g., \"NS_0200597867_597867_20251105034147\" → \"20251105\")\nfunction extractDateFromFilename(filename) {\n  if (!filename) return null;\n  \n  // Pattern: NS_XXXXXXXXXX_XXXXXX_YYYYMMDDHHMMSS\n  // Extract the date part (YYYYMMDD) which is 8 digits after the last underscore before time\n  const match = filename.match(/(\\d{8})\\d{6}$/);\n  return match ? match[1] : null;\n}\n\n// Convert YYYYMMDD to Date object\nfunction parseYYYYMMDD(dateStr) {\n  if (!dateStr || dateStr.length !== 8) return null;\n  const year = parseInt(dateStr.substring(0, 4));\n  const month = parseInt(dateStr.substring(4, 6)) - 1; // Month is 0-indexed\n  const day = parseInt(dateStr.substring(6, 8));\n  return new Date(year, month, day);\n}\n\n// Convert Date object to YYYYMMDD string\nfunction formatToYYYYMMDD(date) {\n  const year = date.getFullYear();\n  const month = String(date.getMonth() + 1).padStart(2, '0');\n  const day = String(date.getDate()).padStart(2, '0');\n  return `${year}${month}${day}`;\n}\n\n// Get previous day in YYYYMMDD format\nfunction getPreviousDayYYYYMMDD(dateStr) {\n  const currentDate = parseYYYYMMDD(dateStr);\n  if (!currentDate) return null;\n  \n  const previousDate = new Date(currentDate);\n  previousDate.setDate(previousDate.getDate() - 1);\n  \n  return formatToYYYYMMDD(previousDate);\n}\n\n// Format YYYYMMDD to readable format (YYYY-MM-DD)\nfunction formatToReadable(dateStr) {\n  if (!dateStr || dateStr.length !== 8) return dateStr;\n  return `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;\n}\n\n// ===== MAIN LOGIC =====\n\n// Extract current record information\nconst currentFileName = extractedData.filename;\nconst currentDateFromFile = extractDateFromFilename(currentFileName); // e.g., \"20251105\"\nconst currentDateReadable = formatToReadable(currentDateFromFile); // e.g., \"2025-11-05\"\n\n// Calculate previous day date\nconst previousDayDate = getPreviousDayYYYYMMDD(currentDateFromFile); // e.g., \"20251104\"\nconst previousDayReadable = formatToReadable(previousDayDate); // e.g., \"2025-11-04\"\n\n// Initialize check variables\nlet currentRecordExists = false;\nlet currentRecordId = null;\n\nlet previousDayRecordExists = false;\nlet previousDayRecordId = null;\nlet previousDayFileName = null;\n\n// Search through all Airtable records\nif (searchResults && searchResults.length > 0) {\n  for (const result of searchResults) {\n    const record = result.json;\n    \n    // Get filename from record\n    const recordFileName = record.fields?.['File Name'] || record['File Name'];\n    \n    if (!recordFileName) continue;\n    \n    // Extract date from this record's filename\n    const recordDate = extractDateFromFilename(recordFileName);\n    \n    // Check if current record exists (exact filename match)\n    if (recordFileName === currentFileName) {\n      currentRecordExists = true;\n      currentRecordId = record.id;\n    }\n    \n    // Check if previous day record exists (date match)\n    if (recordDate === previousDayDate) {\n      previousDayRecordExists = true;\n      previousDayRecordId = record.id;\n      previousDayFileName = recordFileName;\n    }\n  }\n}\n\n// ===== DECISION LOGIC =====\n\nlet shouldInsert = false;\nlet reason = '';\nlet status = '';\n\nif (currentRecordExists) {\n  // Current record already exists - SKIP\n  shouldInsert = false;\n  reason = `Current record already exists in Airtable (ID: ${currentRecordId})`;\n  status = 'DUPLICATE_SKIPPED';\n} else if (!previousDayRecordExists) {\n  // Previous day record is missing - SKIP\n  shouldInsert = false;\n  reason = `Previous day record (${previousDayReadable}) is missing. Cannot insert today's record until yesterday's data is available.`;\n  status = 'PREVIOUS_DAY_MISSING';\n} else {\n  // All conditions met - INSERT\n  shouldInsert = true;\n  reason = `Previous day record (${previousDayReadable}) exists. Ready to insert today's record.`;\n  status = 'READY_TO_INSERT';\n}\n\n// ===== PREPARE OUTPUT =====\n\nconst result = {\n  // ===== Control Flags =====\n  shouldInsert: shouldInsert,\n  currentRecordExists: currentRecordExists,\n  previousDayRecordExists: previousDayRecordExists,\n  \n  // ===== Current Record Info =====\n  currentFileName: currentFileName,\n  currentDate: currentDateFromFile,\n  currentDateReadable: currentDateReadable,\n  currentRecordId: currentRecordId,\n  \n  // ===== Previous Day Info =====\n  previousDayDate: previousDayDate,\n  previousDayReadable: previousDayReadable,\n  previousDayRecordId: previousDayRecordId,\n  previousDayFileName: previousDayFileName,\n  \n  // ===== Data for Airtable =====\n  fields: {\n    'File Name': currentFileName,\n    'Gross': extractedData.amount,\n    'GST': extractedData.gst,\n    'Net': extractedData.net,\n    'Last Modified': new Date().toISOString().split('T')[0]\n  },\n  \n  // ===== Status =====\n  status: status,\n  reason: reason,\n  message: getStatusMessage(status, currentFileName, previousDayReadable, currentRecordId, previousDayFileName),\n  \n  // ===== Summary =====\n  summary: {\n    currentFile: currentFileName,\n    currentDate: currentDateReadable,\n    previousDate: previousDayReadable,\n    canInsert: shouldInsert,\n    blockReason: shouldInsert ? null : reason,\n    totalRecordsSearched: searchResults.length\n  },\n  \n  // ===== Metadata =====\n  metadata: {\n    checkTimestamp: new Date().toISOString(),\n    workflowName: 'Daily NS file upload',\n    nodeVersion: '2.1.0'\n  }\n};\n\n// Helper function to generate status messages\nfunction getStatusMessage(status, fileName, previousDay, recordId, previousFileName) {\n  switch(status) {\n    case 'DUPLICATE_SKIPPED':\n      return `⚠️ Duplicate detected: Record for ${fileName} already exists (ID: ${recordId}). Skipping insertion.`;\n    case 'PREVIOUS_DAY_MISSING':\n      return `🚫 Cannot insert ${fileName}. Previous day (${previousDay}) record is missing in Airtable. Please ensure data continuity.`;\n    case 'READY_TO_INSERT':\n      return `✅ Previous day record found (${previousFileName}). Ready to insert ${fileName}.`;\n    default:\n      return 'Unknown status';\n  }\n}\n\n// ===== CONSOLE LOGGING =====\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('🔍 PREVIOUS DAY RECORD CHECK (Filename-Based Date Extraction)');\nconsole.log('═══════════════════════════════════════════════════════════════');\nconsole.log('📁 Current File:', currentFileName);\nconsole.log('📅 Current Date (from filename):', currentDateFromFile, '→', currentDateReadable);\nconsole.log('📅 Previous Date (calculated):', previousDayDate, '→', previousDayReadable);\nconsole.log('───────────────────────────────────────────────────────────────');\nconsole.log('🔍 Current Record Check:');\nconsole.log('   ├─ Exists:', currentRecordExists);\nif (currentRecordExists) {\n  console.log('   └─ Record ID:', currentRecordId);\n}\nconsole.log('───────────────────────────────────────────────────────────────');\nconsole.log('📋 Previous Day Record Check:');\nconsole.log('   ├─ Exists:', previousDayRecordExists);\nif (previousDayRecordExists) {\n  console.log('   ├─ Record ID:', previousDayRecordId);\n  console.log('   └─ File Name:', previousDayFileName);\n} else {\n  console.log('   └─ Not found for date:', previousDayReadable);\n}\nconsole.log('───────────────────────────────────────────────────────────────');\nconsole.log('✅ Should Insert:', shouldInsert);\nconsole.log('📊 Status:', status);\nconsole.log('💬 Reason:', reason);\nconsole.log('───────────────────────────────────────────────────────────────');\nconsole.log('📈 Records Searched:', searchResults.length);\nconsole.log('═══════════════════════════════════════════════════════════════');\n\nreturn result;\n\n// ============================================================================\n// LOGIC SUMMARY:\n// ============================================================================\n// 1. Extract date from current filename: NS_...20251105... → 20251105\n// 2. Calculate previous day: 20251105 → 20251104\n// 3. Check if current record exists (exact filename match) → SKIP if yes\n// 4. Check if previous day record exists (date in filename) → SKIP if no\n// 5. If previous day exists AND current doesn't → INSERT\n// ============================================================================"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        288
+      ],
+      "id": "c6b3a249-6a37-4a73-9e41-68785aa7eae8",
+      "name": "Check Record in airtable"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c289b36a-95ce-4963-a46a-4c15782df2f2",
+              "leftValue": "={{ $json.previousDayRecordExists }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2d047738-a185-4b97-b11f-e9ac755c454e",
+              "leftValue": "={{ $json.currentRecordExists }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        288
+      ],
+      "id": "40d84e4b-915c-4966-8945-4faadd20b377",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "=ben.lazzaro@lendly.com.au",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        384
+      ],
+      "id": "7f88533a-36c6-4d69-9021-6591ad95ffb5",
+      "name": "Send a message",
+      "webhookId": "e2464acf-fb09-4b64-9ecc-4a28e5ecd130"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// HTML EMAIL GENERATOR FOR AIRTABLE RECORD ALERTS\n// ============================================================================\n// Generates HTML email messages for:\n// 1. PREVIOUS_DAY_MISSING - When yesterday's record is not found\n// 2. DUPLICATE_SKIPPED - When trying to insert a duplicate record\n// ============================================================================\n\nconst data = $input.first().json;\n\n// Helper function to format date for display\nfunction formatDateForDisplay(dateStr) {\n  if (!dateStr || dateStr.length !== 8) return dateStr;\n  const year = dateStr.substring(0, 4);\n  const month = dateStr.substring(4, 6);\n  const day = dateStr.substring(6, 8);\n  const date = new Date(year, parseInt(month) - 1, parseInt(day));\n  return date.toLocaleDateString('en-US', { \n    weekday: 'long', \n    year: 'numeric', \n    month: 'long', \n    day: 'numeric' \n  });\n}\n\n// Helper function to format currency\nfunction formatCurrency(amount) {\n  return new Intl.NumberFormat('en-AU', {\n    style: 'currency',\n    currency: 'AUD'\n  }).format(amount);\n}\n\n// Generate HTML based on status\nlet htmlMessage = '';\nlet subject = '';\n\nif (data.status === 'PREVIOUS_DAY_MISSING') {\n  subject = `🚫 Alert: Previous Day Record Missing - ${data.currentDateReadable}`;\n  htmlMessage = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Record Missing Alert</title>\n</head>\n<body style=\"margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;\">\n  \n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f5f5f5; padding: 20px;\">\n    <tr>\n      <td align=\"center\">\n        \n        <!-- Main Container -->\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;\">\n          \n          <!-- Header -->\n          <tr>\n            <td style=\"background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 30px; text-align: center;\">\n              <div style=\"font-size: 48px; margin-bottom: 10px;\">🚫</div>\n              <h1 style=\"margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;\">\n                Previous Day Record Missing\n              </h1>\n            </td>\n          </tr>\n          \n          <!-- Alert Banner -->\n          <tr>\n            <td style=\"background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin: 20px;\">\n              <p style=\"margin: 0; color: #991b1b; font-weight: 600; font-size: 16px;\">\n                ⚠️ Data Continuity Issue Detected\n              </p>\n              <p style=\"margin: 8px 0 0 0; color: #7f1d1d; font-size: 14px;\">\n                Today's record cannot be inserted due to a missing previous day record.\n              </p>\n            </td>\n          </tr>\n          \n          <!-- Main Content -->\n          <tr>\n            <td style=\"padding: 30px;\">\n              \n              <!-- Problem Summary -->\n              <div style=\"background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;\">\n                <h2 style=\"margin: 0 0 16px 0; color: #111827; font-size: 18px; font-weight: 600;\">\n                  Problem Summary\n                </h2>\n                <p style=\"margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;\">\n                  ${data.reason}\n                </p>\n              </div>\n              \n              <!-- Missing Record Details -->\n              <div style=\"margin-bottom: 24px;\">\n                <h3 style=\"margin: 0 0 16px 0; color: #111827; font-size: 16px; font-weight: 600;\">\n                  📅 Missing Record\n                </h3>\n                <table width=\"100%\" cellpadding=\"12\" style=\"background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;\">\n                  <tr>\n                    <td style=\"color: #7f1d1d; font-weight: 600; font-size: 14px; width: 40%;\">\n                      Date:\n                    </td>\n                    <td style=\"color: #991b1b; font-size: 14px;\">\n                      ${formatDateForDisplay(data.previousDayDate)} (${data.previousDayReadable})\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #7f1d1d; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Expected File Pattern:\n                    </td>\n                    <td style=\"color: #991b1b; font-size: 14px; padding-top: 8px; font-family: 'Courier New', monospace;\">\n                      NS_...${data.previousDayDate}...\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #7f1d1d; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Status:\n                    </td>\n                    <td style=\"color: #991b1b; font-size: 14px; padding-top: 8px;\">\n                      <span style=\"background-color: #dc2626; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;\">\n                        NOT FOUND\n                      </span>\n                    </td>\n                  </tr>\n                </table>\n              </div>\n              \n              <!-- Current Record (Blocked) -->\n              <div style=\"margin-bottom: 24px;\">\n                <h3 style=\"margin: 0 0 16px 0; color: #111827; font-size: 16px; font-weight: 600;\">\n                  📄 Current Record (Blocked)\n                </h3>\n                <table width=\"100%\" cellpadding=\"12\" style=\"background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;\">\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; width: 40%;\">\n                      File Name:\n                    </td>\n                    <td style=\"color: #111827; font-size: 13px; font-family: 'Courier New', monospace;\">\n                      ${data.currentFileName}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Date:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px; padding-top: 8px;\">\n                      ${formatDateForDisplay(data.currentDate)} (${data.currentDateReadable})\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Gross Amount:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px; padding-top: 8px;\">\n                      ${formatCurrency(data.fields.Gross)}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      GST:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px; padding-top: 8px;\">\n                      ${formatCurrency(data.fields.GST)}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Net:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px; padding-top: 8px;\">\n                      ${formatCurrency(data.fields.Net)}\n                    </td>\n                  </tr>\n                </table>\n              </div>\n              \n              <!-- Action Required -->\n              <div style=\"background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px;\">\n                <h3 style=\"margin: 0 0 12px 0; color: #92400e; font-size: 16px; font-weight: 600;\">\n                  🔧 Action Required\n                </h3>\n                <ol style=\"margin: 0; padding-left: 20px; color: #78350f; font-size: 14px; line-height: 1.8;\">\n                  <li>Locate the missing record for <strong>${data.previousDayReadable}</strong></li>\n                  <li>Upload or manually insert the missing record into Airtable</li>\n                  <li>Retry processing today's record (${data.currentDateReadable})</li>\n                  <li>Verify data continuity is maintained</li>\n                </ol>\n              </div>\n              \n            </td>\n          </tr>\n          \n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;\">\n              <p style=\"margin: 0 0 8px 0; color: #6b7280; font-size: 12px;\">\n                <strong>Workflow:</strong> ${data.metadata.workflowName} | <strong>Version:</strong> ${data.metadata.nodeVersion}\n              </p>\n              <p style=\"margin: 0; color: #9ca3af; font-size: 11px;\">\n                Generated: ${new Date(data.metadata.checkTimestamp).toLocaleString('en-US', { \n                  dateStyle: 'full', \n                  timeStyle: 'long' \n                })}\n              </p>\n            </td>\n          </tr>\n          \n        </table>\n        \n      </td>\n    </tr>\n  </table>\n  \n</body>\n</html>\n  `;\n  \n} else if (data.status === 'DUPLICATE_SKIPPED') {\n  subject = `⚠️ Alert: Duplicate Record Detected - ${data.currentDateReadable}`;\n  htmlMessage = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Duplicate Record Alert</title>\n</head>\n<body style=\"margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;\">\n  \n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f5f5f5; padding: 20px;\">\n    <tr>\n      <td align=\"center\">\n        \n        <!-- Main Container -->\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;\">\n          \n          <!-- Header -->\n          <tr>\n            <td style=\"background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center;\">\n              <div style=\"font-size: 48px; margin-bottom: 10px;\">⚠️</div>\n              <h1 style=\"margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;\">\n                Duplicate Record Detected\n              </h1>\n            </td>\n          </tr>\n          \n          <!-- Alert Banner -->\n          <tr>\n            <td style=\"background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px;\">\n              <p style=\"margin: 0; color: #92400e; font-weight: 600; font-size: 16px;\">\n                ⚠️ Duplicate Prevention\n              </p>\n              <p style=\"margin: 8px 0 0 0; color: #78350f; font-size: 14px;\">\n                This record already exists in Airtable. Insertion has been skipped to prevent duplication.\n              </p>\n            </td>\n          </tr>\n          \n          <!-- Main Content -->\n          <tr>\n            <td style=\"padding: 30px;\">\n              \n              <!-- Problem Summary -->\n              <div style=\"background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;\">\n                <h2 style=\"margin: 0 0 16px 0; color: #111827; font-size: 18px; font-weight: 600;\">\n                  Summary\n                </h2>\n                <p style=\"margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;\">\n                  ${data.reason}\n                </p>\n              </div>\n              \n              <!-- Existing Record Details -->\n              <div style=\"margin-bottom: 24px;\">\n                <h3 style=\"margin: 0 0 16px 0; color: #111827; font-size: 16px; font-weight: 600;\">\n                  📋 Existing Record\n                </h3>\n                <table width=\"100%\" cellpadding=\"12\" style=\"background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;\">\n                  <tr>\n                    <td style=\"color: #065f46; font-weight: 600; font-size: 14px; width: 40%;\">\n                      File Name:\n                    </td>\n                    <td style=\"color: #047857; font-size: 13px; font-family: 'Courier New', monospace;\">\n                      ${data.currentFileName}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #065f46; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Record ID:\n                    </td>\n                    <td style=\"color: #047857; font-size: 13px; padding-top: 8px; font-family: 'Courier New', monospace;\">\n                      ${data.currentRecordId}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #065f46; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Date:\n                    </td>\n                    <td style=\"color: #047857; font-size: 14px; padding-top: 8px;\">\n                      ${formatDateForDisplay(data.currentDate)} (${data.currentDateReadable})\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #065f46; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Status:\n                    </td>\n                    <td style=\"color: #047857; font-size: 14px; padding-top: 8px;\">\n                      <span style=\"background-color: #10b981; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;\">\n                        ALREADY EXISTS\n                      </span>\n                    </td>\n                  </tr>\n                </table>\n              </div>\n              \n              <!-- Attempted Insertion -->\n              <div style=\"margin-bottom: 24px;\">\n                <h3 style=\"margin: 0 0 16px 0; color: #111827; font-size: 16px; font-weight: 600;\">\n                  🔄 Attempted Insertion (Skipped)\n                </h3>\n                <table width=\"100%\" cellpadding=\"12\" style=\"background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;\">\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; width: 40%;\">\n                      Gross Amount:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px;\">\n                      ${formatCurrency(data.fields.Gross)}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      GST:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px; padding-top: 8px;\">\n                      ${formatCurrency(data.fields.GST)}\n                    </td>\n                  </tr>\n                  <tr>\n                    <td style=\"color: #4b5563; font-weight: 600; font-size: 14px; padding-top: 8px;\">\n                      Net:\n                    </td>\n                    <td style=\"color: #111827; font-size: 14px; padding-top: 8px;\">\n                      ${formatCurrency(data.fields.Net)}\n                    </td>\n                  </tr>\n                </table>\n              </div>\n              \n              <!-- Next Steps -->\n              <div style=\"background-color: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 20px;\">\n                <h3 style=\"margin: 0 0 12px 0; color: #1e40af; font-size: 16px; font-weight: 600;\">\n                  ℹ️ Next Steps\n                </h3>\n                <ul style=\"margin: 0; padding-left: 20px; color: #1e3a8a; font-size: 14px; line-height: 1.8;\">\n                  <li>No action required - duplicate prevention is working correctly</li>\n                  <li>If this is unexpected, verify the source data is not being processed multiple times</li>\n                  <li>Check workflow triggers for potential duplicates</li>\n                </ul>\n              </div>\n              \n            </td>\n          </tr>\n          \n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;\">\n              <p style=\"margin: 0 0 8px 0; color: #6b7280; font-size: 12px;\">\n                <strong>Workflow:</strong> ${data.metadata.workflowName} | <strong>Version:</strong> ${data.metadata.nodeVersion}\n              </p>\n              <p style=\"margin: 0; color: #9ca3af; font-size: 11px;\">\n                Generated: ${new Date(data.metadata.checkTimestamp).toLocaleString('en-US', { \n                  dateStyle: 'full', \n                  timeStyle: 'long' \n                })}\n              </p>\n            </td>\n          </tr>\n          \n        </table>\n        \n      </td>\n    </tr>\n  </table>\n  \n</body>\n</html>\n  `;\n}\n\n// Return the result\nreturn {\n  subject: subject,\n  html: htmlMessage,\n  status: data.status,\n  to: 'your-email@example.com', // Update with actual recipient\n  originalData: data\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        384
+      ],
+      "id": "fc1fbed9-9cc0-420f-a198-b1f68d1c92ac",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        560
+      ],
+      "id": "0cca3e29-fb9c-44fd-af0c-49a8a7794abd",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all input records\nconst items = $input.all();\n\n// ===== Helper Functions =====\n\n// Extract date (YYYYMMDD) from File Name\nfunction getDateFromFileName(fileName) {\n  const match = fileName.match(/(\\d{8})\\d{6}$/);\n  if (!match) return null;\n  const dateStr = match[1];\n  const year = parseInt(dateStr.substring(0, 4));\n  const month = parseInt(dateStr.substring(4, 6)) - 1;\n  const day = parseInt(dateStr.substring(6, 8));\n  return new Date(year, month, day);\n}\n\n// Convert date to \"YYYY-MM-DD\"\nfunction formatDate(d) {\n  return d.toISOString().split('T')[0];\n}\n\n// Month name lookup\nfunction getMonthName(date) {\n  const months = [\n    \"January\", \"February\", \"March\", \"April\", \"May\", \"June\",\n    \"July\", \"August\", \"September\", \"October\", \"November\", \"December\"\n  ];\n  return months[date.getMonth()];\n}\n\n// ===== Main Logic =====\n\n// Parse all file dates\nconst records = items\n  .map(i => ({\n    file: i.json[\"File Name\"],\n    gross: i.json.Gross,\n    date: getDateFromFileName(i.json[\"File Name\"])\n  }))\n  .filter(r => r.date);\n\n// Sort by date\nrecords.sort((a, b) => a.date - b.date);\n\n// Group by month\nconst grouped = {};\nfor (const r of records) {\n  const monthName = getMonthName(r.date);\n  if (!grouped[monthName]) grouped[monthName] = [];\n  grouped[monthName].push(r);\n}\n\n// ===== Check Missing Days =====\nlet missingDays = [];\n\nfor (const month in grouped) {\n  const monthRecords = grouped[month];\n  const allDates = monthRecords.map(r => r.date);\n  const minDate = new Date(Math.min(...allDates));\n  const maxDate = new Date(Math.max(...allDates));\n\n  // Loop through each date in range to find gaps\n  for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {\n    const exists = allDates.some(date => formatDate(date) === formatDate(d));\n    if (!exists) missingDays.push(formatDate(d));\n  }\n}\n\n// ===== Output =====\nif (missingDays.length > 0) {\n  // Return warning for email node\n  return [\n    {\n      json: {\n        status: \"MISSING_DAYS\",\n        missingDays,\n        message: `Missing record(s) for: ${missingDays.join(\", \")}`\n      }\n    }\n  ];\n} else {\n  // Calculate totals if complete\n  const output = Object.entries(grouped).map(([month, records]) => ({\n    Month: month,\n    \"NS Files\": parseFloat(\n      records.reduce((sum, r) => sum + (r.gross || 0), 0).toFixed(2)\n    )\n  }));\n\n  return output.map(o => ({\n    json: {\n      status: \"COMPLETE\",\n      Month: o.Month,\n      \"NS Files\": o[\"NS Files\"]\n    }\n  }));\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        560
+      ],
+      "id": "84bff4f8-7958-4ea5-b988-1e2624c167b0",
+      "name": "Cal Gross Sum by Month"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appsJAnMTmI4B98ex",
+          "mode": "list",
+          "cachedResultName": "NS Files",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6t32Sw4YoVgHSe",
+          "mode": "list",
+          "cachedResultName": "Tax Invoices",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex/tbl6t32Sw4YoVgHSe"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Month": "={{ $json.Month }}",
+            "NS Files": "={{ $json['NS Files'] }}"
+          },
+          "matchingColumns": [
+            "Month"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Year",
+              "displayName": "Year",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Month",
+              "displayName": "Month",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total (incl. GST)",
+              "displayName": "Total (incl. GST)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "NS Files",
+              "displayName": "NS Files",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "SF File",
+              "displayName": "SF File",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Variance",
+              "displayName": "Variance",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        480
+      ],
+      "id": "d24a5878-f704-425a-8557-7a8831893493",
+      "name": "Update record"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appsJAnMTmI4B98ex",
+          "mode": "list",
+          "cachedResultName": "NS Files",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbltzL5qPB1QWKbmQ",
+          "mode": "list",
+          "cachedResultName": "NS Files",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex/tbltzL5qPB1QWKbmQ"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -384,
+        560
+      ],
+      "id": "2566ae17-9f1a-4cb6-8b99-0e218326fdcc",
+      "name": "Get all Records"
+    },
+    {
+      "parameters": {
+        "content": "## Sum Gross Value of each month and update in NS Files in Tax Invoices Table",
+        "height": 352,
+        "width": 1104,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        448
+      ],
+      "typeVersion": 1,
+      "id": "16bc11ff-6a1e-411c-b8be-1c6a6fc55ad5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "90703136-da9a-4b20-ac12-a2fd946afc3d",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "MISSING_DAYS",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        560
+      ],
+      "id": "6c722997-94bc-4227-a92b-d20fd59e1ae2",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sendTo": "ben.lazzaro@lendly.com.au",
+        "subject": "={{ $json.message }}",
+        "message": "={{ $json.message }} in the NS Files Table, add the record for calculating the Total Gross of this month. ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        640
+      ],
+      "id": "1bc603a5-296f-4553-8d74-af85e0156164",
+      "name": "Send a message1",
+      "webhookId": "b951961f-863f-480e-bb91-9008e8b2ebcb"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appsJAnMTmI4B98ex",
+          "mode": "list",
+          "cachedResultName": "NS File Import",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbltzL5qPB1QWKbmQ",
+          "mode": "list",
+          "cachedResultName": "NS Files",
+          "cachedResultUrl": "https://airtable.com/appsJAnMTmI4B98ex/tbltzL5qPB1QWKbmQ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "File Name": "={{ $json.fields['File Name'] }}",
+            "Gross": "={{ $json.fields.Gross }}",
+            "Import Status": "New"
+          },
+          "matchingColumns": [
+            "File Name"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "File Name",
+              "displayName": "File Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Net",
+              "displayName": "Net",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "GST",
+              "displayName": "GST",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Gross",
+              "displayName": "Gross",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Import Status",
+              "displayName": "Import Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "New",
+                  "value": "New"
+                },
+                {
+                  "name": "In Progress",
+                  "value": "In Progress"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified By",
+              "displayName": "Last Modified By",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Day",
+              "displayName": "Day",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Month Number",
+              "displayName": "Month Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Month Text",
+              "displayName": "Month Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Year",
+              "displayName": "Year",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Weekday",
+              "displayName": "Weekday",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Account",
+              "displayName": "Account",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Tax Invoices",
+              "displayName": "Tax Invoices",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        192
+      ],
+      "id": "fd648ddb-886e-4ff9-b90e-8354b6f91845",
+      "name": "Create or update a record"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Gmail Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Gmail Messages": {
+      "main": [
+        [
+          {
+            "node": "IF Emails Found",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Emails Found": {
+      "main": [
+        [
+          {
+            "node": "Get a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a record": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Dropbox upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Extract & Calculate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Calculate Data": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Check Record in airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Record in airtable": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create or update a record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get all Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal Gross Sum by Month": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all Records": {
+      "main": [
+        [
+          {
+            "node": "Cal Gross Sum by Month",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Update record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Schedule Trigger1": [
+      {
+        "json": {
+          "timestamp": "2025-11-14T00:00:35.008+11:00",
+          "Readable date": "November 14th 2025, 12:00:35 am",
+          "Readable time": "12:00:35 am",
+          "Day of week": "Friday",
+          "Year": "2025",
+          "Month": "November",
+          "Day of month": "14",
+          "Hour": "00",
+          "Minute": "00",
+          "Second": "35",
+          "Timezone": "Australia/Sydney (UTC+11:00)"
+        }
+      }
+    ],
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2025-11-13T06:00:14.088+11:00",
+          "Readable date": "November 13th 2025, 6:00:14 am",
+          "Readable time": "6:00:14 am",
+          "Day of week": "Thursday",
+          "Year": "2025",
+          "Month": "November",
+          "Day of month": "13",
+          "Hour": "06",
+          "Minute": "00",
+          "Second": "14",
+          "Timezone": "Australia/Sydney (UTC+11:00)"
+        }
+      }
+    ]
+  },
+  "versionId": "4a6feddd-c30b-4d15-aaec-cb994d2ccc00",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-16T11:26:48.450Z",
+      "createdAt": "2025-11-16T11:26:48.450Z",
+      "role": "workflow:owner",
+      "workflowId": "T28jLvspUKT8W4nf",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
