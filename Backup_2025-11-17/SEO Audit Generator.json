@@ -1,0 +1,589 @@
+{
+  "updatedAt": "2025-10-16T17:01:22.000Z",
+  "createdAt": "2025-10-14T13:15:50.689Z",
+  "id": "AjDD6ayb5w8eDRZk",
+  "name": "SEO Audit Generator",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/webmasters/v3/sites",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        240
+      ],
+      "id": "f9a5671b-b55b-4d62-9a36-c0ec7a5192f9",
+      "name": "Search Console",
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "BIDmjrF7coBid32w",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json['Enter Website URL (including https://)'] }}"
+            },
+            {
+              "name": "key",
+              "value": "REDACTED_GOOGLE_API_KEY"
+            },
+            {
+              "name": "category",
+              "value": "performance"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        -96
+      ],
+      "id": "a7c1acab-eb09-415d-8692-98d5a8e14fec",
+      "name": "Lighthouse - Performance",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LQUTLGhp68BCZWoR",
+          "name": "LIGHTHOUSE API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json['Enter Website URL (including https://)'] }}"
+            },
+            {
+              "name": "category",
+              "value": "seo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        -256
+      ],
+      "id": "fc600047-0f9e-46e0-ac9b-f2813cfd2e23",
+      "name": "Lighthouse - SEO",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LQUTLGhp68BCZWoR",
+          "name": "LIGHTHOUSE API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of items) {\n  const lighthouseData = item.json;\n\n  if (lighthouseData && lighthouseData.lighthouseResult) {\n    const audits = lighthouseData.lighthouseResult.audits;\n    const categories = lighthouseData.lighthouseResult.categories;\n\n    const outputData = {\n      // General SEO Score\n      finalUrl: lighthouseData.lighthouseResult.finalUrl,\n      seoScore: categories.seo?.score * 100,\n\n      // SEO Audit Details - All these audits have a score of 1 in your data, indicating \"passed\"\n      // They are useful for confirming that core SEO elements are in place.\n      documentTitle: {\n        title: audits['document-title']?.title,\n        score: audits['document-title']?.score,\n      },\n      metaDescription: {\n        title: audits['meta-description']?.title,\n        score: audits['meta-description']?.score,\n      },\n      httpStatusCode: {\n        title: audits['http-status-code']?.title,\n        score: audits['http-status-code']?.score,\n      },\n      robotsTxt: {\n        title: audits['robots-txt']?.title,\n        score: audits['robots-txt']?.score,\n      },\n      linkText: {\n        title: audits['link-text']?.title,\n        score: audits['link-text']?.score,\n      },\n      crawlableAnchors: {\n        title: audits['crawlable-anchors']?.title,\n        score: audits['crawlable-anchors']?.score,\n      },\n      pageIsCrawlable: {\n        title: audits['is-crawlable']?.title,\n        score: audits['is-crawlable']?.score,\n      },\n      imageAlts: {\n        title: audits['image-alt']?.title,\n        score: audits['image-alt']?.score,\n      },\n      hreflang: {\n        title: audits['hreflang']?.title,\n        score: audits['hreflang']?.score,\n      },\n    };\n\n    return [{\n      json: outputData\n    }];\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        -256
+      ],
+      "id": "032776be-49b9-4a0f-a817-ede6f8218cb5",
+      "name": "Extract SEO data"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of items) {\n  const lighthouseData = item.json;\n\n  if (lighthouseData && lighthouseData.lighthouseResult) {\n    const audits = lighthouseData.lighthouseResult.audits;\n    const categories = lighthouseData.lighthouseResult.categories;\n    const loadingExperience = lighthouseData.loadingExperience;\n\n    // A check to handle cases where 'performance' might not be in the categories\n    const performanceCategory = categories.performance;\n\n    if (!performanceCategory) {\n      continue;\n    }\n\n    const outputData = {\n      // General Scores & URL\n      finalUrl: lighthouseData.lighthouseResult.finalUrl,\n      performanceScore: performanceCategory.score * 100,\n      \n      // Core Web Vitals (Lab Data from Lighthouse)\n      largestContentfulPaint_lab: audits['largest-contentful-paint']?.displayValue,\n      cumulativeLayoutShift_lab: audits['cumulative-layout-shift']?.displayValue,\n      totalBlockingTime_lab: audits['total-blocking-time']?.displayValue,\n      speedIndex_lab: audits['speed-index']?.displayValue,\n      firstContentfulPaint_lab: audits['first-contentful-paint']?.displayValue,\n      interactive_lab: audits['interactive']?.displayValue,\n      \n      // Core Web Vitals (Real-World Data from Chrome User Experience Report)\n      // Note: This data is often more reflective of actual user experience\n      realWorldCLS_category: loadingExperience?.metrics?.CUMULATIVE_LAYOUT_SHIFT_SCORE?.category,\n      realWorldLCP_category: loadingExperience?.metrics?.LARGEST_CONTENTFUL_PAINT_MS?.category,\n      realWorldINP_category: loadingExperience?.metrics?.INTERACTION_TO_NEXT_PAINT?.category,\n      realWorldFCP_category: loadingExperience?.metrics?.FIRST_CONTENTFUL_PAINT_MS?.category,\n\n      // Key Opportunities & Actionable Recommendations\n      renderBlockingResources: {\n        title: audits['render-blocking-resources']?.title,\n        savingsMs: audits['render-blocking-resources']?.details?.overallSavingsMs || 0,\n        items: audits['render-blocking-resources']?.details?.items || []\n      },\n      imageDelivery: {\n        title: audits['image-delivery-insight']?.title,\n        savingsBytes: audits['image-delivery-insight']?.details?.overallSavingsBytes || 0,\n        items: audits['image-delivery-insight']?.details?.items || []\n      },\n      longTasks: {\n        title: audits['long-tasks']?.title,\n        value: audits['long-tasks']?.displayValue,\n        items: audits['long-tasks']?.details?.items || []\n      },\n      serverResponseTime: {\n        title: audits['server-response-time']?.title,\n        value: audits['server-response-time']?.displayValue,\n        savingsMs: audits['server-response-time']?.details?.overallSavingsMs || 0\n      },\n      cachePolicy: {\n        title: audits['uses-long-cache-ttl']?.title,\n        savingsBytes: audits['uses-long-cache-ttl']?.details?.summary?.wastedBytes || 0,\n        items: audits['uses-long-cache-ttl']?.details?.items || []\n      },\n      totalByteWeight: {\n        title: audits['total-byte-weight']?.title,\n        totalBytes: audits['total-byte-weight']?.numericValue || 0,\n        items: audits['total-byte-weight']?.details?.items || []\n      },\n      preconnectedOrigins: {\n        title: \"Preconnect Origins\",\n        items: audits['network-dependency-tree-insight']?.details?.items.find(i => i.title === 'Preconnect candidates')?.value?.items || []\n      }\n    };\n\n    return [{ json: outputData }];\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        -96
+      ],
+      "id": "47c4390d-a960-444a-9e3c-dabbea792cc8",
+      "name": "Extract Performance data"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        128,
+        -48
+      ],
+      "id": "f459b698-8768-4cd1-945f-4e9a8026aba7",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/webmasters/v3/sites/{{ $json.siteEntry[0].siteUrl }}/searchAnalytics/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"startDate\": \"2025-08-01\",\n  \"endDate\": \"2025-08-31\",\n  \"dimensions\": [\"date\", \"query\", \"page\", \"country\", \"device\"],\n  \"rowLimit\": 25000,\n  \"startRow\": 0,\n  \"aggregationType\": \"auto\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -128,
+        240
+      ],
+      "id": "7d4eb521-ba45-4edc-9ce4-f773eaf8e07e",
+      "name": "Search console API",
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "BIDmjrF7coBid32w",
+          "name": "Google account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.seranking.com/v1/backlinks/summary",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "target",
+              "value": "dataclicks.nl"
+            },
+            {
+              "name": "mode",
+              "value": "host"
+            },
+            {
+              "name": "output",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        80
+      ],
+      "id": "30dbc62e-e8ac-47e3-ad29-989a7fec7b8a",
+      "name": "SE RANKING",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mlVRyShQnkyvK4oE",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=De data moet de bevindingen bevatten die afkomstig zijn van de drie API's (Website Audit, Concurrentieanalyse, en Zoekwoordonderzoek).\ninvoer: {{ $json.data }}",
+        "options": {
+          "systemMessage": "Je bent een AI-dataprocessor gespecialiseerd in SEO-analyse. Het is jouw taak om de ruwe data die je van de gebruiker ontvangt te transformeren in een gestructureerde JSON-array. Elk object in de array moet overeenkomen met één bevinding en de volgende sleutels en waarden bevatten. Voeg geen andere tekst of commentaar toe aan je antwoord, alleen de uiteindelijke JSON-array.\n\n**Verwerkingsinstructies:**\n1.  **Analyseren en Categoriseren:** Bepaal voor elk afzonderlijk probleem of elke kans die in de invoerdata wordt geïdentificeerd, de juiste categorie uit de volgende lijst: \"Website audit,\" \"Concurrentieonderzoek,\" \"Zoekwoordonderzoek,\" of \"Webstructuur.\"\n2.  **Informatie Extraheren:** Extraheer de volgende informatie uit de data die bij elke bevinding hoort:\n    * **Onderwerp:** Een beknopte titel voor de bevinding.\n    * **Bevinding:** Een gedetailleerde beschrijving van het probleem of de waarneming.\n    * **Oplossing:** Een duidelijke, uitvoerbare stap om de bevinding op te lossen.\n    * **Prioriteit:** Wijs een prioriteitsniveau toe uit deze set: \"Hoog,\" \"Gemiddeld,\" of \"Laag.\"\n    * **Verantwoordelijk:** Wijs de verantwoordelijkheid toe op basis van de aard van de taak: \"DataClicks\" voor analyse, \"Webbouwer\" voor technische site-wijzigingen, of \"Klant\" voor zakelijke beslissingen of content.\n3.  **Status Instellen:** De standaardstatus voor alle nieuwe bevindingen is \"Nee.\"\n\n**Uitvoerformaat:**\nDe uiteindelijke uitvoer moet een enkele, minified JSON-array zijn, waarbij elk object exact de zeven sleutels bevat die hieronder worden vermeld. De waarde van `Opgelost?` moet voor nieuwe vermeldingen altijd op \"Nee\" staan.\n\n```json\n[\n  {\n    \"Onderwerp\": \"\",\n    \"Bevinding\": \"\",\n    \"Oplossing\": \"\",\n    \"Verantwoordelijk\": \"\",\n    \"Prioriteit\": \"\",\n    \"Gevonden\": \"\",\n    \"Opgelost?\": \"Nee\"\n  }\n]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        -16
+      ],
+      "id": "93a94ff3-1353-42ff-bf84-ee4c0b07d634",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        144
+      ],
+      "id": "1363e004-d61c-4052-8970-f44b7e548936",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from input\nconst items = $input.all();\n\n// Merge all objects into a single data field and stringify\nreturn [{\n  json: {\n    data: JSON.stringify({\n      seo: items[0].json,\n      performance: items[1].json,\n      backlinks: items[2].json\n    })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -16
+      ],
+      "id": "81b6888a-b49e-4886-ae15-b9f8f777ccb3",
+      "name": "Data Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of items) {\n  try {\n    // Step 1: Parse the main JSON to get the 'output' string\n    const outputString = item.json.output;\n\n    // Step 2: Parse the 'output' string into a JSON array\n    const findingsArray = JSON.parse(outputString);\n\n    // Step 3: Return the array of findings for the next node\n    return findingsArray.map(finding => ({ json: finding }));\n\n  } catch (error) {\n    // Handle any parsing errors here\n    console.error(\"Error parsing AI agent output:\", error);\n    // You can choose to return an error item or just the original item\n    return [{ json: { error: \"Failed to parse AI agent output\" } }];\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -16
+      ],
+      "id": "4ccd5263-d5ba-44e0-a0a0-3abc1e9d681d",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14dlpPsb9ABB_jDruJikugkPJNV3TQo3W-GRxP4z2trA",
+          "mode": "list",
+          "cachedResultName": "SEO Audit Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14dlpPsb9ABB_jDruJikugkPJNV3TQo3W-GRxP4z2trA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14dlpPsb9ABB_jDruJikugkPJNV3TQo3W-GRxP4z2trA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Onderwerp": "={{ $json.Onderwerp }}",
+            "Bevinding": "={{ $json.Bevinding }}",
+            "Oplossing": "={{ $json.Oplossing }}",
+            "Verantwoordelijk": "={{ $json.Verantwoordelijk }}",
+            "Prioriteit": "={{ $json.Prioriteit }}",
+            "Gevonden": "={{ $json.Gevonden }}",
+            "Opgelost?": "={{ $json[\"Opgelost?\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Onderwerp",
+              "displayName": "Onderwerp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Bevinding",
+              "displayName": "Bevinding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Oplossing",
+              "displayName": "Oplossing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Verantwoordelijk",
+              "displayName": "Verantwoordelijk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Prioriteit",
+              "displayName": "Prioriteit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gevonden",
+              "displayName": "Gevonden",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opgelost?",
+              "displayName": "Opgelost?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        -16
+      ],
+      "id": "12f7c796-be44-4ce3-9b74-06fdd11898f7",
+      "name": "Add Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "SEO Audit Generator",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Enter Website URL (including https://)",
+              "placeholder": "https://www.google.com/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -656,
+        -16
+      ],
+      "id": "4c6c006f-ccf2-4a52-b2be-b062b8e7f067",
+      "name": "On form submission",
+      "webhookId": "31a65d0f-dc80-4589-ba1b-9bff2e22f2e1"
+    }
+  ],
+  "connections": {
+    "Search Console": {
+      "main": [
+        [
+          {
+            "node": "Search console API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lighthouse - Performance": {
+      "main": [
+        [
+          {
+            "node": "Extract Performance data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lighthouse - SEO": {
+      "main": [
+        [
+          {
+            "node": "Extract SEO data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract SEO data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Performance data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "SE RANKING": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Search console API": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Data Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Add Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Lighthouse - SEO",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lighthouse - Performance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SE RANKING",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Console",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "0db99107-5dec-497e-a3a2-3a43fe0d9827",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-14T13:15:50.801Z",
+      "createdAt": "2025-10-14T13:15:50.801Z",
+      "role": "workflow:owner",
+      "workflowId": "AjDD6ayb5w8eDRZk",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
