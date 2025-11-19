@@ -1,0 +1,261 @@
+{
+  "updatedAt": "2025-11-13T11:58:22.000Z",
+  "createdAt": "2025-10-29T17:13:16.897Z",
+  "id": "cv2z0P6TO3Ki9KB7",
+  "name": "Unfazed RAG Agent",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## RAG AI Agent \n",
+        "height": 512,
+        "width": 832,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -352,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "90a9c8d6-1599-42f0-b87c-dbbfb3197c55",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Input:  {{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are editing the Unfazed AI Automation Agency website codebase.\n\nImplement a **floating AI chatbot widget** called “Unfazed Chatbot” in the **bottom-left corner** of every page.  \nThe chatbot connects directly to the following webhook endpoint for conversation handling:\n\n🔗 **Webhook URL:** https://n8n.unfazed-ai.online/webhook/a1de2fe4-04be-4ed9-9c0f-b16dcbd56171\n\n---\n\n### 💬 Chatbot Behavior\n\n- On load: show a small ⚡ thunder icon fixed in the bottom-left corner.\n- On click: open a modern chat window above it with a smooth slide-up animation.\n- On close: collapse the window back into the ⚡ icon.\n\n---\n\n### 🧠 Chat Flow Logic\n\n1. **User sends message**\n   - Instantly display the user’s message.\n   - Show **animated loading dots (“...”)** while waiting for a reply.\n   - Send the message to the webhook using:\n     ```json\n     { \"message\": \"USER_INPUT_TEXT\" }\n     ```\n\n2. **While waiting**\n   - Keep loading dots visible until a response arrives.\n\n3. **When response arrives**\n   - Remove the loading dots.\n   - Beautify and format the response:\n     - Normalize spaces and newlines.\n     - Convert `\\n` to `<br>` for clean display.\n     - Keep numbered or bullet lists on separate lines.\n     - Remove markdown (`**`, `_`, etc.).\n     - Maintain structure and indentation for readability.\n\n4. **Response Conciseness Rule**\n   - For general questions: show only up to **5 lines** or ~60 words.\n   - If truncated, add:  \n     > “Would you like me to explain that in more detail?”\n   - Expand to up to 10 lines only when the user explicitly asks for more.\n\n5. **Intent-Driven Behavior (Core Improvement)**\n   - If the user asks about “services,” “what do you offer,” or “what can you do,” do the following:\n     1. Provide a **brief (≤5 lines)** summary of 4–5 core service areas (lead generation, marketing/content, HR automation, support bots, finance dashboards).\n     2. Immediately follow with a **discovery question** to understand their intent, e.g.:\n        - “What kind of business or work do you do?”\n        - “Are you trying to automate marketing, sales, or internal operations?”\n        - “Would you like me to show how these could apply to your business?”\n     3. Once the user responds, tailor the next reply around their use case and end naturally with the CTA:\n        > “You can book a quick chat with Team Unfazed on WhatsApp (**+91 74600 11985**) or fill out the form on our website to discuss your automation needs.”\n   - Always prioritize guiding the conversation toward understanding the user’s needs and moving them to the call or form.\n\n6. **Fallback Rule**\n   - If the message is unrelated to automation or Unfazed AI, reply:\n     > “I’m here to help with questions about Unfazed AI Automation Agency and how our automations can help your business. Could you rephrase your question related to that?”\n\n---\n\n### 🎨 Design Specifications\n\n**Trigger Icon**\n- Thunder ⚡ icon fixed bottom-left.\n- Color: `#2563EB`\n- Soft glow and pulse on hover.\n\n**Chat Window**\n- Background: `#0F172A`\n- Rounded corners: `16px`\n- Width: 360px (desktop) / 90% (mobile)\n- Height: 450px (desktop) / 80% (mobile)\n- Smooth slide/fade transitions.\n\n**Header**\n- Title: “Team Unfazed ⚡”\n- Background: `#2563EB`\n- Text: white\n- Close icon top-right.\n\n**Message Bubbles**\n- User: right-aligned, background `#1E293B`, white text.\n- Bot: left-aligned, background `#111827`, white text.\n- Rounded, padded, with smooth fade-in.\n\n**Input Area**\n- Fixed bottom of chat window.\n- Placeholder: “Ask about automations, services, or ROI…”\n- Rounded input, send icon, press Enter to send.\n\n**Loading Dots**\n- Three pulsing dots while waiting.\n- Replaced by formatted reply once ready.\n\n---\n\n### ⚡ Text Beautification & Intent Logic\n\n- Convert lists into formatted numbered or bulleted lines.\n- Replace newlines (`\\n`) with `<br>` for spacing.\n- Keep formatting clean — no markdown artifacts.\n- Short replies: ≤5 lines for general.\n- Detailed replies: ≤10 lines for explicit requests.\n- Always end service-related responses with a discovery question to understand user needs.\n- Once intent is clear, follow up with the CTA:\n  > “You can book a quick chat with Team Unfazed on WhatsApp (**+91 74600 11985**) or fill out the form on our website.”\n\n---\n\n### ⚙️ Functional Requirements\n\n- Asynchronous fetch calls.\n- Sanitize all inputs.\n- Auto-scroll to latest message.\n- Preserve chat open/close state.\n- Responsive on all devices.\n- Display formatted replies instantly.\n\n---\n\n### ✅ Final User Experience\n\n- ⚡ Icon opens a clean, dark chat window.\n- User sends a message → loading dots → formatted, short, conversational reply.\n- General responses: ≤5 lines.\n- Lists and line breaks preserved with `<br>`.\n- On “services” queries:\n  - Gives short service overview.\n  - Asks about the user’s business or needs.\n  - Leads the conversation toward WhatsApp or meeting booking.\n- Chat history persists.\n- Design aligns with Unfazed’s dark, professional brand style.\n\n---\n\n**End Goal:**  \nA smart, conversational Unfazed chatbot that delivers concise, beautiful, intent-aware replies — helping users understand what Unfazed offers while smoothly guiding them toward sharing their goals or booking a call.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -16
+      ],
+      "id": "d7b6a010-f997-4b80-abeb-737a27260a27",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        192
+      ],
+      "id": "5cfca824-d3f1-4d0d-b404-eab27baf7e1b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        208,
+        288
+      ],
+      "id": "c724275a-2713-4e1f-a527-7f1fc6ad2e96",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Searches Unfazed AI Automation Agency’s internal documents, website data, service descriptions, and FAQs.  \nUse this tool whenever the user asks about:\n- What Unfazed AI does or offers  \n- Pricing, timelines, or ROI  \n- Specific automation services (lead gen, HR, UGC, chatbots, SEO, etc.)  \n- Workflow steps, integrations, or tech stack  \n- Use cases, client results, or testimonials  \n- Contact information, policies, or FAQs  \n\nReturn the most relevant content sections that can help answer user questions in a clear, detailed, and conversational way — as if you’re explaining Unfazed AI’s offerings to a potential client.  \nNever invent or generalize information; instead, summarize or quote the most relevant facts from the knowledge base.\n",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 1000,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        160
+      ],
+      "id": "66040f4c-14c3-421f-b77c-7adac11ef988",
+      "name": "search_unfazed_documents",
+      "credentials": {
+        "supabaseApi": {
+          "id": "aHYZR2xFCT7sfqUW",
+          "name": "Personal Supabase Account - mailtoanshthakur@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.headers['x-real-ip'] }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        192
+      ],
+      "id": "0dbfe30e-7cad-4eb2-b9f2-ae1f2a01fd67",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a1de2fe4-04be-4ed9-9c0f-b16dcbd56171",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        -16
+      ],
+      "id": "eaa3dc3b-e4c1-4fc6-9927-58ae04932c6b",
+      "name": "Webhook",
+      "webhookId": "a1de2fe4-04be-4ed9-9c0f-b16dcbd56171"
+    }
+  ],
+  "connections": {
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "search_unfazed_documents",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_unfazed_documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.unfazed-ai.online",
+            "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+            "content-length": "17",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "content-type": "application/json",
+            "origin": "https://unfazed-ai.online",
+            "priority": "u=1, i",
+            "referer": "https://unfazed-ai.online/",
+            "sec-ch-ua": "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": "\"Android\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "x-forwarded-for": "106.221.228.126",
+            "x-forwarded-host": "n8n.unfazed-ai.online",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "557c71918a91",
+            "x-real-ip": "106.221.228.126"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "Hii"
+          },
+          "webhookUrl": "https://n8n.unfazed-ai.online/webhook/a1de2fe4-04be-4ed9-9c0f-b16dcbd56171",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "9a155e8d-eb00-4353-a6c7-643f0dc2735d",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-29T17:13:16.901Z",
+      "createdAt": "2025-10-29T17:13:16.901Z",
+      "role": "workflow:owner",
+      "workflowId": "cv2z0P6TO3Ki9KB7",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
+  "tags": []
+}
