@@ -1,0 +1,453 @@
+{
+  "name": "Monthly Fuel Transaction Reconciliation (S3)",
+  "nodes": [
+    {
+      "id": "trigger-monthly",
+      "name": "Monthly Schedule - 1st of Month",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 1 * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "calculate-previous-month",
+      "name": "Calculate Previous Month Range",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Calculate first and last day of previous month\nconst today = new Date();\nconst firstDayPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);\nconst lastDayPrevMonth = new Date(today.getFullYear(), today.getMonth(), 0);\n\nconst formatDate = (date) => {\n  return date.toISOString().split('T')[0];\n};\n\n// Generate list of expected dates\nconst expectedDates = [];\nfor (let d = new Date(firstDayPrevMonth); d <= lastDayPrevMonth; d.setDate(d.getDate() + 1)) {\n  expectedDates.push(formatDate(new Date(d)));\n}\n\nreturn [{\n  json: {\n    startDate: formatDate(firstDayPrevMonth),\n    endDate: formatDate(lastDayPrevMonth),\n    monthName: firstDayPrevMonth.toLocaleString('default', { month: 'long', year: 'numeric' }),\n    expectedDates: expectedDates,\n    calculatedAt: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "list-s3-files",
+      "name": "List S3 Files for Month",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "resource": "folder",
+        "operation": "getAll",
+        "bucketName": "lendly-fuel-transactions",
+        "folderKey": "processed/",
+        "returnAll": true,
+        "options": {}
+      },
+      "credentials": {
+        "aws": {
+          "id": "2",
+          "name": "AWS S3 Credentials"
+        }
+      }
+    },
+    {
+      "id": "fetch-daily-files",
+      "name": "Fetch Daily Files from S3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Filter S3 files for the specific month range\nconst monthInfo = $('Calculate Previous Month Range').first().json;\nconst s3Files = $input.all();\nconst startDate = monthInfo.startDate;\nconst endDate = monthInfo.endDate;\n\n// Filter files that match date range\nconst relevantFiles = [];\nfor (const file of s3Files) {\n  const key = file.json.Key;\n  // Extract date from filename: processed/YYYY-MM-DD.json\n  const dateMatch = key.match(/(\\d{4}-\\d{2}-\\d{2})\\.json$/);\n  \n  if (dateMatch) {\n    const fileDate = dateMatch[1];\n    if (fileDate >= startDate && fileDate <= endDate) {\n      relevantFiles.push({\n        key: key,\n        date: fileDate,\n        size: file.json.Size\n      });\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ...monthInfo,\n    filesFound: relevantFiles.length,\n    filesExpected: monthInfo.expectedDates.length,\n    files: relevantFiles\n  }\n}];"
+      }
+    },
+    {
+      "id": "download-and-aggregate",
+      "name": "Download and Aggregate Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// This node will need to download each file from S3 and aggregate\n// For now, we'll prepare the structure and list of files to download\n\nconst item = $input.first().json;\nconst files = item.files;\n\n// Create download requests for each file\nconst downloadRequests = files.map(file => ({\n  json: {\n    bucketName: 'lendly-fuel-transactions',\n    fileName: file.key,\n    date: file.date\n  }\n}));\n\nreturn downloadRequests;"
+      }
+    },
+    {
+      "id": "download-s3-file",
+      "name": "Download S3 Files",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [1250, 300],
+      "parameters": {
+        "resource": "file",
+        "operation": "download",
+        "bucketName": "={{ $json.bucketName }}",
+        "fileName": "={{ $json.fileName }}",
+        "options": {}
+      },
+      "credentials": {
+        "aws": {
+          "id": "2",
+          "name": "AWS S3 Credentials"
+        }
+      }
+    },
+    {
+      "id": "aggregate-totals",
+      "name": "Aggregate Monthly Totals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Aggregate all daily files\nconst dailyRecords = $input.all();\nconst monthInfo = $('Fetch Daily Files from S3').first().json;\n\nlet totalAmount = 0;\nlet totalTransactions = 0;\nlet filesProcessed = 0;\nlet sequenceIssues = [];\nlet dailyBreakdown = [];\n\nfor (const record of dailyRecords) {\n  try {\n    // Parse the JSON data from S3 file\n    const buffer = Buffer.from(record.binary.data.data, 'base64');\n    const fileContent = buffer.toString('utf-8');\n    const data = JSON.parse(fileContent);\n    \n    totalAmount += parseFloat(data.totalAmount || 0);\n    totalTransactions += parseInt(data.transactionCount || 0);\n    filesProcessed++;\n    \n    dailyBreakdown.push({\n      date: data.fileDate,\n      amount: data.totalAmount,\n      transactions: data.transactionCount\n    });\n    \n    if (!data.isSequential && data.sequenceWarning) {\n      sequenceIssues.push({\n        date: data.fileDate,\n        warning: data.sequenceWarning\n      });\n    }\n  } catch (error) {\n    console.error('Error processing file:', error.message);\n  }\n}\n\nreturn [{\n  json: {\n    monthName: monthInfo.monthName,\n    startDate: monthInfo.startDate,\n    endDate: monthInfo.endDate,\n    totalAmount: parseFloat(totalAmount.toFixed(2)),\n    totalTransactions: totalTransactions,\n    filesProcessed: filesProcessed,\n    filesExpected: monthInfo.filesExpected,\n    filesMissing: monthInfo.filesExpected - filesProcessed,\n    hasSequenceIssues: sequenceIssues.length > 0,\n    sequenceIssues: sequenceIssues,\n    dailyBreakdown: dailyBreakdown,\n    calculatedAt: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "fetch-monthly-invoice",
+      "name": "Fetch Monthly Tax Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 450],
+      "parameters": {
+        "url": "https://api.fuelsupplier.com/v1/invoices/monthly",
+        "method": "GET",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start_date",
+              "value": "={{ $json.startDate }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $json.endDate }}"
+            },
+            {
+              "name": "customer_id",
+              "value": "LENDLY_001"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5",
+          "name": "Fuel Supplier API"
+        }
+      }
+    },
+    {
+      "id": "extract-invoice-amount",
+      "name": "Extract Invoice Amount",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 450],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Extract invoice amount from API response\nconst invoiceData = $input.first().json;\n\n// Adjust these fields based on actual API response structure\nconst invoiceAmount = parseFloat(invoiceData.total_amount || invoiceData.amount || 0);\nconst invoiceNumber = invoiceData.invoice_number || invoiceData.id || 'N/A';\nconst invoiceDate = invoiceData.invoice_date || invoiceData.date || 'N/A';\n\nreturn {\n  json: {\n    invoiceNumber: invoiceNumber,\n    invoiceDate: invoiceDate,\n    invoiceAmount: parseFloat(invoiceAmount.toFixed(2)),\n    rawInvoiceData: invoiceData\n  }\n};"
+      }
+    },
+    {
+      "id": "merge-data",
+      "name": "Merge Daily and Invoice Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1650, 375],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "compare-amounts",
+      "name": "Compare Amounts and Generate Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 375],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Compare daily totals with invoice amount\nconst data = $input.first().json;\n\n// Extract both merged data points\nconst dailyTotal = data.totalAmount;\nconst invoiceAmount = data.invoiceAmount;\nconst difference = dailyTotal - invoiceAmount;\nconst percentageDiff = invoiceAmount !== 0 \n  ? ((difference / invoiceAmount) * 100).toFixed(2) \n  : 0;\n\nconst isReconciled = Math.abs(difference) < 0.01; // Within 1 cent tolerance\n\n// Generate detailed report\nconst report = {\n  reconciliationStatus: isReconciled ? 'MATCHED' : 'DISCREPANCY',\n  monthName: data.monthName,\n  periodStart: data.periodStart,\n  periodEnd: data.periodEnd,\n  \n  dailyTotals: {\n    amount: dailyTotal,\n    filesProcessed: data.filesProcessed,\n    filesExpected: data.filesExpected,\n    filesMissing: data.filesMissing,\n    totalTransactions: data.totalTransactions,\n    sequenceIssues: data.sequenceIssues\n  },\n  \n  invoice: {\n    number: data.invoiceNumber,\n    date: data.invoiceDate,\n    amount: invoiceAmount\n  },\n  \n  comparison: {\n    difference: parseFloat(difference.toFixed(2)),\n    percentageDiff: parseFloat(percentageDiff),\n    isReconciled: isReconciled\n  },\n  \n  dailyBreakdown: data.dailyBreakdown,\n  \n  reportGeneratedAt: new Date().toISOString()\n};\n\nreturn {\n  json: report\n};"
+      }
+    },
+    {
+      "id": "save-reconciliation-to-s3",
+      "name": "Save Reconciliation Report to S3",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [2050, 375],
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "lendly-fuel-transactions",
+        "fileName": "={{ 'reconciliation/' + $json.periodStart.substring(0,7) + '-reconciliation.json' }}",
+        "binaryData": false,
+        "fileContent": "={{ JSON.stringify($json, null, 2) }}",
+        "options": {
+          "storageClass": "STANDARD",
+          "contentType": "application/json"
+        }
+      },
+      "credentials": {
+        "aws": {
+          "id": "2",
+          "name": "AWS S3 Credentials"
+        }
+      }
+    },
+    {
+      "id": "check-discrepancy",
+      "name": "Check for Discrepancy",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2250, 375],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.comparison.isReconciled }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "send-discrepancy-alert",
+      "name": "Send Discrepancy Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2450, 300],
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "method": "POST",
+        "authentication": "none",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "🚨 Monthly Fuel Reconciliation Discrepancy\\n\\n*Period:* {{ $json.monthName }}\\n*Daily Total:* ${{ $json.dailyTotals.amount }}\\n*Invoice Amount:* ${{ $json.invoice.amount }}\\n*Difference:* ${{ $json.comparison.difference }} ({{ $json.comparison.percentageDiff }}%)\\n*Invoice #:* {{ $json.invoice.number }}\\n*Files Missing:* {{ $json.dailyTotals.filesMissing }}\\n\\nReport saved to S3: reconciliation/{{ $json.periodStart.substring(0,7) }}-reconciliation.json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "send-success-report",
+      "name": "Send Success Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2450, 450],
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "method": "POST",
+        "authentication": "none",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "✅ Monthly Fuel Reconciliation Complete\\n\\n*Period:* {{ $json.monthName }}\\n*Status:* Reconciled Successfully\\n*Daily Total:* ${{ $json.dailyTotals.amount }}\\n*Invoice Amount:* ${{ $json.invoice.amount }}\\n*Files Processed:* {{ $json.dailyTotals.filesProcessed }}/{{ $json.dailyTotals.filesExpected }}\\n*Total Transactions:* {{ $json.dailyTotals.totalTransactions }}\\n*Invoice #:* {{ $json.invoice.number }}\\n\\nReport saved to S3: reconciliation/{{ $json.periodStart.substring(0,7) }}-reconciliation.json"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Monthly Schedule - 1st of Month": {
+      "main": [
+        [
+          {
+            "node": "Calculate Previous Month Range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Previous Month Range": {
+      "main": [
+        [
+          {
+            "node": "List S3 Files for Month",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Monthly Tax Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List S3 Files for Month": {
+      "main": [
+        [
+          {
+            "node": "Fetch Daily Files from S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Daily Files from S3": {
+      "main": [
+        [
+          {
+            "node": "Download and Aggregate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download and Aggregate Data": {
+      "main": [
+        [
+          {
+            "node": "Download S3 Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download S3 Files": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Monthly Totals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Monthly Totals": {
+      "main": [
+        [
+          {
+            "node": "Merge Daily and Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Monthly Tax Invoice": {
+      "main": [
+        [
+          {
+            "node": "Extract Invoice Amount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Invoice Amount": {
+      "main": [
+        [
+          {
+            "node": "Merge Daily and Invoice Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Daily and Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Compare Amounts and Generate Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare Amounts and Generate Report": {
+      "main": [
+        [
+          {
+            "node": "Save Reconciliation Report to S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Reconciliation Report to S3": {
+      "main": [
+        [
+          {
+            "node": "Check for Discrepancy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Discrepancy": {
+      "main": [
+        [
+          {
+            "node": "Send Discrepancy Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Success Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "versionId": "1",
+  "meta": {
+    "instanceId": "your-instance-id"
+  },
+  "tags": []
+}

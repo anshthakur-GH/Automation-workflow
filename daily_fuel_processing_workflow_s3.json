@@ -1,0 +1,352 @@
+{
+  "name": "Daily Fuel Transaction Processing (S3)",
+  "nodes": [
+    {
+      "id": "trigger-email",
+      "name": "Email Trigger - Daily Fuel Reports",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [250, 300],
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "format": "simple",
+        "downloadAttachments": true,
+        "options": {}
+      },
+      "credentials": {
+        "imap": {
+          "id": "1",
+          "name": "Fuel Supplier Email"
+        }
+      }
+    },
+    {
+      "id": "filter-supplier-emails",
+      "name": "Filter - Fuel Supplier Emails",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.from.address }}",
+              "rightValue": "supplier@fuelcompany.com",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "condition2",
+              "leftValue": "={{ $json.subject }}",
+              "rightValue": "Daily Fuel Transactions",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "extract-attachment",
+      "name": "Extract Attachment Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 250],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Extract and parse the .txt attachment\n// This code handles email attachments from IMAP trigger\n\nfor (const item of $input.all()) {\n  // Debug: Check what data we have\n  console.log('Item keys:', Object.keys(item));\n  console.log('Has binary:', !!item.binary);\n  if (item.binary) {\n    console.log('Binary keys:', Object.keys(item.binary));\n  }\n  \n  // Try to find attachment in different possible locations\n  let attachmentData = null;\n  let filename = 'unknown';\n  \n  // Check for any binary data (flexible approach)\n  if (item.binary && Object.keys(item.binary).length > 0) {\n    // Get the first binary key (could be attachment_0, NS_0, data, etc.)\n    const binaryKey = Object.keys(item.binary)[0];\n    console.log('Using binary key:', binaryKey);\n    \n    attachmentData = item.binary[binaryKey];\n    filename = attachmentData.fileName || attachmentData.filename || attachmentData.name || 'unknown';\n    console.log('Filename found:', filename);\n  } else {\n    // List all available binary keys for debugging\n    const binaryKeys = item.binary ? Object.keys(item.binary) : [];\n    throw new Error('No attachment found. Available binary keys: ' + binaryKeys.join(', '));\n  }\n  \n  // Convert binary data to text\n  let fileContent;\n  try {\n    const buffer = Buffer.from(attachmentData.data, 'base64');\n    fileContent = buffer.toString('utf-8');\n  } catch (error) {\n    throw new Error('Failed to convert attachment to text: ' + error.message);\n  }\n  \n  // Extract date from filename\n  // Try multiple date formats: YYYY-MM-DD, YYYYMMDD, DDMMYYYY\n  let fileDate = null;\n  \n  // Format 1: YYYY-MM-DD\n  let dateMatch = filename.match(/(\\d{4}-\\d{2}-\\d{2})/);\n  if (dateMatch) {\n    fileDate = dateMatch[1];\n  } else {\n    // Format 2: YYYYMMDD\n    dateMatch = filename.match(/(\\d{8})/);\n    if (dateMatch) {\n      const d = dateMatch[1];\n      fileDate = `${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}`;\n    } else {\n      // Format 3: DDMMYYYY\n      dateMatch = filename.match(/(\\d{2})(\\d{2})(\\d{4})/);\n      if (dateMatch) {\n        fileDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;\n      }\n    }\n  }\n  \n  if (!fileDate) {\n    console.log('Filename:', filename);\n    throw new Error('Could not extract date from filename. Please check filename format.');\n  }\n  \n  // Parse transaction data from file\n  // NOTE: Adjust this section based on your actual file format\n  const lines = fileContent.split('\\n').filter(line => line.trim());\n  const transactions = [];\n  let totalAmount = 0;\n  \n  // Skip header if present (first line often contains column names)\n  const startLine = lines[0] && lines[0].toLowerCase().includes('transaction') ? 1 : 0;\n  \n  for (let i = startLine; i < lines.length; i++) {\n    const line = lines[i].trim();\n    if (!line) continue;\n    \n    // Parse transaction line\n    // Format: \"TransactionID,Amount,Timestamp\" (CSV)\n    const parts = line.split(',');\n    \n    if (parts.length >= 2) {\n      const amount = parseFloat(parts[1].trim());\n      if (!isNaN(amount)) {\n        transactions.push({\n          transactionId: parts[0].trim(),\n          amount: amount,\n          timestamp: parts[2]?.trim() || ''\n        });\n        totalAmount += amount;\n      }\n    }\n  }\n  \n  // Return processed data\n  return {\n    json: {\n      fileDate: fileDate,\n      filename: filename,\n      totalAmount: parseFloat(totalAmount.toFixed(2)),\n      transactionCount: transactions.length,\n      transactions: transactions,\n      rawContent: fileContent,\n      processedAt: new Date().toISOString()\n    }\n  };\n}"
+      }
+    },
+    {
+      "id": "check-sequential",
+      "name": "Validate Sequential Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 250],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Check if this file is the next expected file in sequence\n// Uses workflow static data instead of database\n\nconst item = $input.first().json;\nconst currentDate = new Date(item.fileDate);\n\n// Query last processed date from workflow static data\nconst workflow = this.getWorkflowStaticData('global');\nconst lastProcessedDate = workflow.lastProcessedDate;\n\nlet isSequential = true;\nlet warningMessage = null;\n\nif (lastProcessedDate) {\n  const lastDate = new Date(lastProcessedDate);\n  const daysDifference = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));\n  \n  if (daysDifference > 1) {\n    isSequential = false;\n    warningMessage = `Gap detected: ${daysDifference} days between ${lastProcessedDate} and ${item.fileDate}`;\n  } else if (daysDifference < 1) {\n    isSequential = false;\n    warningMessage = `Duplicate or out-of-order file: ${item.fileDate} (last processed: ${lastProcessedDate})`;\n  }\n}\n\n// Update last processed date\nworkflow.lastProcessedDate = item.fileDate;\n\nreturn {\n  json: {\n    ...item,\n    isSequential: isSequential,\n    sequenceWarning: warningMessage\n  }\n};"
+      }
+    },
+    {
+      "id": "save-raw-file-to-s3",
+      "name": "Save Raw File to S3",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [1050, 250],
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "lendly-fuel-transactions",
+        "fileName": "={{ 'raw-files/' + $json.fileDate + '/' + $json.filename }}",
+        "binaryData": false,
+        "fileContent": "={{ $json.rawContent }}",
+        "options": {
+          "storageClass": "STANDARD"
+        }
+      },
+      "credentials": {
+        "aws": {
+          "id": "2",
+          "name": "AWS S3 Credentials"
+        }
+      }
+    },
+    {
+      "id": "save-processed-to-s3",
+      "name": "Save Processed Data to S3",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [1250, 250],
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "lendly-fuel-transactions",
+        "fileName": "={{ 'processed/' + $json.fileDate + '.json' }}",
+        "binaryData": false,
+        "fileContent": "={{ JSON.stringify($json, null, 2) }}",
+        "options": {
+          "storageClass": "STANDARD",
+          "contentType": "application/json"
+        }
+      },
+      "credentials": {
+        "aws": {
+          "id": "2",
+          "name": "AWS S3 Credentials"
+        }
+      }
+    },
+    {
+      "id": "check-sequence-status",
+      "name": "Check Sequence Status",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.isSequential }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "send-alert",
+      "name": "Send Sequence Warning Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 400],
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "method": "POST",
+        "authentication": "none",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "⚠️ Fuel File Sequence Warning\\n\\nDate: {{ $json.fileDate }}\\nWarning: {{ $json.sequenceWarning }}\\n\\nPlease investigate missing files."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "import-to-fleet-system",
+      "name": "Import to Fleet Management System",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 200],
+      "parameters": {
+        "url": "https://api.fleetmanagement.com/v1/fuel/import",
+        "method": "POST",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "date",
+              "value": "={{ $json.fileDate }}"
+            },
+            {
+              "name": "transactions",
+              "value": "={{ JSON.stringify($json.transactions) }}"
+            },
+            {
+              "name": "totalAmount",
+              "value": "={{ $json.totalAmount }}"
+            },
+            {
+              "name": "source",
+              "value": "n8n_s3_automation"
+            }
+          ]
+        },
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 1000
+          },
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4",
+          "name": "Fleet Management API"
+        }
+      }
+    },
+    {
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 250],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Log successful processing\nconst item = $input.first().json;\n\nconsole.log(`Successfully processed fuel file for ${item.fileDate}`);\nconsole.log(`Total amount: $${item.totalAmount}`);\nconsole.log(`Transaction count: ${item.transactionCount}`);\nconsole.log(`Saved to S3: processed/${item.fileDate}.json`);\n\nreturn {\n  json: {\n    status: 'success',\n    message: `Processed ${item.filename} successfully`,\n    fileDate: item.fileDate,\n    totalAmount: item.totalAmount,\n    s3Path: `s3://lendly-fuel-transactions/processed/${item.fileDate}.json`\n  }\n};"
+      }
+    }
+  ],
+  "connections": {
+    "Email Trigger - Daily Fuel Reports": {
+      "main": [
+        [
+          {
+            "node": "Filter - Fuel Supplier Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - Fuel Supplier Emails": {
+      "main": [
+        [
+          {
+            "node": "Extract Attachment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Attachment Data": {
+      "main": [
+        [
+          {
+            "node": "Validate Sequential Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Sequential Processing": {
+      "main": [
+        [
+          {
+            "node": "Save Raw File to S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Raw File to S3": {
+      "main": [
+        [
+          {
+            "node": "Save Processed Data to S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Processed Data to S3": {
+      "main": [
+        [
+          {
+            "node": "Check Sequence Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sequence Status": {
+      "main": [
+        [
+          {
+            "node": "Send Sequence Warning Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Import to Fleet Management System",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import to Fleet Management System": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "versionId": "1",
+  "meta": {
+    "instanceId": "your-instance-id"
+  },
+  "tags": []
+}

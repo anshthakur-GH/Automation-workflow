@@ -1,0 +1,772 @@
+{
+  "name": "Question and Answer separator workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "text": "You are an expert OCR and text extraction system. Extract ALL visible content from this file accurately. If questions and answers are mixed, separate them using this structure:\n\nQ: <question text>\nA: <answer text>\n\nIf there are multiple Q/A pairs, repeat the format line by line. Do NOT rewrite, modify, or improve yet. Just extract clean text exactly as visible.”",
+        "inputType": "binary",
+        "binaryPropertyName": "Upload_File_for_extracting_Questions_and_Answers",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        96
+      ],
+      "id": "53708f1e-e1ae-4995-be23-1a8767662244",
+      "name": "AI DOCUMENT EXTRACTOR NODE",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 2024,
+          "temperature": 0.1,
+          "topK": 20
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        944,
+        336
+      ],
+      "id": "37707faf-6497-4e4c-8162-2cb2b75371af",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the merged data from extraction:\n\nQ/A Text:\n{{ $json[\"data\"] }}\n\nTopic List:\n{{ JSON.stringify($json[\"topics\"]) }}\n\nIdentify all valid Q/A pairs from the Q/A text, refine them, map each to exactly one topic, and generate the final JSON array using the schema described in the system prompt.\n\nReturn ONLY the JSON array.\n",
+        "options": {
+          "systemMessage": "You will receive two inputs:\n1. A large raw text block containing unstructured questions and answers extracted from a PDF, image, or handwritten file.\n2. A structured list of topics, where each topic is represented as:\n   { \"chapter_name\": \"...\", \"name\": \"...\" }\n\nYour tasks are:\n\n━━━━━━━━━━━━━━━━━━━━\n1. IDENTIFY VALID QUESTION–ANSWER PAIRS\n━━━━━━━━━━━━━━━━━━━━\n- Parse the raw text and identify every Q/A pair.\n- Ignore headings such as \"Fill in the blanks\", \"True/False\", \"Assertion and Reason Type Questions\", \"Short Answer Questions\", etc.\n- Include MCQs, case studies, fill-in-the-blanks, true/false, assertion–reason, numerical questions, theory questions, activity-based questions.\n- Convert assertion–reason + selected option into a single combined Q/A.\n\n━━━━━━━━━━━━━━━━━━━━\n2. CLEAN THE QUESTION\n━━━━━━━━━━━━━━━━━━━━\n- Remove numbering, unwanted prefixes, and non-question text.\n- Make the question standalone and clean.\n- PRESERVE all mathematical symbols, equations, and notation exactly as they appear.\n\n━━━━━━━━━━━━━━━━━━━━\n3. REFINE THE ANSWER - CRITICAL RULES FOR MATH ANSWERS\n━━━━━━━━━━━━━━━━━━━━\n**IMPORTANT: For mathematics questions, you MUST preserve the mathematical working and calculations.**\n\n**For Mathematical/Numerical Answers:**\n- ALWAYS preserve the step-by-step mathematical working\n- KEEP all equations, formulas, and calculations in their original mathematical notation\n- DO NOT convert mathematical steps into plain English sentences\n- Use proper mathematical symbols: =, ≠, ≤, ≥, ±, √, ∞, ∑, ∫, etc.\n- Preserve subscripts (aₙ, a₁, x₂) and superscripts (n², x³, 2ⁿ)\n- Keep fractions in fraction form, not as \"divided by\"\n- Show calculations with the actual numbers and operators\n- You may ADD a brief concluding statement in English at the end if helpful\n\n**Example of CORRECT mathematical answer:**\n\"Given: a = 3.5, d = 0, n = 101\nUsing aₙ = a + (n-1)d\na₁₀₁ = 3.5 + (101-1)(0) = 3.5 + 0 = 3.5\"\n\n**Example of INCORRECT answer (avoid this):**\n\"Given a equals 3.5, d equals 0, and n equals 101, the value of aₙ is 3.5, since the common difference is zero.\"\n\n**For Conceptual/Theory Answers:**\n- Keep the meaning accurate\n- Rewrite to make it fully original (no plagiarism)\n- Make the length approx. 10% shorter OR 10% longer\n- Keep the tone simple, clear, exam-friendly\n\n**General Rules:**\n- If the original answer shows working/steps, your refined answer MUST also show working/steps\n- Rearrange or reword slightly to avoid plagiarism, but maintain mathematical integrity\n- For proofs and derivations, preserve the logical flow and mathematical steps\n- For word problems, include the formula, substitution, and calculation\n\n━━━━━━━━━━━━━━━━━━━━\n4. GENERATE APPROACH\n━━━━━━━━━━━━━━━━━━━━\nCreate a concise \"Approach\" field that explains the solving strategy in 2-4 sentences (mid-level length).\n\n**Guidelines for Approach:**\n- Length: 2-4 sentences (50-100 words) - not too short, not too long\n- Focus on the METHOD/STRATEGY, not the detailed calculation\n- Include: what formula/concept to use, what steps to follow\n- Make it teaching-oriented: \"To solve this, first identify... then apply... finally calculate...\"\n- Use simple language that guides a student through the thought process\n\n**Examples:**\n\nFor numerical questions:\n\"Identify the given values for first term (a), common difference (d), and term number (n). Apply the nth term formula aₙ = a + (n-1)d. Substitute the values and solve for the required term.\"\n\nFor proof questions:\n\"Express each term using the general form aₚ = a + (p-1)d. Substitute these expressions into the given equation. Simplify algebraically to show both sides are equal, which completes the proof.\"\n\nFor MCQs:\n\"Convert the given sequence into a simplified form to identify the common difference. Recognize the pattern and extend it to find the next term. Match your result with the given options.\"\n\nFor assertion-reason:\n\"First verify if the assertion is mathematically correct by testing the given values. Then check if the reason statement is true. Finally, determine if the reason correctly explains the assertion.\"\n\nFor word problems/case studies:\n\"Set up the problem by identifying what forms an arithmetic progression. Write equations using the AP formula based on given conditions. Solve the system of equations to find the required values.\"\n\n**Approach should NOT:**\n- Be too brief (avoid single sentences like \"Use the formula\")\n- Be too detailed (avoid step-by-step calculations)\n- Repeat the exact answer\n- Be generic (tailor it to the specific question type)\n\n━━━━━━━━━━━━━━━━━━━━\n5. DETERMINE QUESTION TYPE\n━━━━━━━━━━━━━━━━━━━━\nClassify each question into ONE of these types:\n\n- **MCQ-S** (Multiple Choice Question - Single Correct)\n  - Has 4-5 options with only ONE correct answer\n  - Typical format: \"(a) ... (b) ... (c) ... (d) ...\"\n  - Example: \"What is 2+2? (a) 3 (b) 4 (c) 5 (d) 6\"\n\n- **MCQ-M** (Multiple Choice Question - Multiple Correct)\n  - Has 4-5 options with TWO OR MORE correct answers\n  - Usually explicitly states \"select all that apply\" or \"which of the following are correct\"\n  - Rare in most exams - only use if clearly indicated\n\n- **TFQ** (True/False Question)\n  - Question asks to determine if a statement is true or false\n  - May also include assertion-reason type with true/false evaluation\n  - Example: \"True or False: All prime numbers are odd\"\n\n- **DES** (Descriptive Question)\n  - All other question types: numerical, short answer, long answer, proofs, derivations\n  - Case studies, word problems, fill-in-the-blanks\n  - Any question requiring written explanation or calculation\n\n**Decision Tree:**\n1. Does it have options (a), (b), (c), (d)? \n   - If YES and only one is correct → MCQ-S\n   - If YES and multiple are correct → MCQ-M\n2. Does it ask \"True or False\" or is it assertion-reason format?\n   - If YES → TFQ\n3. Everything else → DES\n\n━━━━━━━━━━━━━━━━━━━━\n6. GENERATE CORRECT ANSWER\n━━━━━━━━━━━━━━━━━━━━\nExtract or generate the correct answer based on question type:\n\n**For MCQ-S:**\n- Extract only the correct option letter: \"a\", \"b\", \"c\", or \"d\"\n- Example: If answer shows \"(b) 3.5\" → correct_answer = \"b\"\n\n**For MCQ-M:**\n- Extract all correct option letters as comma-separated: \"a,c\" or \"b,d\"\n- Example: If options a and c are correct → correct_answer = \"a,c\"\n\n**For TFQ:**\n- Extract: \"True\" or \"False\"\n- For assertion-reason: extract the selected option \"a\", \"b\", \"c\", or \"d\"\n\n**For DES:**\n- Extract the final answer value/result only (not the full working)\n- Keep it concise: just the number, value, or brief statement\n- Examples:\n  - For \"find the value of p\" → correct_answer = \"4\"\n  - For \"prove that...\" → correct_answer = \"Proven (see solution)\"\n  - For \"find the 10th term\" → correct_answer = \"209\"\n\n**If no answer is provided in the extracted text:**\n- For MCQ-S/MCQ-M/TFQ: Solve the question and determine the correct option\n- For DES: Solve and provide the final answer value\n\n━━━━━━━━━━━━━━━━━━━━\n7. DETECT SUBJECT\n━━━━━━━━━━━━━━━━━━━━\nAnalyze the content and topic list to determine the subject:\n\n**Common subjects to detect:**\n- Mathematics\n- Physics\n- Chemistry\n- Biology\n- English\n- Hindi\n- Social Science\n- Computer Science\n- Economics\n- Accountancy\n\n**Detection rules:**\n- Use the chapter names and topic keywords\n- Look for subject-specific terminology in questions\n- Default to \"Mathematics\" if AP (Arithmetic Progression) topics are present\n- If unclear, use \"General\"\n\n━━━━━━━━━━━━━━━━━━━━\n8. DETECT LANGUAGE\n━━━━━━━━━━━━━━━━━━━━\nAnalyze the text to determine language:\n\n**Language Detection:**\n- Scan the question and answer text\n- Check for Devanagari script (Hindi): क, ख, ग, घ, etc.\n- Check for English alphabet: a-z, A-Z\n- Common words detection:\n  - Hindi indicators: है, का, के, में, से, को, आदि\n  - English indicators: the, is, are, of, in, and\n\n**Rules:**\n- If ANY Devanagari characters present → \"Hindi\"\n- If only English/Latin characters → \"English\"\n- If mixed (bilingual) → \"English\" (default to primary language)\n- Mathematical symbols don't affect language detection\n\n━━━━━━━━━━━━━━━━━━━━\n9. TOPIC MAPPING (MANDATORY)\n━━━━━━━━━━━━━━━━━━━━\n- You must select exactly ONE topic from the provided topic list.\n- Topic format must be: \"<chapter_name> - <name>\"\n- Do NOT create new topics.\n- Do NOT modify topic spelling.\n\n━━━━━━━━━━━━━━━━━━━━\n10. GENERATE ADDITIONAL FIELDS\n━━━━━━━━━━━━━━━━━━━━\nYou must determine the following for each question:\n\n(1) time_duration  \n- Based on estimated student solving time:\n  - Very simple / recall: 1 min  \n  - Short reasoning / MCQs: 2 min  \n  - Medium complexity: 3–4 min  \n  - Long reasoning / numerical: 5–6 min  \n  - High-order / case study: 7–10 min  \nFormat exactly: \"1 min\", \"2 min\", \"3 min\", etc.\n\n(2) marks  \n- Infer marks from the depth of the question:\n  - Recall, MCQs, fill-in-the-blanks, true/false → 1 mark  \n  - Short concept questions → 2 marks  \n  - Medium reasoning or multi-step → 3–4 marks  \n  - Long explanation or derivation → 5–6 marks  \n\n(3) difficulty  \n- Assign:\n  - E  → Easy  \n  - M  → Moderate  \n  - D  → Difficult  \n  - HOTS → High Order Thinking Skills  \n\n(4) knowledge_type  \nChoose ONE from:\n  - IMB → Image Based  \n  - DRW → Drawing required  \n  - PTL → Practical / experiment related  \n  - ABQ → Activity-based  \n  - ARQ → Assertion–Reasoning  \n  - UEQ → Understanding / comprehension  \n  - CON → Conceptual  \n\nRules:\n- MCQs → UEQ or CON  \n- Numerical solving → CON or M  \n- Assertion–Reason → ARQ  \n- Case studies → HOTS + UEQ  \n- If the question requires interpreting a diagram/image → IMB  \n\n━━━━━━━━━━━━━━━━━━━━\n11. FLASHCARD LOGIC\n━━━━━━━━━━━━━━━━━━━━\nIf refined answer < 3 lines → \"Yes\"  \nElse → \"No\"\n\n━━━━━━━━━━━━━━━━━━━━\n12. OUTPUT FORMAT (STRICT)\n━━━━━━━━━━━━━━━━━━━━\nReturn an array of JSON objects only, each in this format:\n\n{\n  \"topic\": \"<topic from list>\",\n  \"question\": \"<cleaned question>\",\n  \"answer\": \"<refined answer with mathematical notation preserved>\",\n  \"approach\": \"<2-4 sentence solving strategy>\",\n  \"question_type\": \"MCQ-S | MCQ-M | TFQ | DES\",\n  \"correct_answer\": \"<extracted or generated correct answer>\",\n  \"subject\": \"<detected subject name>\",\n  \"language\": \"English | Hindi\",\n  \"time_duration\": \"<x min>\",\n  \"marks\": <number>,\n  \"difficulty\": \"E | M | D | HOTS\",\n  \"knowledge_type\": \"IMB | DRW | PTL | ABQ | ARQ | UEQ | CON\",\n  \"date_extracted\": \"dd/mm/yyyy\",\n  \"for_flashcard\": \"Yes\" or \"No\"\n}\n\n━━━━━━━━━━━━━━━━━━━━\n13. STRICT RULES\n━━━━━━━━━━━━━━━━━━━━\n- Output ONLY the JSON array.  \n- Do NOT wrap in code blocks or markdown.\n- Do NOT provide explanations or notes.  \n- Do NOT modify topic names.  \n- Do NOT include items without both a question and an answer.\n- PRESERVE all mathematical notation, symbols, and calculations.\n- Do NOT truncate the output - include ALL questions from the input.\n- Ensure the JSON is complete and properly closed with ].\n- Always provide all required fields for every question.\n\n14. Important constraints:\n\n- Only use the provided topic list.\n- Topic matching should be strict - if subject mismatch (e.g., Maths questions but Science topics), return topic = \"\".\n- For mathematics content: ALWAYS preserve formulas, equations, and step-by-step calculations in mathematical notation.\n- The \"approach\" field must be 2-4 sentences explaining the solving method.\n- \"question_type\" must be exactly one of: MCQ-S, MCQ-M, TFQ, DES\n- \"correct_answer\" must always be populated with the final answer\n- \"subject\" should match common subject names\n- \"language\" must be either \"English\" or \"Hindi\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        944,
+        112
+      ],
+      "id": "2f1dd9fb-27e0-4845-bd19-cc6cb0b89216",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "formTitle": "Question and Answer separator workflow",
+        "formDescription": "Provide the PDF,  image or sheet Containing the questions and answers.\n\nImp: One at a time.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload File for extracting Questions and Answers",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Upload Excel Sheet for extracting Topics",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -208,
+        96
+      ],
+      "id": "d7450997-e093-4fe8-a08b-8ad8300ff2d5",
+      "name": "On form submission",
+      "webhookId": "1279fa60-70c6-41d5-85c0-4750939dd316"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the output from the previous node\nconst item = $input.first();\nconst outputString = item.json.output;\n\n// Remove the ```json and ``` markdown wrapper if present\nlet cleanedString = outputString.trim();\n\n// Remove markdown code fences more aggressively\ncleanedString = cleanedString\n  .replace(/^```json\\s*/i, '')  // Remove opening ```json\n  .replace(/^```\\s*/i, '')       // Remove opening ```\n  .replace(/```\\s*$/i, '')       // Remove closing ```\n  .trim();\n\n// If the string doesn't end with ], try to close it properly\nif (!cleanedString.endsWith(']')) {\n  // Count opening and closing brackets to determine what's missing\n  const openBrackets = (cleanedString.match(/\\[/g) || []).length;\n  const closeBrackets = (cleanedString.match(/\\]/g) || []).length;\n  const openBraces = (cleanedString.match(/\\{/g) || []).length;\n  const closeBraces = (cleanedString.match(/\\}/g) || []).length;\n  \n  // Add missing closing characters\n  for (let i = 0; i < (openBraces - closeBraces); i++) {\n    cleanedString += '\\n  }';\n  }\n  for (let i = 0; i < (openBrackets - closeBrackets); i++) {\n    cleanedString += '\\n]';\n  }\n}\n\n// Parse the JSON string\nlet parsedData;\ntry {\n  parsedData = JSON.parse(cleanedString);\n} catch (error) {\n  // If parsing still fails, try to extract valid JSON objects\n  const jsonObjects = [];\n  const regex = /\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}/g;\n  let match;\n  \n  while ((match = regex.exec(outputString)) !== null) {\n    try {\n      const obj = JSON.parse(match[0]);\n      if (obj.question) { // Only include if it has a question field\n        jsonObjects.push(obj);\n      }\n    } catch (e) {\n      // Skip invalid objects\n    }\n  }\n  \n  if (jsonObjects.length > 0) {\n    parsedData = jsonObjects;\n  } else {\n    throw new Error('Failed to parse JSON: ' + error.message + '\\n\\nReceived: ' + cleanedString.substring(0, 500));\n  }\n}\n\n// If parsedData is an array, map each item to the output format\nif (Array.isArray(parsedData)) {\n  return parsedData.map(record => ({\n    json: {\n      topic: record.topic || '',\n      question: record.question || '',\n      answer: record.answer || '',\n      approach: record.approach || '',\n      question_type: record.question_type || 'DES',  // NEW FIELD\n      correct_answer: record.correct_answer || '',   // NEW FIELD\n      subject: record.subject || '',                 // NEW FIELD\n      language: record.language || 'English',        // NEW FIELD\n      time_duration: record.time_duration || '',\n      marks: record.marks || '',\n      difficulty: record.difficulty || '',\n      knowledge_type: record.knowledge_type || '',\n      date_extracted: record.date_extracted || '',\n      for_flashcard: record.for_flashcard || ''\n    }\n  }));\n} else {\n  // If it's a single object, return it as one item\n  return {\n    json: {\n      topic: parsedData.topic || '',\n      question: parsedData.question || '',\n      answer: parsedData.answer || '',\n      approach: parsedData.approach || '',\n      question_type: parsedData.question_type || 'DES',  // NEW FIELD\n      correct_answer: parsedData.correct_answer || '',   // NEW FIELD\n      subject: parsedData.subject || '',                 // NEW FIELD\n      language: parsedData.language || 'English',        // NEW FIELD\n      time_duration: parsedData.time_duration || '',\n      marks: parsedData.marks || '',\n      difficulty: parsedData.difficulty || '',\n      knowledge_type: parsedData.knowledge_type || '',\n      date_extracted: parsedData.date_extracted || '',\n      for_flashcard: parsedData.for_flashcard || ''\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        112
+      ],
+      "id": "242b0dc3-c612-4704-9a0a-36f1d32b8019",
+      "name": "Parse AI Agent Reponse"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        576,
+        112
+      ],
+      "id": "d5f12843-3676-4a92-be9a-56546040e946",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access binary data from the first input item\nconst item = $input.first();\nconst bin = item.binary?.Upload_File_for_extracting_Topics;\n\nlet filename = null;\nlet extension = null;\nlet fileTypeFlag = \"OTHER\";\n\nif (bin && bin.fileName) {\n  filename = bin.fileName;\n  const parts = filename.split(\".\");\n  extension = parts.length > 1 ? parts.pop().toLowerCase() : null;\n  if ([\"xlsx\", \"xls\"].includes(extension)) {\n    fileTypeFlag = \"EXCEL\";\n  }\n}\n\n// RETURN both JSON + the original binary file\nreturn {\n  json: {\n    filename,\n    fileExtension: extension,\n    fileTypeFlag\n  },\n  binary: {\n    Upload_File_for_extracting_Topics: bin\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        304
+      ],
+      "id": "4da71c5c-571a-46d0-b18f-8c9bb72ff3eb",
+      "name": "Extract File Extension"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c6d8437-7644-45f8-a5b3-54ae177ff6e9",
+              "leftValue": "={{ $json.fileExtension }}",
+              "rightValue": "xlsx",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        304
+      ],
+      "id": "baee4b8a-f3bc-44f0-8c5b-110dfc19bd19",
+      "name": "If Excel?"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "Upload_File_for_extracting_Topics",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        288
+      ],
+      "id": "d4ca731e-044e-44ff-8e44-dea86f51f5a2",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// The merge node gives an array of items\nconst itemsArray = items.map(i => i.json);\n\n// First element contains the Q/A extracted text\nconst first = itemsArray[0];\n\n// Extract text safely\nlet data = null;\ntry {\n  data = first.content.parts[0].text;\n} catch (e) {\n  data = \"\";\n}\n\n// Remaining items are topics\nconst topics = itemsArray.slice(1).map(t => ({\n  chapter_name: t.chapter_name,\n  name: t.name\n}));\n\nreturn [\n  {\n    json: {\n      data,\n      topics\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        112
+      ],
+      "id": "15d37d9b-ac5c-4982-a907-2d47c1e6b680",
+      "name": "Clean Merge Output"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NT6UU1_Ery0gOVVL6zzLhxwqgzluMYJyfojGvQAUfV8",
+          "mode": "list",
+          "cachedResultName": "Question Extraction & Classification Data (n8n)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NT6UU1_Ery0gOVVL6zzLhxwqgzluMYJyfojGvQAUfV8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NT6UU1_Ery0gOVVL6zzLhxwqgzluMYJyfojGvQAUfV8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Type of Question ": "={{ $json.question_type }}",
+            "Questions": "={{ $json.question }}",
+            "Correct Answer": "={{ $json.correct_answer }}",
+            "Time Duration": "={{ $json.time_duration }}",
+            "Marks": "={{ $json.marks }}",
+            "Difficulty Level": "={{ $json.difficulty }}",
+            "Type of Knowledge to be Used": "={{ $json.knowledge_type }}",
+            "Topic": "={{ $json.topic }}",
+            "VidyaMine Approch": "={{ $json.approach }}",
+            "Solution": "={{ $json.answer }}",
+            "For Flash Card?": "={{ $json.for_flashcard }}",
+            "Subject": "={{ $json.subject }}",
+            "Language": "={{ $json.language }}",
+            "Date Extracted": "={{ $json.date_extracted }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Index",
+              "displayName": "Index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Sr No",
+              "displayName": "Sr No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Type of Question ",
+              "displayName": "Type of Question ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Questions",
+              "displayName": "Questions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image or Special Words Change",
+              "displayName": "Image or Special Words Change",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "I",
+              "displayName": "I",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "II",
+              "displayName": "II",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "III",
+              "displayName": "III",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "IV",
+              "displayName": "IV",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Correct Option(s)",
+              "displayName": "Correct Option(s)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Correct Answer",
+              "displayName": "Correct Answer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Course",
+              "displayName": "Course",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Key Chapter No",
+              "displayName": "Key Chapter No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Length",
+              "displayName": "Length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Time Duration",
+              "displayName": "Time Duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Marks",
+              "displayName": "Marks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Difficulty Level",
+              "displayName": "Difficulty Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type of Knowledge to be Used",
+              "displayName": "Type of Knowledge to be Used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Book Flag",
+              "displayName": "Book Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Chapter No",
+              "displayName": "Chapter No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Exercise",
+              "displayName": "Exercise",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question No",
+              "displayName": "Question No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ex Type",
+              "displayName": "Ex Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Activity Number",
+              "displayName": "Activity Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Flag",
+              "displayName": "Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Key Chapter Name",
+              "displayName": "Key Chapter Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Topic No",
+              "displayName": "Topic No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Exam Flag",
+              "displayName": "Exam Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Section",
+              "displayName": "Section",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Language",
+              "displayName": "Language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sub type",
+              "displayName": "Sub type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Exam QNo",
+              "displayName": "Exam QNo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Option",
+              "displayName": "Option",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "For Flash Card?",
+              "displayName": "For Flash Card?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "VidyaMine Approch",
+              "displayName": "VidyaMine Approch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Solution",
+              "displayName": "Solution",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Extracted",
+              "displayName": "Date Extracted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1456,
+        112
+      ],
+      "id": "834072ce-d5f9-466e-a7e7-5bde53423d27",
+      "name": "Append Data in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI DOCUMENT EXTRACTOR NODE": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Agent Reponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI DOCUMENT EXTRACTOR NODE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract File Extension",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Agent Reponse": {
+      "main": [
+        [
+          {
+            "node": "Append Data in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Clean Merge Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Extension": {
+      "main": [
+        [
+          {
+            "node": "If Excel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Excel?": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Clean Merge Output": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "8f036edf-0807-4824-a165-f9eb02617495",
+  "meta": {
+    "instanceId": "dcc9a0a1e9fb50ed5875b5c43fbd8606f5910728c5bd86e52dab9a01ca3cb988"
+  },
+  "id": "dHr5j7068oYXvp7o_zLnP",
+  "tags": []
+}

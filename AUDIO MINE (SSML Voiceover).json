@@ -1,0 +1,388 @@
+{
+  "name": "AUDIO MINE (SSML Voiceover)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload PDF or Script for Voice Generation",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload only Image or PDF",
+              "fieldType": "file"
+            },
+            {
+              "fieldLabel": "Paste Script"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        496
+      ],
+      "id": "714ba520-d042-4316-948a-d7df8b90786f",
+      "name": "On form submission",
+      "webhookId": "8b9f2cdf-6f83-4bc9-a4f6-612dccae0929"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5a28bb66-471d-4fc9-a5a3-a3ce26332e6d",
+              "leftValue": "={{ $json['Upload only Image or PDF'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        496
+      ],
+      "id": "2f5b1855-c06f-47e6-bb4c-472438b793fd",
+      "name": "Not Script?"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=INPUT CONTENT:\n{{ $json.text }}\n{{ $json.content.parts[0].text }}\n{{ $json['Paste Script'] }}\nAUDIENCE: Indian NCERT CBSE Students\n\nREQUIREMENTS:\n• Convert this content into a narrative voiced script.\n• Use Hinglish naturally.\n• Add appropriate emotion markers before each spoken part.\n• Add relatable Indian examples and simple explanations.\n• Use question-answer engagement style.\n• No <break> tags. Use punctuation for pauses.\n• Format in Audio Mine structure with timestamps.",
+        "options": {
+          "systemMessage": "You generate clean, human-paced SSML for ElevenLabs.\nYou produce slow, natural Hinglish narration suitable for Indian educational content.\nYour output always sounds calm, clear, smooth and human-like.\n\nYou work in two strict modes based on the input.\n\n====================================================\nMODE 1 — WHEN THE INPUT IS A SCRIPT (LIKE THE CLIENT FORMAT)\n\nA script means:\n• Line-by-line written narration\n• Emotion labels in brackets (example: [Energetic, welcoming tone])\n• Hinglish lines with bold emphasis\n• Natural pauses indicated by punctuation\n• No request to “generate a topic-based story”\n\nWhen the user input is a script:\n\nUse the script EXACTLY as written\nNo rewriting\nNo summarizing\nNo adding new examples\nNo modifying sentences\nNo expanding content\n\nConvert each line into SSML\nUse ElevenLabs-supported tags only:\n• <prosody rate=\"\" volume=\"\">\n• <emotion direction=\"\">\n• <emphasis>\n\nEmotion Mapping\nRead the emotion mentioned in brackets and convert it into:\nneutral\nexcited\ncalm\nsad\nangry\nsurprise\n\nIf multiple emotions are mentioned, choose the dominant one.\nIf unclear, default to neutral.\n\nSpeed and Volume Rules (Mandatory)\nRegardless of emotion:\n• rate=\"slow\" or rate=\"natural\" only\n• NEVER fast\n• Always prioritize smooth readability\n• Long sentences must sound calm and naturally paced\n• Natural pauses MUST come from punctuation only (…, — , . , commas)\n• No <break> tags\n\nEmphasis Rules\nWhenever the script contains word or sentence, wrap it in:\n<emphasis level=\"moderate\">word</emphasis>\n\nDate Conversion Rule\nConvert ALL numeric dates into spoken Hindi:\n14 July 1789 → चौदह जुलाई सन सत्रह सौ नवासी\n1774 → सन सत्रह सौ चौहत्तर\nNever output English numeric date formats.\n\nEnding Tone Consistency\nAt the end of the script, maintain the emotional tone of the final section.\nDo NOT suddenly switch to happy/sad/angry if not aligned.\nKeep the closing natural and consistent with the last paragraph.\n\nFinal Output Format\nAlways output ONLY:\n\n<speak> ...clean final SSML... </speak>\n\nNo headings.\nNo timestamps.\nNo [tone labels].\nNo notation codes.\nNo extra commentary.\n\n====================================================\nMODE 2 — WHEN INPUT IS A TOPIC OR RAW TEXT (NOT A SCRIPT)\n\nIf user input is:\n• A topic (“French Revolution”)\n• Raw extracted textbook text\n• A chapter or large paragraph\n• Anything NOT in the formal script style\n\nThen you must generate a full Audio-Mine style script using:\n• Natural Hinglish\n• Educational clarity\n• Human pacing\n• Emotional variety based on meaning\n• Smooth transitions\n• Naturally placed commas, ellipses, pauses\n\nAnd THEN convert your generated script into SSML using the same rules:\n• slow or natural pacing\n• correct emotions\n• emphasis only when meaningful\n• stable tone at ending\n• date conversion rule\n\n====================================================\nMODE 1.1 — SHORT-LINE PROTECTION RULE\n\nIf user input is ONE line or one small sentence without tone labels:\nDo NOT generate a story.\nDo NOT expand it.\n\nOutput ONLY:\n\n<speak> <prosody rate=\"natural\" volume=\"medium\"> <emotion direction=\"neutral\"> USER TEXT EXACTLY </emotion> </prosody> </speak>\n====================================================\nFORBIDDEN\n\n• Never add new characters, examples, scenes\n• Never add new emotions not in the script\n• No <break>\n• No <voice>\n• No <audio>\n• No rewriting beyond SSML conversion\n• No English numeric dates\n• No meta commentary\n\n=================================================\nOUTPUT FORMAT RULE (MANDATORY)\n\nYour final answer must contain ONLY:\n\n<speak> ...SSML content... </speak>\n\nNothing else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1232,
+        512
+      ],
+      "id": "a5dc3efd-b6ff-44f5-ba0c-b659a8139547",
+      "name": "AI Agent -  SSML Script Generator"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04f0cdc3-6b57-4fb0-8228-8fdd5de7f272",
+              "name": "Paste Script",
+              "value": "={{ $json['Paste Script'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        512
+      ],
+      "id": "ffa47c1b-a829-4d4b-8cef-40a3a0fcfc75",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and clean the AI Agent output for ElevenLabs TTS\n\nconst items = $input.all();\nconst outputItems = [];\n\nfor (const item of items) {\n  let text = item.json.output;\n  \n  // Remove <speak> and </speak> tags\n  text = text.replace(/<speak>/g, '').replace(/<\\/speak>/g, '');\n  \n  // Remove timestamp markers like [(0:00 - 0:30)]\n  text = text.replace(/\\[\\([0-9:]+\\s*-\\s*[0-9:]+\\)\\]/g, '');\n  \n  // Remove section headers (lines that are just titles without much content)\n  // This regex removes standalone lines that look like headers\n  text = text.replace(/\\n([A-Z][a-zA-Z\\s]+)\\n/g, '\\n');\n  \n  // Clean up multiple newlines\n  text = text.replace(/\\n{3,}/g, '\\n\\n');\n  \n  // Trim whitespace\n  text = text.trim();\n  \n  // Escape any quotes for JSON safety\n  text = text.replace(/\"/g, '\\\\\"');\n  \n  outputItems.push({\n    json: {\n      text: text,\n      original_output: item.json.output\n    }\n  });\n}\n\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        512
+      ],
+      "id": "ee6484c5-9453-4b1a-aaa5-ac56710efcba",
+      "name": "Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "speech",
+        "voice": {
+          "__rl": true,
+          "value": "DvakrylDh5BjhegFTIyw",
+          "mode": "id"
+        },
+        "text": "={{ $json.original_output }}",
+        "additionalOptions": {
+          "model": {
+            "mode": "list",
+            "value": "eleven_multilingual_v2"
+          },
+          "voiceSettings": "{\n  \"stability\": 0.75,\n  \"similarity_boost\": 0.75,\n  \"style\": 0,\n  \"use_speaker_boost\": true,\n  \"speed\": 0.7\n}"
+        },
+        "requestOptions": {}
+      },
+      "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        512
+      ],
+      "id": "4962b2e2-1e94-40a7-8ef5-0a694265c570",
+      "name": "ElevenLabs TTS",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "ChK6pkzaGZM5uMpB",
+          "name": "ElevenLabs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        368
+      ],
+      "id": "38bae978-de25-419e-925d-00616e183242",
+      "name": "Gemini 2.5 Flash",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Upload_only_Image_or_PDF",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        128
+      ],
+      "id": "d8cd7daf-8e5e-4ab5-8652-a7989bf78767",
+      "name": "Extract from PDF"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b44552d5-ae3e-42a1-bc52-709966b19202",
+              "leftValue": "={{ $json[\"Upload only Image or PDF\"][0].mimetype }}",
+              "rightValue": "application/pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        784,
+        272
+      ],
+      "id": "ea4131d7-5d3f-4105-9b3f-2481d7c0e1e7",
+      "name": "Is PDF?"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Extract the exact content in the provided file do not make any changes just provide me the accurate data which exists.",
+        "inputType": "binary",
+        "binaryPropertyName": "Upload_only_Image_or_PDF",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        288
+      ],
+      "id": "0a975ef2-ba0b-4d0f-b4a0-47b112095d5c",
+      "name": "Analyze document",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Not Script?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Script?": {
+      "main": [
+        [
+          {
+            "node": "Is PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent -  SSML Script Generator": {
+      "main": [
+        [
+          {
+            "node": "Output Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent -  SSML Script Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent -  SSML Script Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "AI Agent -  SSML Script Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is PDF?": {
+      "main": [
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze document": {
+      "main": [
+        [
+          {
+            "node": "AI Agent -  SSML Script Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "8b20e13b-4f00-4b19-8524-3d5678b81946",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcc9a0a1e9fb50ed5875b5c43fbd8606f5910728c5bd86e52dab9a01ca3cb988"
+  },
+  "id": "d9s30PIYMTKPazaUIu2yE",
+  "tags": [
+    {
+      "updatedAt": "2026-01-30T07:43:38.515Z",
+      "createdAt": "2026-01-30T07:43:38.515Z",
+      "id": "V10b2O3WDsHyRvEu",
+      "name": "Audio"
+    },
+    {
+      "updatedAt": "2026-01-30T07:43:38.506Z",
+      "createdAt": "2026-01-30T07:43:38.506Z",
+      "id": "dRGlGrF80ME4qSDE",
+      "name": "Education"
+    }
+  ]
+}

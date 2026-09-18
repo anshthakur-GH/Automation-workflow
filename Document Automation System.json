@@ -1,0 +1,1140 @@
+{
+  "name": "Document Automation System",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the input:\nEmail Subject: {{ $json.Subject }}\nEmail Body: {{ $json.Body }}\nSubmitted at: {{ $now }}\nAttached File Data: {{ $json['File Analysis Content '] }}\nYour output must be a single JSON object with exactly these keys. Do not add any extra text or commentary.\ndocument_title: A concise title derived from Subject/body that best represents the document.\ndocument_type: One from: Invoice, Purchase Order, Safety Bulletin, HR Policy, Engineering Drawing, Incident Report, Regulatory Directive, Legal Opinion, Board Meeting Minutes, General Correspondence, Other.\ndepartments_tagged: Array of one or more from: Operations, Engineering, Finance, Procurement, HR, Safety/Compliance, Legal.\nsummary: 2–3 sentences summarizing the main points. Explicitly mention any deadlines/important dates found, with context.\n\nkeywords: Array of 5–10 important terms/entities. Include all dates/deadlines in YYYY-MM-DD format as elements.\n\ncontent: {{ $json['File Analysis Content '] }}\nMake sure the heading should be bold.[Eg: Language name, Subject etc.]\nAnd also add a break line b/w different heading in the content.\nDocumentType: Free-form business label if present in text (e.g., “Maintenance Job Card”), else null.\n\nLanguages: Array subset of [\"English\",\"Malayalam\",\"Bilingual\"] based on language name provided in input; prefer [\"Bilingual\"] if both languages present; else the single detected language; null if unknown.\n\nDateReceived: ISO datetime when the message/document was received if present or inferable from headers/body; else null.\n\nDateIssued: ISO datetime when the document was issued/published if present; else null.\n\nTrigger: Short phrase for why this was sent (e.g., “Scheduled mileage”, “Incident report”), else null.\n\nAuthorIssuer: Name/role of the sender/issuing authority if present; else null.\n\nDepartment: One from ['Engineering','Finance','Operations','Procurement','Exceutive Director','Legal'] if clearly attributable; else null.\n\nStakeholders: Array of roles mentioned or implied (e.g., [\"Rolling-Stock Engineer\",\"Depot Supervisor\"]); null if none identifiable.\n\nUrgencyLevel: One from ['High','Medium','Low'] inferred from language like “immediately”, “urgent”, deadlines <72h => High, <7d => Medium, otherwise Low; null if unclear.\n\nActionRequired: Boolean, true if explicit action or acknowledgement is requested; else false.\n\nDueDate: ISO datetime if any due/deadline date is present or inferable; else null.\n\nComplianceTags: Array of labels present or implied, e.g., [\"Safety\",\"Regulatory\"]; null if none.\n\nVersionRevision: Version/revision string if present; else null.\n\nTraceabilityLink: Source pointer (e.g., sharepoint path, URL, PO/Invoice number ref) if present; else null.\n\nSummaryMeta: Any extra summary remarks that aid routing/context (1 line); null if none.\n\nEmbeddedContent: Brief note if tables, signatures, or bilingual text are embedded (e.g., “Tabulated torque values; Malayalam summary”); else null.\n\nTablesExtracted: Array of simple objects { tableId: string, description: string } if tables are referenced; null if none.\n\nPhotosExtracted: Object { count: number, captions: string[] } if photos referenced; null if none.\n\nSignaturesDetected: Object { detected: boolean, signers: string[]|null } if signatures/stamps referenced; null if none.\n\nAttachmentsListed: Array of attachment names if present; null if none.\n\nOutput JSON:\nExample structure to follow exactly (values are placeholders — fill from input):\n\n{\n\n\"document_title\": \"<string>\",\n\n\"document_type\": \"<enum value>\",\n\n\"departments_tagged\": [\"<enum>\", \"<enum>\"],\n\n\"summary\": \"<2–3 sentences with dates mentioned>\",\n\n\"keywords\": [\"term1\",\"term2\",\"2025-09-20\",\"entityX\"],\n\n\"content\": \"<raw extracted body text>\",\n\n\"images\": [\n\n{ \"filename\": \"file1.jpg\", \"mimetype\": \"image/jpeg\", \"size\": 123456, \"text_extracted\": \"text or null\" }\n\n],\n\n\"DocumentType\": \"Maintenance Job Card\",\n\n\"Languages\": [\"Bilingual\"],\n\n\"DateReceived\": \"2025-09-10T08:30:00.000Z\",\n\n\"DateIssued\": \"2025-09-09T10:00:00.000Z\",\n\n\"Trigger\": \"Scheduled mileage\",\n\n\"AuthorIssuer\": \"Depot Manager - Muttom\",\n\n\"Department\": \"Engineering\",\n\n\"Stakeholders\": [\"Rolling-Stock Engineer\",\"Depot Supervisor\"],\n\n\"UrgencyLevel\": \"Medium\",\n\n\"ActionRequired\": true,\n\n\"DueDate\": \"2025-09-20T18:30:00.000Z\",\n\n\"ComplianceTags\": [\"Safety\",\"Regulatory\"],\n\n\"VersionRevision\": \"Rev 2.1\",\n\n\"TraceabilityLink\": \"sharepoint://ops/sop/RS-BR-INS-021\",\n\n\"SummaryMeta\": \"Periodic SOP; integrate with CMMS task MX-34221.\",\n\n\"EmbeddedContent\": \"Tabulated torque values; Malayalam summary appended.\",\n\n\"TablesExtracted\": [\n\n{ \"tableId\": \"tbl-001\", \"description\": \"Torque settings by assembly\" }\n\n],\n\n\"PhotosExtracted\": { \"count\": 2, \"captions\": [\"Left bogie pad\",\"Right bogie pad\"] },\n\n\"SignaturesDetected\": { \"detected\": true, \"signers\": [\"A. Menon\",\"R. Varma\"] },\n\n\"AttachmentsListed\": [\"Annex A - Checklist.pdf\",\"Annex B - Torque Chart.xlsx\"]\n\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        272
+      ],
+      "id": "7e62f84f-d80a-4489-8f4d-60312a2a8b51",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "content": "# MAIN AI Agent (NER)",
+        "height": 464,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        128
+      ],
+      "typeVersion": 1,
+      "id": "2978509c-d0c7-4c62-835f-5c37fd83c471",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# EMAIL & WHATSAPP CHANNEL PROCESSING",
+        "height": 1088,
+        "width": 2448,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1680,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "91f240d9-0e56-480d-bc7a-df114abcca0a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# UPLOAD FILE VIA UPLOAD BUTTON (UI) PROCESSING PIPELINE\n",
+        "height": 672,
+        "width": 2432,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1664,
+        816
+      ],
+      "typeVersion": 1,
+      "id": "1ca36c3a-73c1-4171-9805-cc9b0417b6fc",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# CENTRAL DATABASE",
+        "height": 272,
+        "width": 384,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        912,
+        512
+      ],
+      "typeVersion": 1,
+      "id": "eb192fdc-bab1-48ae-9c16-a1fcd668e9a6",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "# MAIN AI Agent (NER)",
+        "height": 448,
+        "width": 448,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        848
+      ],
+      "typeVersion": 1,
+      "id": "2d4dce84-718a-4fae-9c61-7fc7143b4f8d",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1136
+      ],
+      "id": "0656efca-c735-4a2f-a187-6f12d0b828cd",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        0,
+        448
+      ],
+      "id": "adc9f206-c033-4bea-80f9-fc58fcb92dc4",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c75e1beb-083d-4076-98f0-893d6c26c4e8",
+              "name": "File Analysis Content ",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "0e6646fb-7919-401d-9105-7ee5d411099a",
+              "name": "Sender ",
+              "value": "={{ $('Gmail 2').item.json.headers.from }}",
+              "type": "string"
+            },
+            {
+              "id": "a90ec6db-cf3a-4972-a20d-34a1f82233e7",
+              "name": "Subject",
+              "value": "={{ $('Gmail 2').item.json.headers.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "62ba8028-91b4-4ab4-b558-379f8380d6ea",
+              "name": "Body",
+              "value": "={{ $('Gmail 2').item.json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "aec9f0f5-9d88-4f5f-a40e-425962a2a30d",
+              "name": "webViewLink",
+              "value": "={{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        272
+      ],
+      "id": "47afcc97-a707-4be0-b757-d93b53369aea",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "formTitle": "Upload Document",
+        "formDescription": "Upload KMRL related document directly ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "UserID",
+              "placeholder": "User ID",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Upload Document ",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1376,
+        1120
+      ],
+      "id": "f4d49257-704f-4b27-a247-9d6fa2691bb5",
+      "name": "On any File Upload",
+      "webhookId": "723abf57-4dcb-4dbe-9e6d-dffac7ed5442"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "=processed_documents",
+        "fields": "document_title, document_type, departments_tagged, summary, keywords, content, images, DocumentType, Languages, DateReceived, DateIssued, Trigger, AuthorIssuer, Department, Stakeholders, UrgencyLevel, ActionRequired, DueDate, ComplianceTags, VersionRevision, TraceabilityLink, SummaryMeta, EmbeddedContent, TablesExtracted, PhotosExtracted, SignaturesDetected, AttachmentsListed, webViewLink",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        992,
+        624
+      ],
+      "id": "19854f00-af22-4646-9c1a-0e019f8153f1",
+      "name": "Insert Document",
+      "credentials": {
+        "mongoDb": {
+          "id": "lfTd6ehSTQQ5sC4E",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "721988b6-8807-40de-b560-504398071370",
+              "name": "['Upload Document '][0].filename",
+              "value": "={{ $('On any File Upload').item.json['Upload Document '][0].filename }}",
+              "type": "string"
+            },
+            {
+              "id": "42996a26-dd52-4ca3-a708-54d54055269b",
+              "name": "submittedAt",
+              "value": "={{ $('On any File Upload').item.json.submittedAt }}",
+              "type": "string"
+            },
+            {
+              "id": "b588ebca-375e-4e22-acc1-29753ec5b455",
+              "name": "File Analysis Content",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -544,
+        960
+      ],
+      "id": "b1d74ed4-16ac-40a2-903a-3758a25af190",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the input:\nUpload file Name:{{ $json['Upload Document '][0].filename }}\nSubmitted at: {{ $json.submittedAt }}\nUploaded File Content: {{ $json['File Analysis Content '] }}\nYour output must be a single JSON object with exactly these keys. Do not add any extra text or commentary.\ndocument_title: A concise title derived from Subject/body that best represents the document.\ndocument_type: One from: Invoice, Purchase Order, Safety Bulletin, HR Policy, Engineering Drawing, Incident Report, Regulatory Directive, Legal Opinion, Board Meeting Minutes, General Correspondence, Other.\ndepartments_tagged: Array of one or more from: Operations, Engineering, Finance, Procurement, HR, Safety/Compliance, Legal.\nsummary: 2–3 sentences summarizing the main points. Explicitly mention any deadlines/important dates found, with context.\nkeywords: Array of 5–10 important terms/entities. Include all dates/deadlines in YYYY-MM-DD format as elements.\ncontent: The raw extracted text/content from the email/body (no formatting other than plain text).\nima\nDocumentType: Free-form business label if present in text (e.g., “Maintenance Job Card”), else null.\nLanguages: Array subset of [\"English\",\"Malayalam\",\"Bilingual\"] based on language name provided in input; prefer [\"Bilingual\"] if both languages present; else the single detected language; null if unknown.\nDateReceived: ISO datetime when the message/document was received if present or inferable from headers/body; else null.\nDateIssued: ISO datetime when the document was issued/published if present; else null.\nTrigger: Short phrase for why this was sent (e.g., “Scheduled mileage”, “Incident report”), else null.\nAuthorIssuer: Name/role of the sender/issuing authority if present; else null.\nDepartment: One from ['Engineering','Finance','Operations','Procurement','Exceutive Director','Legal'] if clearly attributable; else null.\nStakeholders: Array of roles mentioned or implied (e.g., [\"Rolling-Stock Engineer\",\"Depot Supervisor\"]); null if none identifiable.\nUrgencyLevel: One from ['High','Medium','Low'] inferred from language like “immediately”, “urgent”, deadlines <72h => High, <7d => Medium, otherwise Low; null if unclear.\nActionRequired: Boolean, true if explicit action or acknowledgement is requested; else false.\nDueDate: ISO datetime if any due/deadline date is present or inferable; else null.\nComplianceTags: Array of labels present or implied, e.g., [\"Safety\",\"Regulatory\"]; null if none.\nVersionRevision: Version/revision string if present; else null.\nTraceabilityLink: Source pointer (e.g., sharepoint path, URL, PO/Invoice number ref) if present; else null.\nSummaryMeta: Any extra summary remarks that aid routing/context (1 line); null if none.\nEmbeddedContent: Brief note if tables, signatures, or bilingual text are embedded (e.g., “Tabulated torque values; Malayalam summary”); else null.\nTablesExtracted: Array of simple objects { tableId: string, description: string } if tables are referenced; null if none.\nPhotosExtracted: Object { count: number, captions: string[] } if photos referenced; null if none.\nSignaturesDetected: Object { detected: boolean, signers: string[]|null } if signatures/stamps referenced; null if none.\n\nUploaded File Link: Raw link uploaded in  the input\nAttachmentsListed: Array of attachment names if present; null if none.\n\nOutput JSON:\nExample structure to follow exactly (values are placeholders — fill from input):\n{\n\"document_title\": \"<string>\",\n\"document_type\": \"<enum value>\",\n\"departments_tagged\": [\"<enum>\", \"<enum>\"],\n\"summary\": \"<2–3 sentences with dates mentioned>\",\n\"keywords\": [\"term1\",\"term2\",\"2025-09-20\",\"entityX\"],\n\"content\": \"<raw extracted body text>\",\n\"images\": [\n{ \"filename\": \"file1.jpg\", \"mimetype\": \"image/jpeg\", \"size\": 123456, \"text_extracted\": \"text or null\" }\n],\n\"DocumentType\": \"Maintenance Job Card\",\n\"Languages\": [\"Bilingual\"],\n\"DateReceived\": \"2025-09-10T08:30:00.000Z\",\n\"DateIssued\": \"2025-09-09T10:00:00.000Z\",\n\"Trigger\": \"Scheduled mileage\",\n\"AuthorIssuer\": \"Depot Manager - Muttom\",\n\"Department\": \"Engineering\",\n\"Stakeholders\": [\"Rolling-Stock Engineer\",\"Depot Supervisor\"],\n\"UrgencyLevel\": \"Medium\",\n\"ActionRequired\": true,\n\"DueDate\": \"2025-09-20T18:30:00.000Z\",\n\"ComplianceTags\": [\"Safety\",\"Regulatory\"],\n\"VersionRevision\": \"Rev 2.1\",\n\"TraceabilityLink\": \"sharepoint://ops/sop/RS-BR-INS-021\",\n\"SummaryMeta\": \"Periodic SOP; integrate with CMMS task MX-34221.\",\n\"EmbeddedContent\": \"Tabulated torque values; Malayalam summary appended.\",\n\"TablesExtracted\": [\n{ \"tableId\": \"tbl-001\", \"description\": \"Torque settings by assembly\" }\n],\n\"PhotosExtracted\": { \"count\": 2, \"captions\": [\"Left bogie pad\",\"Right bogie pad\"] },\n\"SignaturesDetected\": { \"detected\": true, \"signers\": [\"A. Menon\",\"R. Varma\"] },\n\"AttachmentsListed\": [\"Annex A - Checklist.pdf\",\"Annex B - Torque Chart.xlsx\"]\n}\n\nHere is the input:\nEmail Subject: {{ $json.Subject }}\nEmail Body: {{ $json.Body }}\nSubmitted at: {{ $now }}\nAttached File Data: {{ $json['File Analysis Content '] }}\nYour output must be a single JSON object with exactly these keys. Do not add any extra text or commentary.\ndocument_title: A concise title derived from Subject/body that best represents the document.\ndocument_type: One from: Invoice, Purchase Order, Safety Bulletin, HR Policy, Engineering Drawing, Incident Report, Regulatory Directive, Legal Opinion, Board Meeting Minutes, General Correspondence, Other.\ndepartments_tagged: Array of one or more from: Operations, Engineering, Finance, Procurement, HR, Safety/Compliance, Legal.\nsummary: 2–3 sentences summarizing the main points. Explicitly mention any deadlines/important dates found, with context.\nkeywords: Array of 5–10 important terms/entities. Include all dates/deadlines in YYYY-MM-DD format as elements.\ncontent: {{ $json['File Analysis Content '] }}\nMake sure the heading should be bold.[Eg: Language name, Subject etc.]\nAnd also add a break line b/w different heading in the content.\nDocumentType: Free-form business label if present in text (e.g., “Maintenance Job Card”), else null.\nLanguages: Array subset of [\"English\",\"Malayalam\",\"Bilingual\"] based on language name provided in input; prefer [\"Bilingual\"] if both languages present; else the single detected language; null if unknown.\nDateReceived: ISO datetime when the message/document was received if present or inferable from headers/body; else null.\nDateIssued: ISO datetime when the document was issued/published if present; else null.\nTrigger: Short phrase for why this was sent (e.g., “Scheduled mileage”, “Incident report”), else null.\nAuthorIssuer: Name/role of the sender/issuing authority if present; else null.\nDepartment: One from ['Engineering','Finance','Operations','Procurement','Exceutive Director','Legal'] if clearly attributable; else null.\nStakeholders: Array of roles mentioned or implied (e.g., [\"Rolling-Stock Engineer\",\"Depot Supervisor\"]); null if none identifiable.\nUrgencyLevel: One from ['High','Medium','Low'] inferred from language like “immediately”, “urgent”, deadlines <72h => High, <7d => Medium, otherwise Low; null if unclear.\nActionRequired: Boolean, true if explicit action or acknowledgement is requested; else false.\nDueDate: ISO datetime if any due/deadline date is present or inferable; else null.\nComplianceTags: Array of labels present or implied, e.g., [\"Safety\",\"Regulatory\"]; null if none.\nVersionRevision: Version/revision string if present; else null.\nTraceabilityLink: Source pointer (e.g., sharepoint path, URL, PO/Invoice number ref) if present; else null.\nSummaryMeta: Any extra summary remarks that aid routing/context (1 line); null if none.\nEmbeddedContent: Brief note if tables, signatures, or bilingual text are embedded (e.g., “Tabulated torque values; Malayalam summary”); else null.\nTablesExtracted: Array of simple objects { tableId: string, description: string } if tables are referenced; null if none.\nPhotosExtracted: Object { count: number, captions: string[] } if photos referenced; null if none.\nSignaturesDetected: Object { detected: boolean, signers: string[]|null } if signatures/stamps referenced; null if none.\nAttachmentsListed: Array of attachment names if present; null if none.\nOutput JSON:\nExample structure to follow exactly (values are placeholders — fill from input):\n{\n\"document_title\": \"<string>\",\n\"document_type\": \"<enum value>\",\n\"departments_tagged\": [\"<enum>\", \"<enum>\"],\n\"summary\": \"<2–3 sentences with dates mentioned>\",\n\"keywords\": [\"term1\",\"term2\",\"2025-09-20\",\"entityX\"],\n\"content\": \"<raw extracted body text>\",\n\"images\": [\n{ \"filename\": \"file1.jpg\", \"mimetype\": \"image/jpeg\", \"size\": 123456, \"text_extracted\": \"text or null\" }\n],\n\"DocumentType\": \"Maintenance Job Card\",\n\"Languages\": [\"Bilingual\"],\n\"DateReceived\": \"2025-09-10T08:30:00.000Z\",\n\"DateIssued\": \"2025-09-09T10:00:00.000Z\",\n\"Trigger\": \"Scheduled mileage\",\n\"AuthorIssuer\": \"Depot Manager - Muttom\",\n\"Department\": \"Engineering\",\n\"Stakeholders\": [\"Rolling-Stock Engineer\",\"Depot Supervisor\"],\n\"UrgencyLevel\": \"Medium\",\n\"ActionRequired\": true,\n\"DueDate\": \"2025-09-20T18:30:00.000Z\",\n\"ComplianceTags\": [\"Safety\",\"Regulatory\"],\n\"VersionRevision\": \"Rev 2.1\",\n\"TraceabilityLink\": \"sharepoint://ops/sop/RS-BR-INS-021\",\n\"SummaryMeta\": \"Periodic SOP; integrate with CMMS task MX-34221.\",\n\"EmbeddedContent\": \"Tabulated torque values; Malayalam summary appended.\",\n\"TablesExtracted\": [\n{ \"tableId\": \"tbl-001\", \"description\": \"Torque settings by assembly\" }\n],\n\"PhotosExtracted\": { \"count\": 2, \"captions\": [\"Left bogie pad\",\"Right bogie pad\"] },\n\"SignaturesDetected\": { \"detected\": true, \"signers\": [\"A. Menon\",\"R. Varma\"] },\n\"AttachmentsListed\": [\"Annex A - Checklist.pdf\",\"Annex B - Torque Chart.xlsx\"]\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        960
+      ],
+      "id": "611a35c9-21f1-49bf-830e-0c582a0374de",
+      "name": "AI Agent 1.0"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $json.id }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1jc5c-7WXE8HFnF9I5Ul2eU5nbSrKA-eO",
+          "mode": "list",
+          "cachedResultName": "KMRL PROCESSED FILES",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1jc5c-7WXE8HFnF9I5Ul2eU5nbSrKA-eO"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -528,
+        32
+      ],
+      "id": "fa23607b-dd2c-443a-a6dc-63f88d3c149d",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "00IFHMksL8NUEI5v",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        48
+      ],
+      "id": "46638a9d-bec3-4904-a167-bb88b848fbf2",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b64f3aaf-cb04-4c8f-8d40-9a1c72375f67",
+              "name": "webViewLink",
+              "value": "={{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -368,
+        32
+      ],
+      "id": "829516fa-650a-42ad-b0d1-10e7fd79d7f5",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=Upload_Document_",
+        "name": "={{ $json[\"Upload Document \"][0].filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1jc5c-7WXE8HFnF9I5Ul2eU5nbSrKA-eO",
+          "mode": "list",
+          "cachedResultName": "KMRL PROCESSED FILES",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1jc5c-7WXE8HFnF9I5Ul2eU5nbSrKA-eO"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -784,
+        1280
+      ],
+      "id": "051c9a6b-a280-4c47-b100-3d59d9e99b27",
+      "name": "Upload via Upload Button(Website)",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "00IFHMksL8NUEI5v",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "579413a8-c22a-4961-adbe-5fb6b1fa4cb3",
+              "name": "webViewLink",
+              "value": "={{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -544,
+        1280
+      ],
+      "id": "389fee78-0531-46ff-b376-afc771e366b3",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        1264
+      ],
+      "id": "6a1ff899-a471-4c87-ac29-575ae5a4aeee",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1f38561-bbdd-42a7-aa7d-a56af9e7f9ee",
+              "leftValue": "={{ $json.content.parts[0].text }}",
+              "rightValue": "=True",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1104,
+        1120
+      ],
+      "id": "3e9a458f-01fc-492e-840a-0129dfa4de05",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1f38561-bbdd-42a7-aa7d-a56af9e7f9ee",
+              "leftValue": "={{ $json.candidates[0].content.parts[0].text }}",
+              "rightValue": "=True",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -992,
+        176
+      ],
+      "id": "034b2575-9820-4a92-bc51-0b3b34d30459",
+      "name": "Filters"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash"
+        },
+        "text": "=\"You are a specialized AI assistant designed to perform a high-level relevance check, if the message is informal you just reply False otherwise True.\n\nInput:\nSubject: {{ $json.headers.subject }}\nBody: {{ $json.text }}\nFile Attached\n\n\nInstructions:\nLook for keyword in that makes it formal.\n\nIf the content is clearly related, your output should be a single word \"True\"\n\nIf the content is not relevant, your output should be a single word \"False\"\n\nYour entire response MUST be a single word. Do not add any extra text, notes, or conversational filler.\n\nExample Input (for testing):\nDocument_Content: [Text from a document about a new HR policy]\nMessage_Text: [Email from the Head of HR regarding the new policy]\n\nOutput:\n\"True\"",
+        "inputType": "binary",
+        "binaryPropertyName": "attachment_0",
+        "simplify": false,
+        "options": {
+          "maxOutputTokens": 300
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        176
+      ],
+      "id": "bc558377-5893-4f35-a847-38d598a4b24d",
+      "name": "AI Filter",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail 2').item.json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -752,
+        160
+      ],
+      "id": "7f1e658d-dbc6-45a1-975e-769b770cae22",
+      "name": "Fetches message + Files",
+      "webhookId": "67d30930-b263-4d21-b747-434388524735",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GnwBugge5Hbo8HjB",
+          "name": "Unfazed Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutputItem = $input.all().find(item => item.json.output);\nconst webViewLinkItem = $input.all().find(item => item.json.webViewLink);\n\nif (!agentOutputItem || !webViewLinkItem) {\n  throw new Error(\"Missing 'output' or 'webViewLink' in input data.\");\n}\n\nconst agentOutput = agentOutputItem.json.output;\nconst webViewLink = webViewLinkItem.json.webViewLink;\n\nconst parsedJson = JSON.parse(agentOutput.replace(/```json\\n|```/g, \"\"));\n\nparsedJson.webViewLink = webViewLink;\n\nreturn { json: parsedJson };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        288
+      ],
+      "id": "80f99d81-a58f-4115-97ff-a6280e0bdfde",
+      "name": "Parse Json"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutputItem = $input.all().find(item => item.json.output);\nconst webViewLinkItem = $input.all().find(item => item.json.webViewLink);\n\nif (!agentOutputItem || !webViewLinkItem) {\n  throw new Error(\"Missing 'output' or 'webViewLink' in input data.\");\n}\n\nconst agentOutput = agentOutputItem.json.output;\nconst webViewLink = webViewLinkItem.json.webViewLink;\n\nconst parsedJson = JSON.parse(agentOutput.replace(/```json\\n|```/g, \"\"));\n\nparsedJson.webViewLink = webViewLink;\n\nreturn { json: parsedJson };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        1008
+      ],
+      "id": "609283f1-e8a9-4f47-96dc-8f69507a16a2",
+      "name": "Parse json"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash"
+        },
+        "text": "=Analyze the attached file and provide me the exact content in the file in the same format.\nIf the data is in bilingual language then your output should be in the below format:\nLanguage name:\nOriginal Language Content Extracted: \nContent Converted to english:",
+        "inputType": "binary",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        272
+      ],
+      "id": "8f75934f-2883-42f6-a6b2-885c3c012d5f",
+      "name": "Ai Analysis (Bilingual) OCR",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash"
+        },
+        "text": "=Analyze the attached file and provide me all the content.",
+        "inputType": "binary",
+        "binaryPropertyName": "=",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        960
+      ],
+      "id": "9425d83a-04e9-4d1e-9d7e-98d01558314a",
+      "name": "Ai Analysis ( Bilingual ) OCR",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PvgTtuWB8dkb86hc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1uC_aV5z8bGFS76uktmPdWlehm7xy4vO7L1VAinMeOsw",
+          "mode": "list",
+          "cachedResultName": "Uploaded Files Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uC_aV5z8bGFS76uktmPdWlehm7xy4vO7L1VAinMeOsw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uC_aV5z8bGFS76uktmPdWlehm7xy4vO7L1VAinMeOsw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "User ID": "={{ $json.UserID }}",
+            "Document Name": "={{ $json['Upload Document '][0].filename }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "User ID",
+              "displayName": "User ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Document Name",
+              "displayName": "Document Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1104,
+        1312
+      ],
+      "id": "0095ce99-e4ea-424c-bed4-d74a93b2b3b3",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "V3tL5YYkX6lKrb7l",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1392,
+        112
+      ],
+      "id": "35bb5f21-ef6d-48ad-8ef4-3c8757a9ec9f",
+      "name": "Gmail 3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KzbTFwaHrfDmkS7k",
+          "name": "anshthakur.work"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1392,
+        -64
+      ],
+      "id": "e5628b51-abb1-4cb9-9869-223a1f3a6ca2",
+      "name": "Gmail 2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GnwBugge5Hbo8HjB",
+          "name": "Unfazed Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1392,
+        -240
+      ],
+      "id": "e0af7333-9ddc-47d7-94d2-221e4eef0500",
+      "name": "Gmail 1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SwgFsEdunpCmtqVb",
+          "name": "Droid bgmi Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        448
+      ],
+      "id": "4c4fbada-26a0-42a1-b496-dd4937c4806a",
+      "name": "WhatsApp Trigger",
+      "webhookId": "ef4c462a-3004-4149-b2ef-ac1dfc13dbd9",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "BoJvIPNVx4BAaBKI",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        592
+      ],
+      "id": "06bc3f08-1aea-4082-b2e8-e1d98e3dd622",
+      "name": "WhatsApp Trigger1",
+      "webhookId": "ef4c462a-3004-4149-b2ef-ac1dfc13dbd9",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "BoJvIPNVx4BAaBKI",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "ec4958c9-6a86-4640-9005-1ba7ab87b539",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1392,
+        288
+      ],
+      "id": "d6efd6aa-b835-4f40-b670-625a96c73485",
+      "name": "Webhook",
+      "webhookId": "ec4958c9-6a86-4640-9005-1ba7ab87b539"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent 1.0",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On any File Upload": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent 1.0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent 1.0": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Parse Json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload via Upload Button(Website)": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Parse json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Ai Analysis ( Bilingual ) OCR",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload via Upload Button(Website)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filters": {
+      "main": [
+        [
+          {
+            "node": "Fetches message + Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Filter": {
+      "main": [
+        [
+          {
+            "node": "Filters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetches message + Files": {
+      "main": [
+        [
+          {
+            "node": "Ai Analysis (Bilingual) OCR",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Json": {
+      "main": [
+        [
+          {
+            "node": "Insert Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse json": {
+      "main": [
+        [
+          {
+            "node": "Insert Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ai Analysis (Bilingual) OCR": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ai Analysis ( Bilingual ) OCR": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 2": {
+      "main": [
+        [
+          {
+            "node": "AI Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 1": {
+      "main": [
+        [
+          {
+            "node": "AI Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail 3": {
+      "main": [
+        [
+          {
+            "node": "AI Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cc662dcd-4c5a-45fb-8731-18e3243887f5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
+  },
+  "id": "P7JJf7l48lcDjWul",
+  "tags": []
+}

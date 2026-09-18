@@ -1,0 +1,764 @@
+{
+  "name": "Mathematics Formula Separator Agentic Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Mathematics Formula Separator Trigger Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload PDF for extracting Mathematics Formula ",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Upload Topic File(Optional)",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -880,
+        16
+      ],
+      "id": "e4daa5b3-6d7d-43d6-9ed8-c72606ea3c8a",
+      "name": "On form submission",
+      "webhookId": "6c670f27-418c-42b3-ba43-a23eaa1d64d8"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract ALL formulas from this chapter text and map them to topics from the topic sheet.\n\nTasks:\n1. Extract 8-15 formulas (look in ALL sections: Euclid's Division, FTA, HCF/LCM, irrationality proofs)\n2. Remove expressions with specific numbers only\n3. Convert to clean LaTeX (single backslashes)\n4. Map to exact topic names from sheet\n5. Add practical examples\n6. Return raw JSON array (no markdown wrapper)\n\nChapter Text:\n{{ $json.extracted_text }}\n\nTopic Sheet:\n{{ JSON.stringify($json.topics) }}",
+        "options": {
+          "systemMessage": "You are a STRICT NCERT mathematics formula extractor and topic-mapper.\n\nYour job:\n1. Extract ALL valid formulas from the chapter text (aim for 8-15 formulas).\n2. Map each extracted formula to the correct topic from the uploaded NCERT topic sheet, if the topics are not provided leave it.\n3. Never rename, shorten, modify, or infer the topic name. Use the topic EXACTLY as it appears in the sheet.\n4. Return ONLY real formulas, NOT expressions, examples, or intermediate steps.\n\n╔═══════ WHAT COUNTS AS A FORMULA (STRICT) ═══════╗\nA formula MUST:\n- Be a GENERAL mathematical relationship using variables (a, b, n, p, q, x, y, etc.)\n- NOT contain specific numbers as the main focus\n- Be reusable across different problems\n- Represent a mathematical law, theorem, identity, or proof step\n\n✅ VALID FORMULAS (Extract these):\n- HCF(a,b) × LCM(a,b) = a × b\n- LCM(a,b) = (a × b) / HCF(a,b)\n- a = bq + r, where 0 ≤ r < b (Euclid's Division)\n- If p divides a², then p divides a (where p is prime)\n- Proof steps: 2b² = a², b² = 2c², a = 2c, 3b² = a², a = 3c\n- General factorization: x = p₁p₂...pₙ\n\n❌ INVALID (DO NOT extract these):\n- 32760 = 2³ × 3² × 5 × 7 × 13 (specific factorization)\n- HCF(6,20) = 2 (specific calculation)\n- 96 = 2⁵ × 3 (specific example)\n- Any equation with only specific numbers\n\nCRITICAL: Extract ALL formulas from the entire chapter, including:\n- Euclid's Division Lemma\n- Fundamental Theorem of Arithmetic\n- HCF/LCM relationships\n- Irrationality proofs (√2, √3, √5)\n- Divisibility theorems\n╚═════════════════════════════════════════════════╝\n\n╔═══════ TOPIC MAPPING((If provided) ═══════╗\n- Match each formula to the MOST relevant topic\n- Use exact topic names from the sheet\n- Never invent new topics\n╚════════════════════════════════╝\n\n╔═══════ EXAMPLE TEXT ═══════╗\nFor each formula, add a practical example (1-2 sentences).\nExample: \"For a=12, b=18: HCF(12,18) × LCM(12,18) = 6 × 36 = 216 = 12 × 18.\"\n╚═════════════════════════════╝\n\n╔═══════ OUTPUT FORMAT ═══════╗\n\nOUTPUT ONLY RAW JSON. NO MARKDOWN. NO ```json WRAPPER.\n\nLaTeX rules:\n- SINGLE backslash: \\text NOT \\\\text\n- SINGLE backslash: \\leq NOT \\\\leq\n- SINGLE backslash: \\times NOT \\\\times\n\nEach formula:\n{\n  \"key_chapter_id\": \"1062CH01\",\n  \"res_title\": \"short formula name\",\n  \"res_desc\": \"one-line description\",\n  \"latex_form\": \"formula in LaTeX\",\n  \"topic\": \"exact topic from sheet\",\n  \"example_text\": \"practical example\"\n}\n\nSTART WITH [\nEND WITH ]\nNO ```json\n╚════════════════════════════╝\nConstraint: If topics are not provided keep the field topic empty."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        -64
+      ],
+      "id": "bac829a2-f72f-41c9-8c17-69193f75ccf7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 5000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        224,
+        112
+      ],
+      "id": "83ff4a96-2c1d-42f0-a8aa-f1fa85ef1e19",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet allFormulas = [];\n\n// Parse AI output\nfor (const item of items) {\n  try {\n    let rawText = item.json.output || item.json.text || JSON.stringify(item.json);\n\n    rawText = rawText\n      .replace(/```json\\s*/g, '')\n      .replace(/```\\s*/g, '')\n      .trim();\n\n    if (!rawText.startsWith('[')) {\n      const match = rawText.match(/\\[[\\s\\S]*\\]/);\n      if (match) rawText = match[0];\n    }\n\n    let parsed = JSON.parse(rawText);\n    if (!Array.isArray(parsed)) parsed = [parsed];\n\n    allFormulas = allFormulas.concat(parsed);\n  } catch (error) {\n    console.error('Parse error:', error.message);\n  }\n}\n\n// Fix double slashes\nallFormulas = allFormulas.map(f => {\n  if (f.latex_form) {\n    f.latex_form = f.latex_form.replace(/\\\\\\\\/g, '\\\\');\n  }\n  return f;\n});\n\n// Normalize for deduplication\nfunction normalize(latex) {\n  if (!latex) return '';\n  return latex.toLowerCase()\n    .replace(/\\s+/g, '')\n    .replace(/\\\\times/g, '*')\n    .replace(/\\\\cdot/g, '*')\n    .replace(/\\{|\\}/g, '')\n    .replace(/\\^1(?![0-9])/g, '');\n}\n\n// Simpler validation – accept all formulas with \"=\"\nfunction isRealFormula(formula) {\n  const latex = formula.latex_form || '';\n  if (!latex.includes('=')) return false;\n  return true;\n}\n\n// Deduplicate\nconst seen = new Map();\nconst unique = [];\n\nfor (const formula of allFormulas) {\n  const norm = normalize(formula.latex_form);\n  if (!norm || seen.has(norm)) continue;\n  seen.set(norm, true);\n  unique.push(formula);\n}\n\n// Filter valid (topic is OPTIONAL)\nconst valid = unique.filter(f => {\n  return f.latex_form && \n         f.res_title && \n         f.res_desc &&\n         isRealFormula(f);   // topic NOT required\n});\n\n// Final output\nreturn valid.map((formula) => ({\n  json: {\n    key_chapter_id: formula.key_chapter_id || \"1062CH01\",\n    res_category: \"formula\",\n    res_desc: formula.res_desc || \"\",\n    res_title: formula.res_title || \"\",\n    res_lang: \"en\",\n    latex_form: formula.latex_form || \"\",\n    topic: formula.topic || \"\",   // keep empty if empty\n    example_text: formula.example_text || formula.example || \"\",\n    created_on: new Date().toISOString(),\n    created_by: \"ai_agent\"\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        -64
+      ],
+      "id": "1b8ab6be-e7b4-4b0e-916c-9fcae958ac42",
+      "name": "Parse AI Agent Reponse"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite"
+        },
+        "text": "Extract all text from this PDF exactly as it appears, without summarizing or rewriting anything.\n\nPreserve:\n- All mathematical expressions\n- All equations\n- All factorizations\n- All numeric patterns like 2 × 3 × 7 × 11 × 23\n- All inequalities and conditions such as 0 ≤ r < b\n- All exponents such as 4ⁿ, 2²ⁿ, 2³, etc.\n\nDo not add any interpretation, extra explanations, or derived equations.\n\nDo NOT add citations, links, or metadata.  \nOnly return the extracted text.\n",
+        "inputType": "binary",
+        "binaryPropertyName": "Upload_PDF_for_extracting_Mathematics_Formula_",
+        "options": {
+          "maxOutputTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -608,
+        -80
+      ],
+      "id": "2546535f-f6e9-4075-a869-d3df7ce934b0",
+      "name": "AI DOCUMENT EXTRACTOR NODE",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\nconst extractedText = item?.content?.parts?.[0]?.text || \"\";\n\n// Normalize unicode subscripts and superscripts to prevent LaTeX issues\nlet cleanedText = extractedText\n  // Replace unicode subscripts with regular numbers\n  .replace(/₀/g, '0').replace(/₁/g, '1').replace(/₂/g, '2')\n  .replace(/₃/g, '3').replace(/₄/g, '4').replace(/₅/g, '5')\n  .replace(/₆/g, '6').replace(/₇/g, '7').replace(/₈/g, '8')\n  .replace(/₉/g, '9').replace(/ₙ/g, 'n')\n  \n  // Replace unicode superscripts\n  .replace(/⁰/g, '0').replace(/¹/g, '1').replace(/²/g, '2')\n  .replace(/³/g, '3').replace(/⁴/g, '4').replace(/⁵/g, '5')\n  .replace(/⁶/g, '6').replace(/⁷/g, '7').replace(/⁸/g, '8')\n  .replace(/⁹/g, '9').replace(/ⁿ/g, 'n')\n  \n  // Normalize whitespace\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nreturn [{\n  json: {\n    extracted_text: cleanedText\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -80
+      ],
+      "id": "8ed262a4-a998-4a55-ae31-225cd9e0f2d6",
+      "name": "Clean AI Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access binary data from the first input item\nconst item = $input.first();\nconst bin = item.binary?.Upload_Topic_File;\n\nlet filename = null;\nlet extension = null;\nlet fileTypeFlag = \"OTHER\";\n\nif (bin && bin.fileName) {\n  filename = bin.fileName;\n  const parts = filename.split(\".\");\n  extension = parts.length > 1 ? parts.pop().toLowerCase() : null;\n  if ([\"xlsx\", \"xls\"].includes(extension)) {\n    fileTypeFlag = \"EXCEL\";\n  }\n}\n\n// RETURN both JSON + the original binary file\nreturn {\n  json: {\n    filename,\n    fileExtension: extension,\n    fileTypeFlag\n  },\n  binary: {\n    Upload_Topic_File: bin\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        144
+      ],
+      "id": "302551ba-d2c0-4e43-81dd-2f26b3c36445",
+      "name": "Extract File Extension"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c6d8437-7644-45f8-a5b3-54ae177ff6e9",
+              "leftValue": "={{ $json.fileExtension }}",
+              "rightValue": "xlsx",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        144
+      ],
+      "id": "0efef502-6d6d-4cda-852e-2a5b25a7d11f",
+      "name": "If Excel?"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "Upload_Topic_File",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        128
+      ],
+      "id": "18c25063-af9f-4ac8-bce3-5bdf7a6aef19",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -80,
+        -64
+      ],
+      "id": "5f22df7d-10b4-44f9-a4cb-ae7ad9755f10",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from previous node\nconst items = $input.all();\n\n// First item contains extracted PDF text\nconst chapterText = items[0]?.json?.extracted_text || \"\";\n\n// All remaining items (1 to N) are the topics from Excel\nconst topicRows = items.slice(1).map(i => i.json);\n\n// Output a single unified object exactly as needed\nreturn [\n  {\n    json: {\n      extracted_text: chapterText,\n      topics: topicRows   // keep everything EXACTLY as it is\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -64
+      ],
+      "id": "0a469117-a895-4a76-a8a6-b01b1e3b93a6",
+      "name": "Clean Merge Output"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1jJRYOoz_7ygC7VmuVAUJa6jMlfcGSMGcfwTwI5USWNY",
+          "mode": "list",
+          "cachedResultName": "Mathematics Formula Separator Agentic Workflow Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jJRYOoz_7ygC7VmuVAUJa6jMlfcGSMGcfwTwI5USWNY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jJRYOoz_7ygC7VmuVAUJa6jMlfcGSMGcfwTwI5USWNY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "key_chapter_id": "={{ $json.key_chapter_id }}",
+            "res_title": "={{ $json.res_title }}",
+            "res_desc": "={{ $json.res_desc }}",
+            "latex_form": "={{ $json.latex_form }}",
+            "res_category": "={{ $json.res_category }}",
+            "res_lang": "={{ $json.res_lang }}",
+            "created_on": "={{ $json.created_on }}",
+            "created_by": "={{ $json.created_by }}",
+            "example_text": "={{ $json.example_text }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "key_chapter_id",
+              "displayName": "key_chapter_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chapter_resource_id",
+              "displayName": "chapter_resource_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "res_category",
+              "displayName": "res_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "res_alias",
+              "displayName": "res_alias",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "res_desc",
+              "displayName": "res_desc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "res_no",
+              "displayName": "res_no",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "res_creator_id",
+              "displayName": "res_creator_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "res_title",
+              "displayName": "res_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "res_type",
+              "displayName": "res_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "res_lang",
+              "displayName": "res_lang",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "no_of_pages",
+              "displayName": "no_of_pages",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_length",
+              "displayName": "video_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "pdf_link",
+              "displayName": "pdf_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_link",
+              "displayName": "video_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "audio_link",
+              "displayName": "audio_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "image_link",
+              "displayName": "image_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "attachment_link",
+              "displayName": "attachment_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "banner",
+              "displayName": "banner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "document",
+              "displayName": "document",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "comment",
+              "displayName": "comment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "interactive_content_link",
+              "displayName": "interactive_content_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "other_link",
+              "displayName": "other_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "resource_icon",
+              "displayName": "resource_icon",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "resource_thumbnail",
+              "displayName": "resource_thumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tagging_keywords",
+              "displayName": "tagging_keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "latex_form",
+              "displayName": "latex_form",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "plain_text",
+              "displayName": "plain_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "variable_explanation",
+              "displayName": "variable_explanation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "example_text",
+              "displayName": "example_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_on",
+              "displayName": "created_on",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_updated_on",
+              "displayName": "last_updated_on",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_by",
+              "displayName": "created_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_updated_by",
+              "displayName": "last_updated_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        736,
+        -64
+      ],
+      "id": "98ecf0e5-6b61-491b-9029-ae228ef94efe",
+      "name": "Append Data in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI DOCUMENT EXTRACTOR NODE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract File Extension",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Agent Reponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Agent Reponse": {
+      "main": [
+        [
+          {
+            "node": "Append Data in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI DOCUMENT EXTRACTOR NODE": {
+      "main": [
+        [
+          {
+            "node": "Clean AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean AI Output": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Extension": {
+      "main": [
+        [
+          {
+            "node": "If Excel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Excel?": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Clean Merge Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Merge Output": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "52984125-d4e0-4c98-bde5-0c4934aefea3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcc9a0a1e9fb50ed5875b5c43fbd8606f5910728c5bd86e52dab9a01ca3cb988"
+  },
+  "id": "TboccrBwntM70tcAb_9o_",
+  "tags": []
+}

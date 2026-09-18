@@ -1,0 +1,770 @@
+{
+  "name": "Question Extraction & Classification Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "text": "You are an expert OCR and text extraction system. Extract ALL visible content from this file accurately. \nDo NOT rewrite, modify, or improve yet. Just extract clean text exactly as visible.”",
+        "inputType": "binary",
+        "binaryPropertyName": "Upload_File_for_extracting_Questions_",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        96
+      ],
+      "id": "9cd068e5-3d85-49ec-b063-9a9e11d55afe",
+      "name": "AI DOCUMENT EXTRACTOR NODE",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {
+          "maxOutputTokens": 2024,
+          "temperature": 0.1,
+          "topK": 20
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        864,
+        336
+      ],
+      "id": "d550bbce-de1d-4bbb-ba81-71cd8ab1fd91",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Pw5zHzezdiuKSbPc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the merged data from extraction:\n\nQ/A Text:\n{{ $json[\"data\"] }}\n\nTopic List:\n{{ JSON.stringify($json[\"topics\"]) }}\n\nAnalyze the extracted questions and map each to exactly one topic from the provided list.\n\nReturn the complete JSON array with all fields populated including the \"topic\" field.",
+        "options": {
+          "systemMessage": "INPUT:\n- Extracted PDF text with questions\n- Topics list: [{\"chapter_name\":\"...\",\"name\":\"...\"}]\n- is_exam_paper: \"yes\"|\"no\"\n\nOUTPUT: JSON array of question objects with 22 fields.\n\n═══════════════════════════════════════════════════════════════════════════════\nFIELD RULES (E=Extract, G=Generate, D=Detect, S=Smart)\n═══════════════════════════════════════════════════════════════════════════════\n\n[E] EXTRACT ONLY - Copy from PDF, blank if missing:\n- Question: Clean question text, remove numbering\n- I,II,III,IV: MCQ options (blank for non-MCQ)\n- Correct Option(s): Answer letter if shown (a/b/c/d or a,c)\n- Exam Flag: Exam code if visible\n- Exam QNo: Question # from exam (only if is_exam_paper=\"yes\", else \"\")\n- Option: Sub-part letter (a/b/i/ii) if exists\n- Subject: If mentioned or obvious from content\n\n[S] SMART EXTRACT/GENERATE - Extract if present, else generate:\n- Marks: Extract if stated, else infer from complexity:\n  - MCQ/Fill-blanks/True-False → 1\n  - Short answer (2-3 lines) → 2\n  - Medium (multi-step/reasoning) → 3-4\n  - Long (proofs/derivations/case studies) → 5-6\n\n[D] DETECT:\n- Type of Question: MCQ-S(single)|MCQ-M(multi)|TFQ(true/false)|DES(descriptive)\n- Image or Special Words Change: \"Yes\"=actual image/diagram exists, \"NA\"=text only (math symbols ≠ image)\n- Language: \"Hindi\"=Devanagari script present, \"English\"=otherwise\n- Section: Extract if clear, detect from structure, else \"\"\n\n[G] GENERATE:\n- Sr No: Sequential \"1\",\"2\",\"3\"...\n- Correct Answer: Extract if present, else SOLVE and provide answer\n- VidyaMine Approach: 2-4 sentence solving strategy (50-100 words)\n- Solution: Step-by-step with formulas preserved\n- Topic: Match to list as \"<chapter_name> - <name>\", blank if no match\n- Time Duration: Align with marks:\n  - 1 mark → \"1-2 min\"\n  - 2 marks → \"2-3 min\"\n  - 3 marks → \"3-4 min\"\n  - 4 marks → \"4-5 min\"\n  - 5-6 marks → \"5-7 min\"\n- Difficulty: E(easy)|M(moderate)|D(difficult)|HOTS\n- Knowledge Type: IMB|DRW|PTL|ABQ|ARQ|UEQ|CON\n- For Flash Card?: \"Yes\" if solution <3 lines, else \"No\"\n- Date Extracted: Current date \"dd/mm/yyyy\"\n\n═══════════════════════════════════════════════════════════════════════════════\nMARKS INFERENCE RULES (When not stated in PDF)\n═══════════════════════════════════════════════════════════════════════════════\n\nAnalyze question depth/length/complexity:\n\n1 MARK:\n- MCQ (single/multiple choice)\n- True/False questions\n- Fill in the blanks\n- One-word answers\n- Direct recall questions\n\n2 MARKS:\n- Short answer (2-3 sentences)\n- Simple calculations (1-2 steps)\n- Define and explain briefly\n- Diagram labeling\n\n3 MARKS:\n- Medium explanations (4-6 sentences)\n- Multi-step calculations (3-4 steps)\n- Distinguish between concepts\n- Short derivations\n\n4 MARKS:\n- Detailed explanations\n- Complex calculations (5+ steps)\n- Compare and contrast\n- Application-based problems\n\n5-6 MARKS:\n- Long answers (full page)\n- Complete derivations/proofs\n- Case studies with multiple parts\n- Project/activity-based questions\n- Assertion-reason with justification\n\n═══════════════════════════════════════════════════════════════════════════════\nCRITICAL RULES\n═══════════════════════════════════════════════════════════════════════════════\n\n1. NEVER generate MCQ options - extract only\n2. Marks: Extract if present, generate if missing (MANDATORY - never leave blank)\n3. NEVER create exam codes/flags\n4. Exam QNo: ONLY fill when is_exam_paper=\"yes\"\n5. Topic: ONLY use provided list, NEVER create new\n6. Math solutions: KEEP formulas, calculations, symbols\n7. All 22 fields required, use \"\" for empty (not null)\n8. Time Duration must align with assigned marks\n\n═══════════════════════════════════════════════════════════════════════════════\nOUTPUT FORMAT\n═══════════════════════════════════════════════════════════════════════════════\n\nReturn ONLY valid JSON array:\n\n[\n  {\n    \"Sr No\": \"\",\n    \"Type of Question\": \"\",\n    \"Question\": \"\",\n    \"Image or Special Words Change\": \"\",\n    \"I\": \"\",\n    \"II\": \"\",\n    \"III\": \"\",\n    \"IV\": \"\",\n    \"Correct Option(s)\": \"\",\n    \"Correct Answer\": \"\",\n    \"Subject\": \"\",\n    \"Marks\": \"\",\n    \"Exam Flag\": \"\",\n    \"Section\": \"\",\n    \"Language\": \"\",\n    \"Exam QNo\": \"\",\n    \"Option\": \"\",\n    \"VidyaMine Approach\": \"\",\n    \"Solution\": \"\",\n    \"Topic\": \"\",\n    \"Time Duration\": \"\",\n    \"Difficulty\": \"\",\n    \"Knowledge Type\": \"\",\n    \"For Flash Card?\": \"\",\n    \"Date Extracted\": \"\"\n  }\n]\n\nRules: No markdown/code blocks, no truncation, complete JSON, \\n for line breaks, all questions included, Marks MUST always be filled."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        864,
+        112
+      ],
+      "id": "05144c4a-7c75-4022-a1b6-37bfeedbc53f",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "formTitle": "Question Extractor Workflow",
+        "formDescription": "Provide the PDF or Image Containing the questions.\n\nImp: One at a time.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload File for extracting Questions.",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Upload Excel Sheet for extracting Topics",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -288,
+        96
+      ],
+      "id": "9843ae23-5e13-47ce-bac7-e3d1666fe490",
+      "name": "On form submission",
+      "webhookId": "c5a06157-169e-45a9-b7ea-fff8cdc34510"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the output from the AI Agent\nconst item = $input.first();\nconst outputString = item.json.output;\n\n// Remove the ```json and ``` markdown wrapper if present\nlet cleanedString = outputString.trim();\n\n// Remove markdown code fences more aggressively\ncleanedString = cleanedString\n  .replace(/^```json\\s*/i, '')  // Remove opening ```json\n  .replace(/^```\\s*/i, '')       // Remove opening ```\n  .replace(/```\\s*$/i, '')       // Remove closing ```\n  .trim();\n\n// If the string doesn't end with ], try to close it properly\nif (!cleanedString.endsWith(']')) {\n  const openBrackets = (cleanedString.match(/\\[/g) || []).length;\n  const closeBrackets = (cleanedString.match(/\\]/g) || []).length;\n  const openBraces = (cleanedString.match(/\\{/g) || []).length;\n  const closeBraces = (cleanedString.match(/\\}/g) || []).length;\n  \n  for (let i = 0; i < (openBraces - closeBraces); i++) {\n    cleanedString += '\\n  }';\n  }\n  for (let i = 0; i < (openBrackets - closeBrackets); i++) {\n    cleanedString += '\\n]';\n  }\n}\n\n// Parse the JSON string\nlet parsedData;\ntry {\n  parsedData = JSON.parse(cleanedString);\n} catch (error) {\n  const jsonObjects = [];\n  const regex = /\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}/g;\n  let match;\n  \n  while ((match = regex.exec(outputString)) !== null) {\n    try {\n      const obj = JSON.parse(match[0]);\n      if (obj.Question || obj.question) {\n        jsonObjects.push(obj);\n      }\n    } catch (e) {\n      continue;\n    }\n  }\n  \n  if (jsonObjects.length > 0) {\n    parsedData = jsonObjects;\n  } else {\n    throw new Error('Failed to parse JSON: ' + error.message + '\\n\\nReceived: ' + cleanedString.substring(0, 500));\n  }\n}\n\n// Helper function to ensure marks are valid\nfunction validateMarks(marks) {\n  if (!marks || marks === \"\") return \"1\"; // Default to 1 if missing\n  const marksNum = parseInt(marks);\n  if (isNaN(marksNum) || marksNum < 1) return \"1\";\n  if (marksNum > 10) return \"6\"; // Cap at reasonable maximum\n  return marks.toString();\n}\n\n// If parsedData is an array, map each item to the output format\nif (Array.isArray(parsedData)) {\n  return parsedData.map(record => ({\n    json: {\n      \"Sr No\": record[\"Sr No\"] || record.sr_no || '',\n      \"Type of Question\": record[\"Type of Question\"] || record.question_type || 'DES',\n      \"Question\": record.Question || record.question || '',\n      \"Image or Special Words Change\": record[\"Image or Special Words Change\"] || record.image_or_special_words_change || 'NA',\n      \"I\": record.I || record.option_1 || '',\n      \"II\": record.II || record.option_2 || '',\n      \"III\": record.III || record.option_3 || '',\n      \"IV\": record.IV || record.option_4 || '',\n      \"Correct Option(s)\": record[\"Correct Option(s)\"] || record.correct_options || '',\n      \"Correct Answer\": record[\"Correct Answer\"] || record.correct_answer || '',\n      \"Subject\": record.Subject || record.subject || '',\n      \"Marks\": validateMarks(record.Marks || record.marks), // SMART VALIDATION\n      \"Exam Flag\": record[\"Exam Flag\"] || record.exam_flag || '',\n      \"Section\": record.Section || record.section || '',\n      \"Language\": record.Language || record.language || 'English',\n      \"Exam QNo\": record[\"Exam QNo\"] || record.exam_qno || '',\n      \"Option\": record.Option || record.option || '',\n      \"VidyaMine Approach\": record[\"VidyaMine Approach\"] || record.approach || '',\n      \"Solution\": record.Solution || record.solution || record.answer || '',\n      \"Topic\": record.Topic || record.topic || '',\n      \"Time Duration\": record[\"Time Duration\"] || record.time_duration || '',\n      \"Difficulty\": record.Difficulty || record.difficulty || '',\n      \"Knowledge Type\": record[\"Knowledge Type\"] || record.knowledge_type || '',\n      \"For Flash Card?\": record[\"For Flash Card?\"] || record.for_flashcard || '',\n      \"Date Extracted\": record[\"Date Extracted\"] || record.date_extracted || ''\n    }\n  }));\n} else {\n  return [{\n    json: {\n      \"Sr No\": parsedData[\"Sr No\"] || parsedData.sr_no || '',\n      \"Type of Question\": parsedData[\"Type of Question\"] || parsedData.question_type || 'DES',\n      \"Question\": parsedData.Question || parsedData.question || '',\n      \"Image or Special Words Change\": parsedData[\"Image or Special Words Change\"] || parsedData.image_or_special_words_change || 'NA',\n      \"I\": parsedData.I || parsedData.option_1 || '',\n      \"II\": parsedData.II || parsedData.option_2 || '',\n      \"III\": parsedData.III || parsedData.option_3 || '',\n      \"IV\": parsedData.IV || parsedData.option_4 || '',\n      \"Correct Option(s)\": parsedData[\"Correct Option(s)\"] || parsedData.correct_options || '',\n      \"Correct Answer\": parsedData[\"Correct Answer\"] || parsedData.correct_answer || '',\n      \"Subject\": parsedData.Subject || parsedData.subject || '',\n      \"Marks\": validateMarks(parsedData.Marks || parsedData.marks), // SMART VALIDATION\n      \"Exam Flag\": parsedData[\"Exam Flag\"] || parsedData.exam_flag || '',\n      \"Section\": parsedData.Section || parsedData.section || '',\n      \"Language\": parsedData.Language || parsedData.language || 'English',\n      \"Exam QNo\": parsedData[\"Exam QNo\"] || parsedData.exam_qno || '',\n      \"Option\": parsedData.Option || parsedData.option || '',\n      \"VidyaMine Approach\": parsedData[\"VidyaMine Approach\"] || parsedData.approach || '',\n      \"Solution\": parsedData.Solution || parsedData.solution || parsedData.answer || '',\n      \"Topic\": parsedData.Topic || parsedData.topic || '',\n      \"Time Duration\": parsedData[\"Time Duration\"] || parsedData.time_duration || '',\n      \"Difficulty\": parsedData.Difficulty || parsedData.difficulty || '',\n      \"Knowledge Type\": parsedData[\"Knowledge Type\"] || parsedData.knowledge_type || '',\n      \"For Flash Card?\": parsedData[\"For Flash Card?\"] || parsedData.for_flashcard || '',\n      \"Date Extracted\": parsedData[\"Date Extracted\"] || parsedData.date_extracted || ''\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        112
+      ],
+      "id": "816ed67c-9d92-457b-8501-5722ac60d179",
+      "name": "Parse AI Agent Reponse"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        496,
+        112
+      ],
+      "id": "8ace9a12-669e-4974-a6de-a852bfcf27d4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access binary data from the first input item\nconst item = $input.first();\nconst bin = item.binary?.Upload_Excel_Sheet_for_extracting_Topics;\n\nlet filename = null;\nlet extension = null;\nlet fileTypeFlag = \"OTHER\";\n\nif (bin && bin.fileName) {\n  filename = bin.fileName;\n  const parts = filename.split(\".\");\n  extension = parts.length > 1 ? parts.pop().toLowerCase() : null;\n  if ([\"xlsx\", \"xls\"].includes(extension)) {\n    fileTypeFlag = \"EXCEL\";\n  }\n}\n\n// RETURN both JSON + the original binary file\nreturn {\n  json: {\n    filename,\n    fileExtension: extension,\n    fileTypeFlag\n  },\n  binary: {\n    Upload_Excel_Sheet_for_extracting_Topics: bin\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        304
+      ],
+      "id": "61e4c65d-f2de-4340-9005-65654778d48c",
+      "name": "Extract File Extension"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c6d8437-7644-45f8-a5b3-54ae177ff6e9",
+              "leftValue": "={{ $json.fileExtension }}",
+              "rightValue": "xlsx",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        96,
+        304
+      ],
+      "id": "8a9ae206-d91f-47ef-84b4-387dda7af975",
+      "name": "If Excel?"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "Upload_Excel_Sheet_for_extracting_Topics",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        288
+      ],
+      "id": "1d2024cc-d063-46e4-9f9b-3526a5f8f40d",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "// The merge node gives an array of items\nconst itemsArray = items.map(i => i.json);\n\n// First element contains the Q/A extracted text\nconst first = itemsArray[0];\n\n// Extract text safely\nlet data = null;\ntry {\n  data = first.content.parts[0].text;\n} catch (e) {\n  data = \"\";\n}\n\n// Remaining items are topics\nconst topics = itemsArray.slice(1).map(t => ({\n  chapter_name: t.chapter_name,\n  name: t.name\n}));\n\nreturn [\n  {\n    json: {\n      data,\n      topics\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        112
+      ],
+      "id": "f4a779bf-c761-405d-9611-fa630dd35c36",
+      "name": "Clean Merge Output"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NT6UU1_Ery0gOVVL6zzLhxwqgzluMYJyfojGvQAUfV8",
+          "mode": "list",
+          "cachedResultName": "Question Extraction & Classification Data (n8n)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NT6UU1_Ery0gOVVL6zzLhxwqgzluMYJyfojGvQAUfV8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NT6UU1_Ery0gOVVL6zzLhxwqgzluMYJyfojGvQAUfV8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Sr No": "={{ $json[\"Sr No\"] }}",
+            "Type of Question ": "={{ $json[\"Type of Question\"] }}",
+            "Questions": "={{ $json.Question }}",
+            "Image or Special Words Change": "={{ $json[\"Image or Special Words Change\"] }}",
+            "I": "={{ $json.I }}",
+            "II": "={{ $json.II }}",
+            "III": "={{ $json.III }}",
+            "IV": "={{ $json.IV }}",
+            "Correct Option(s)": "={{ $json[\"Correct Option(s)\"] }}",
+            "Correct Answer": "={{ $json[\"Correct Answer\"] }}",
+            "Subject": "={{ $json.Subject }}",
+            "Time Duration": "={{ $json[\"Time Duration\"] }}",
+            "Marks": "={{ $json.Marks }}",
+            "Difficulty Level": "={{ $json.Difficulty }}",
+            "Type of Knowledge to be Used": "={{ $json[\"Knowledge Type\"] }}",
+            "Topic": "={{ $json.Topic }}",
+            "Exam Flag": "={{ $json[\"Exam Flag\"] }}",
+            "Section": "={{ $json.Section }}",
+            "Language": "={{ $json.Language }}",
+            "Exam QNo": "={{ $json[\"Exam QNo\"] }}",
+            "Option": "={{ $json.Option }}",
+            "For Flash Card?": "={{ $json[\"For Flash Card?\"] }}",
+            "VidyaMine Approch": "={{ $json[\"VidyaMine Approach\"] }}",
+            "Solution": "={{ $json.Solution }}",
+            "Date Extracted": "={{ $json[\"Date Extracted\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Index",
+              "displayName": "Index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Sr No",
+              "displayName": "Sr No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type of Question ",
+              "displayName": "Type of Question ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Questions",
+              "displayName": "Questions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image or Special Words Change",
+              "displayName": "Image or Special Words Change",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "I",
+              "displayName": "I",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "II",
+              "displayName": "II",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "III",
+              "displayName": "III",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IV",
+              "displayName": "IV",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Correct Option(s)",
+              "displayName": "Correct Option(s)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Correct Answer",
+              "displayName": "Correct Answer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Course",
+              "displayName": "Course",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Key Chapter No",
+              "displayName": "Key Chapter No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Length",
+              "displayName": "Length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Time Duration",
+              "displayName": "Time Duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Marks",
+              "displayName": "Marks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Difficulty Level",
+              "displayName": "Difficulty Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type of Knowledge to be Used",
+              "displayName": "Type of Knowledge to be Used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Book Flag",
+              "displayName": "Book Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Chapter No",
+              "displayName": "Chapter No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Exercise",
+              "displayName": "Exercise",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Question No",
+              "displayName": "Question No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ex Type",
+              "displayName": "Ex Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Activity Number",
+              "displayName": "Activity Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Flag",
+              "displayName": "Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Key Chapter Name",
+              "displayName": "Key Chapter Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Topic No",
+              "displayName": "Topic No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Exam Flag",
+              "displayName": "Exam Flag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Section",
+              "displayName": "Section",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Language",
+              "displayName": "Language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sub type",
+              "displayName": "Sub type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Exam QNo",
+              "displayName": "Exam QNo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Option",
+              "displayName": "Option",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "For Flash Card?",
+              "displayName": "For Flash Card?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "VidyaMine Approch",
+              "displayName": "VidyaMine Approch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Solution",
+              "displayName": "Solution",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Extracted",
+              "displayName": "Date Extracted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1376,
+        112
+      ],
+      "id": "3ce5ebbe-3517-4cf0-a4d0-02953b2498fc",
+      "name": "Append Data in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI DOCUMENT EXTRACTOR NODE": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Agent Reponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI DOCUMENT EXTRACTOR NODE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract File Extension",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Agent Reponse": {
+      "main": [
+        [
+          {
+            "node": "Append Data in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Clean Merge Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Extension": {
+      "main": [
+        [
+          {
+            "node": "If Excel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Excel?": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Clean Merge Output": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6ef0ba18-cf80-41ec-93f9-bc9b72cd55f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcc9a0a1e9fb50ed5875b5c43fbd8606f5910728c5bd86e52dab9a01ca3cb988"
+  },
+  "id": "FpwW2zorB1LSc4sOskZEq",
+  "tags": []
+}

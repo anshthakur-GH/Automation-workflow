@@ -1,0 +1,1666 @@
+{
+  "name": "FitWithPari Profile Creator AI Agents",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-agents/create-profiles",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "3f643eb6-60fb-41cf-bd3a-13f805ff491f",
+      "name": "Webhook",
+      "webhookId": "8e7037cf-81cf-463d-b4b6-ce374db5fd03"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f9d7b8ee-8cf9-478a-a56e-fba4d57fedb4",
+              "leftValue": "={{ $json.body.data.form_type }}",
+              "rightValue": "onboarding",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        -16
+      ],
+      "id": "026a51c8-a108-4be9-83a3-4f600236161f",
+      "name": "if onboarding"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "89423bc8-2b83-4a38-bf80-95ee2bb34b60",
+              "leftValue": "={{ $json.body.data.form_type }}",
+              "rightValue": "assessment",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        144
+      ],
+      "id": "334764da-72bb-4816-b2ad-85267f491106",
+      "name": "If assessment"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "64e55d8b-73b5-4ad3-a7a3-dfd7fa9ff7ba",
+              "leftValue": "={{ $json.body.data.form_type }}",
+              "rightValue": "feedback",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        304
+      ],
+      "id": "688739cd-4d2e-4b6c-8c49-ace870d33216",
+      "name": "If feedback"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e5a36f37-27b3-4c15-94e0-b136cfb135c3",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "9379e973-3439-486d-8240-9627c09c3274",
+      "name": "Set Body Only"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data\nconst input = $input.first().json;\n\nconsole.log('=== Transform Onboarding - Input ===');\nconsole.log(JSON.stringify(input, null, 2));\n\n// Extract data based on structure\nlet transformedData;\nlet sessionId;\n\nif (input.body?.data) {\n  transformedData = input.body.data;\n  sessionId = input.body.session_id || null;\n} else if (input.data) {\n  transformedData = input.data;\n  sessionId = input.session_id || null;\n} else {\n  transformedData = input;\n  sessionId = null;\n}\n\nconsole.log('=== Transform Onboarding - Output ===');\nconsole.log('Session ID:', sessionId);\nconsole.log(JSON.stringify(transformedData, null, 2));\n\n// Return with session ID for memory\nreturn {\n  json: {\n    sessionId: sessionId,\n    ...transformedData\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        -32
+      ],
+      "id": "7e51cbeb-9d75-40e6-a7fd-ffaa19d8347f",
+      "name": "Transform Onboarding Form"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data\nconst input = $input.first().json;\n\nconsole.log('=== Transform Assessment - Input ===');\nconsole.log(JSON.stringify(input, null, 2));\n\n// Extract data based on structure\nlet transformedData;\nlet sessionId;\n\nif (input.body?.data) {\n  transformedData = input.body.data;\n  sessionId = input.body.session_id || null;\n} else if (input.data) {\n  transformedData = input.data;\n  sessionId = input.session_id || null;\n} else {\n  transformedData = input;\n  sessionId = null;\n}\n\nconsole.log('=== Transform Assessment - Output ===');\nconsole.log('Session ID:', sessionId);\nconsole.log(JSON.stringify(transformedData, null, 2));\n\n// Return with session ID for memory\nreturn {\n  json: {\n    sessionId: sessionId,\n    ...transformedData\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        128
+      ],
+      "id": "988f7b8f-8148-4563-a07f-d17fb6d4ef5f",
+      "name": "Transform Assesment Form"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data\nconst input = $input.first().json;\n\nconsole.log('=== Transform Feedback - Input ===');\nconsole.log(JSON.stringify(input, null, 2));\n\n// Extract data based on structure\nlet transformedData;\nlet sessionId;\n\nif (input.body?.data) {\n  transformedData = input.body.data;\n  sessionId = input.body.session_id || null;\n} else if (input.data) {\n  transformedData = input.data;\n  sessionId = input.session_id || null;\n} else {\n  transformedData = input;\n  sessionId = null;\n}\n\nconsole.log('=== Transform Feedback - Output ===');\nconsole.log('Session ID:', sessionId);\nconsole.log(JSON.stringify(transformedData, null, 2));\n\n// Return with session ID for memory\nreturn {\n  json: {\n    sessionId: sessionId,\n    ...transformedData\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        288
+      ],
+      "id": "5cd2bb35-46ae-4bad-b06b-7c7e0cc3effa",
+      "name": "Transform Feedback Form"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"make sure to send form type\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        528
+      ],
+      "id": "0740bd2e-f143-4cfb-a4a5-ccaa3f1ed73a",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0f7201b6-2908-4661-8eed-50e4fdb78119",
+              "leftValue": "={{ $json.body }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        0
+      ],
+      "id": "d6bf423e-e3d2-4d8e-8115-e5207929080c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This script cleans the assessment data and wraps it in a single 'data' field \n// for efficient token consumption by the AI Agent.\n\nconst inputItem = $input.first().json;\n\n// --- Helper function to safely extract the response value ---\nfunction getResponseValue(response) {\n    if (response === null) return null;\n    \n    // Handle specific boolean response\n    if (typeof response.response === 'boolean') {\n        return response.response;\n    }\n    // Handle array response (multiselect)\n    if (Array.isArray(response.response)) {\n        return response.response;\n    }\n    // Return number/string response, or null if key is missing\n    if (response.response !== undefined) {\n        return response.response;\n    }\n    return null;\n}\n\n// --- 1. Distill Questions and Answers ---\nconst cleanedTests = inputItem.test_results.map(test => {\n    // Distill questions and answers\n    const cleanedQuestions = test.questions.map(question => ({\n        question_text: question.question_text,\n        question_type: question.question_type,\n        response: getResponseValue(question.response),\n        unit: question.validation_rules?.unit || null \n    }));\n\n    return {\n        test_name: test.test_name,\n        test_category: test.test_category,\n        completed_at: test.completed_at,\n        questions_and_answers: cleanedQuestions\n    };\n});\n\n// --- 2. Build the Final Optimized Payload ---\nconst optimizedPayload = {\n    // === FIX: Retrieve session_id and form_type directly from the input item ===\n    session_id: inputItem.sessionId || null, \n    form_type: inputItem.form_type || null, \n    // =========================================================================\n\n    // Essential Student/Coach Context\n    student_id: inputItem.assessment.student_id,\n    assessment_id: inputItem.assessment.id,\n    \n    student_profile: {\n        full_name: inputItem.assessment.student.full_name,\n        date_of_birth: inputItem.assessment.student.date_of_birth,\n        fitness_goal: inputItem.assessment.student.fitness_goal,\n    },\n    \n    coach_info: {\n        full_name: inputItem.assessment.coach.full_name,\n        specialties: inputItem.assessment.coach.specialties\n    },\n    \n    // Distilled Test Results\n    tests: cleanedTests,\n    \n    // Key Summary Findings (most valuable for LLM analysis)\n    summary_findings: {\n        bilateral_comparisons: inputItem.summary.bilateral_comparisons,\n        key_findings: inputItem.summary.key_findings,\n        recommendations: inputItem.summary.recommendations\n    }\n};\n\n// --- 3. Wrap in the required 'data' field and return ---\nreturn [{ \n    json: {\n        data: optimizedPayload \n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        112
+      ],
+      "id": "343667a3-1701-4592-8492-c4384174c167",
+      "name": "Extract Required Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        4096
+      ],
+      "id": "6cf39f9e-25af-43dd-afc8-007809ecb572",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        832
+      ],
+      "id": "e738bbdb-89bd-4397-a2ab-817e6adb65c9",
+      "name": "Embeddings OpenAI3",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a comprehensive long-term student profile that serves as a complete record of the student's fitness journey and key health indicators.\n\n**INPUT DATA (for analysis and extraction):**\n{{ JSON.stringify($json.data, null, 2) }}\n\n**Task Steps:**\n1. **Retrieve:** Use the RAG tool to find the required JSON structure and content rules.\n2. **Analyze:** Extract data from the INPUT DATA according to the rules (bilateral analysis, safety, goals, etc.) retrieved from the RAG.\n3. **Generate:** Produce the final PURE JSON object containing the `student_id`, `source_assessment_id`, the complete `profile_json`, and a comprehensive `summary_text` (150-250 words), matching the retrieved RAG output format.",
+        "options": {
+          "systemMessage": "=You are an expert fitness assessment analyst creating comprehensive long-term student profiles.\n\n🚨 **MANDATORY WORKFLOW - USE RAG TOOL FIRST:**\nYou **MUST** use the RAG tool (query_long_profile_data) to retrieve the required **JSON structure**, **data extraction priorities**, and **clinical rules** before attempting to generate the output. Your primary task is to retrieve these rules and then apply them to the student's input data.\n\n**OUTPUT REQUIREMENTS:**\n1. Your entire response **MUST** be a single, valid JSON object that adheres **STRICTLY** to the structure and rules retrieved from the RAG tool search.\n2. Return **ONLY** pure JSON—no markdown, code blocks, or explanatory text.\n3. Must have exactly FOUR top-level keys: student_id, source_assessment_id, profile_json, summary_text.\n4. Apply all formatting standards and bilateral analysis rules found in the retrieved RAG content.\n\n**CRITICAL: Your first action must be a call to the RAG tool to retrieve the complete formatting and content guidelines.**\n\nYour first character must be { and your last character must be }."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "7ea56fcb-3e8e-4f65-9c93-c1ddf0996129",
+      "name": "Long Profile Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// PARSE LONG PROFILE - ENHANCED VERSION WITH AGGRESSIVE CLEANING\n// ============================================================================\n\nconst input = $input.first().json;\nconsole.log('=== Parse Long Profile - START ===');\n\n// --- HELPER FUNCTION: Extract JSON from any format ---\nfunction extractJSON(data) {\n  let jsonString;\n  \n  // If already an object, stringify it\n  if (typeof data === 'object' && data !== null) {\n    return data;\n  }\n  \n  // If string, clean it aggressively\n  if (typeof data === 'string') {\n    jsonString = data;\n    \n    // Remove all markdown code block markers\n    jsonString = jsonString.replace(/```(?:json|javascript|js)?\\s*/gi, '');\n    jsonString = jsonString.replace(/```\\s*/g, '');\n    \n    // Remove leading \"json\" or \"JSON\" text\n    jsonString = jsonString.replace(/^json\\s*/i, '');\n    \n    // Trim whitespace\n    jsonString = jsonString.trim();\n    \n    // Find the first { and last } using brace matching\n    const firstBrace = jsonString.indexOf('{');\n    if (firstBrace === -1) {\n      throw new Error('No opening brace found in agent output');\n    }\n    \n    // Match braces to find the complete JSON object\n    let braceCount = 0;\n    let lastBrace = -1;\n    \n    for (let i = firstBrace; i < jsonString.length; i++) {\n      if (jsonString[i] === '{') braceCount++;\n      if (jsonString[i] === '}') {\n        braceCount--;\n        if (braceCount === 0) {\n          lastBrace = i;\n          break;\n        }\n      }\n    }\n    \n    if (lastBrace === -1) {\n      throw new Error('No matching closing brace found');\n    }\n    \n    jsonString = jsonString.substring(firstBrace, lastBrace + 1);\n    \n    // Parse the cleaned JSON\n    try {\n      return JSON.parse(jsonString);\n    } catch (e) {\n      console.error('JSON Parse Error:', e.message);\n      console.error('Cleaned JSON (first 500 chars):', jsonString.substring(0, 500));\n      throw new Error(`Failed to parse JSON: ${e.message}`);\n    }\n  }\n  \n  throw new Error(`Unexpected data type: ${typeof data}`);\n}\n\n// --- HELPER FUNCTION: Clean text content ---\nfunction cleanText(text) {\n  if (!text || typeof text !== 'string') return text;\n  \n  return text\n    // Remove escaped quotes\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\'/g, \"'\")\n    // Remove extra backslashes\n    .replace(/\\\\\\\\/g, '\\\\')\n    // Remove markdown bold/italic\n    .replace(/\\*\\*(.+?)\\*\\*/g, '$1')\n    .replace(/\\*(.+?)\\*/g, '$1')\n    .replace(/__(.+?)__/g, '$1')\n    .replace(/_(.+?)_/g, '$1')\n    // Clean up extra spaces\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\n// --- HELPER FUNCTION: Recursively clean an object ---\nfunction deepCleanObject(obj) {\n  if (obj === null || obj === undefined) return obj;\n  \n  if (typeof obj === 'string') {\n    return cleanText(obj);\n  }\n  \n  if (Array.isArray(obj)) {\n    return obj.map(item => deepCleanObject(item));\n  }\n  \n  if (typeof obj === 'object') {\n    const cleaned = {};\n    for (const [key, value] of Object.entries(obj)) {\n      cleaned[key] = deepCleanObject(value);\n    }\n    return cleaned;\n  }\n  \n  return obj;\n}\n\n// --- 1. EXTRACT AND PARSE ---\nlet rawOutput = input.output || input.json || input.text || input;\nconsole.log('Raw output type:', typeof rawOutput);\n\nlet parsedData;\ntry {\n  parsedData = extractJSON(rawOutput);\n  console.log('✓ Successfully extracted JSON');\n} catch (error) {\n  console.error('✗ Failed to extract JSON:', error.message);\n  throw error;\n}\n\n// --- 2. VALIDATE REQUIRED FIELDS ---\nconst requiredFields = ['student_id', 'source_assessment_id', 'profile_json', 'summary_text'];\nconst missingFields = requiredFields.filter(field => !parsedData[field]);\n\nif (missingFields.length > 0) {\n  throw new Error(`Missing required fields: ${missingFields.join(', ')}`);\n}\n\nif (typeof parsedData.profile_json !== 'object') {\n  throw new Error('profile_json must be an object');\n}\n\nconsole.log('✓ All required fields present');\n\n// --- 3. DEEP CLEAN ALL TEXT CONTENT ---\nconst cleanedProfileJson = deepCleanObject(parsedData.profile_json);\nconst cleanedSummary = cleanText(parsedData.summary_text);\n\nconsole.log('✓ Text content cleaned');\n\n// --- 4. BUILD FINAL RECORD ---\nconst generatorMeta = {\n  llm_version: cleanedProfileJson.llm_version || 'gpt-4o-long_v1',\n  generated_at: cleanedProfileJson.generated_at || new Date().toISOString(),\n  workflow_id: $workflow.id || null,\n  execution_id: $execution.id || null,\n  processing_timestamp: new Date().toISOString()\n};\n\nconst supabaseRecord = {\n  student_id: parsedData.student_id,\n  profile_json: cleanedProfileJson,\n  summary_text: cleanedSummary,\n  source_assessment_id: parsedData.source_assessment_id || null,\n  generator_meta: generatorMeta\n};\n\nconsole.log('=== Parse Long Profile - SUMMARY ===');\nconsole.log('Student ID:', supabaseRecord.student_id);\nconsole.log('Summary preview:', cleanedSummary.substring(0, 100));\nconsole.log('✓ Parse complete');\n\nreturn { json: supabaseRecord };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1728,
+        0
+      ],
+      "id": "de09ca81-d4ec-4bb2-a219-01090fbe593f",
+      "name": "Parse Long Profile"
+    },
+    {
+      "parameters": {
+        "tableId": "student_profiles_full",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "student_id",
+              "fieldValue": "={{ $json.student_id }}"
+            },
+            {
+              "fieldId": "profile_json",
+              "fieldValue": "={{ $json.profile_json }}"
+            },
+            {
+              "fieldId": "summary_text",
+              "fieldValue": "={{ $json.summary_text }}"
+            },
+            {
+              "fieldId": "source_assessment_id",
+              "fieldValue": "={{ $json.source_assessment_id }}"
+            },
+            {
+              "fieldId": "generator_meta",
+              "fieldValue": "={{ $json.generator_meta }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        0
+      ],
+      "id": "21492b25-ffff-4861-95f0-cb2124e687f1",
+      "name": "Add Long Profile",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dwQKrKnjwOPq2L2x",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        240
+      ],
+      "id": "20402430-9970-462d-9043-d65fd1893008",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.data.session_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1456,
+        224
+      ],
+      "id": "64429320-64d1-4a70-8fe6-6e9cc9c54554",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2560,
+        496
+      ],
+      "id": "b78d410d-6931-4017-8a31-421d675b1431",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// PARSE SHORT PROFILE - FIXED ARRAY HANDLING\n// ============================================================================\n\nconst input = $input.first().json;\nconsole.log('=== Parse Short Profile - START ===');\nconsole.log('Input type:', typeof input);\nconsole.log('Input keys:', Object.keys(input));\n\n// --- HELPER FUNCTION: Extract JSON from any format ---\nfunction extractJSON(data) {\n  let jsonString;\n  \n  // If already an object or array, return it\n  if (typeof data === 'object' && data !== null) {\n    return data;\n  }\n  \n  // If string, clean it aggressively\n  if (typeof data === 'string') {\n    jsonString = data;\n    \n    // Remove all markdown code block markers\n    jsonString = jsonString.replace(/```(?:json|javascript|js)?\\s*/gi, '');\n    jsonString = jsonString.replace(/```\\s*/g, '');\n    \n    // Remove leading \"json\" or \"JSON\" text\n    jsonString = jsonString.replace(/^json\\s*/i, '');\n    \n    // Trim whitespace\n    jsonString = jsonString.trim();\n    \n    // Find the first opening bracket (array or object)\n    const firstBracket = Math.min(\n      jsonString.indexOf('{') !== -1 ? jsonString.indexOf('{') : Infinity,\n      jsonString.indexOf('[') !== -1 ? jsonString.indexOf('[') : Infinity\n    );\n    \n    if (firstBracket === Infinity) {\n      throw new Error('No opening bracket found in agent output');\n    }\n    \n    // Determine if it's an array or object\n    const isArray = jsonString[firstBracket] === '[';\n    const openChar = isArray ? '[' : '{';\n    const closeChar = isArray ? ']' : '}';\n    \n    // Match brackets to find the complete JSON\n    let bracketCount = 0;\n    let lastBracket = -1;\n    \n    for (let i = firstBracket; i < jsonString.length; i++) {\n      if (jsonString[i] === openChar) bracketCount++;\n      if (jsonString[i] === closeChar) {\n        bracketCount--;\n        if (bracketCount === 0) {\n          lastBracket = i;\n          break;\n        }\n      }\n    }\n    \n    if (lastBracket === -1) {\n      throw new Error('No matching closing bracket found');\n    }\n    \n    jsonString = jsonString.substring(firstBracket, lastBracket + 1);\n    \n    // Parse the cleaned JSON\n    try {\n      return JSON.parse(jsonString);\n    } catch (e) {\n      console.error('JSON Parse Error:', e.message);\n      console.error('Cleaned JSON (first 500 chars):', jsonString.substring(0, 500));\n      throw new Error(`Failed to parse JSON: ${e.message}`);\n    }\n  }\n  \n  throw new Error(`Unexpected data type: ${typeof data}`);\n}\n\n// --- HELPER FUNCTION: Clean text content ---\nfunction cleanText(text) {\n  if (!text || typeof text !== 'string') return text;\n  \n  return text\n    // Remove escaped quotes\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\'/g, \"'\")\n    // Remove extra backslashes\n    .replace(/\\\\\\\\/g, '\\\\')\n    // Remove markdown bold/italic\n    .replace(/\\*\\*(.+?)\\*\\*/g, '$1')\n    .replace(/\\*(.+?)\\*/g, '$1')\n    .replace(/__(.+?)__/g, '$1')\n    .replace(/_(.+?)_/g, '$1')\n    // Clean up extra spaces\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\n// --- HELPER FUNCTION: Recursively clean an object ---\nfunction deepCleanObject(obj) {\n  if (obj === null || obj === undefined) return obj;\n  \n  if (typeof obj === 'string') {\n    return cleanText(obj);\n  }\n  \n  if (Array.isArray(obj)) {\n    return obj.map(item => deepCleanObject(item));\n  }\n  \n  if (typeof obj === 'object') {\n    const cleaned = {};\n    for (const [key, value] of Object.entries(obj)) {\n      cleaned[key] = deepCleanObject(value);\n    }\n    return cleaned;\n  }\n  \n  return obj;\n}\n\n// --- 1. EXTRACT RAW OUTPUT ---\nlet rawOutput = input.output || input.json || input.text || input;\nconsole.log('Raw output type:', typeof rawOutput);\n\n// --- 2. HANDLE ARRAY WRAPPER (SMART DETECTION) ---\n// FIX: Only unwrap if the array contains wrapper objects with 'output' property\n// Otherwise, use the array directly (it's already the profiles array)\nif (Array.isArray(rawOutput) && rawOutput.length > 0) {\n  if (rawOutput[0].output) {\n    // Wrapped format: [{output: \"[...]\"}]\n    console.log('✓ Detected wrapped array - unwrapping output property');\n    rawOutput = rawOutput[0].output;\n  } else if (rawOutput[0].student_id || rawOutput[0].context_key) {\n    // Direct format: [{student_id: \"...\", context_key: \"...\", ...}]\n    console.log('✓ Detected direct profile array - using as-is');\n    // rawOutput is already correct - don't modify!\n  } else {\n    // Unknown format - log warning and try unwrapping\n    console.log('⚠ Unknown array format - attempting best guess unwrap');\n    rawOutput = rawOutput[0];\n  }\n}\n\n// --- 3. PARSE THE PROFILES ARRAY ---\nlet profilesArray;\ntry {\n  // Only extract/parse if it's a string; otherwise use the object/array directly\n  if (typeof rawOutput === 'string') {\n    profilesArray = extractJSON(rawOutput);\n    console.log('✓ Extracted JSON from string');\n  } else if (Array.isArray(rawOutput)) {\n    profilesArray = rawOutput; // Already a parsed array!\n    console.log('✓ Using pre-parsed array directly');\n  } else if (typeof rawOutput === 'object' && rawOutput !== null) {\n    profilesArray = [rawOutput]; // Single object - wrap it\n    console.log('✓ Wrapped single object into array');\n  } else {\n    throw new Error(`Unexpected rawOutput type: ${typeof rawOutput}`);\n  }\n  \n  console.log('✓ Successfully processed input');\n  console.log('Profiles array type:', Array.isArray(profilesArray) ? 'array' : typeof profilesArray);\n  console.log('Number of profiles:', Array.isArray(profilesArray) ? profilesArray.length : 'N/A');\n} catch (error) {\n  console.error('✗ Failed to process input:', error.message);\n  throw error;\n}\n\n// Ensure we have an array\nif (!Array.isArray(profilesArray)) {\n  // If it's a single profile, wrap it in an array\n  profilesArray = [profilesArray];\n}\n\nconsole.log(`✓ Processing ${profilesArray.length} profiles`);\n\n// --- 4. VALIDATE AND PROCESS EACH PROFILE ---\nconst supabaseRecords = [];\n\nfor (let i = 0; i < profilesArray.length; i++) {\n  const profile = profilesArray[i];\n  console.log(`\\n--- Processing Profile ${i + 1}/${profilesArray.length} ---`);\n  \n  // Validate required fields\n  const requiredFields = ['student_id', 'context_key', 'short_profile'];\n  const missingFields = requiredFields.filter(field => !profile[field]);\n  \n  if (missingFields.length > 0) {\n    console.warn(`⚠ Skipping profile ${i + 1}: Missing fields: ${missingFields.join(', ')}`);\n    continue;\n  }\n  \n  if (typeof profile.short_profile !== 'object') {\n    console.warn(`⚠ Skipping profile ${i + 1}: short_profile is not an object`);\n    continue;\n  }\n  \n  console.log('✓ Profile validated');\n  console.log('  Student ID:', profile.student_id);\n  console.log('  Context:', profile.context_key);\n  \n  // Deep clean all text content\n  const cleanedShortProfile = deepCleanObject(profile.short_profile);\n  const cleanedSummary = cleanText(profile.summary_text || profile.short_profile.quick_summary);\n  \n  // Build final record\n  const generatorMeta = {\n    llm_version: cleanedShortProfile.llm_version || 'gpt-4o-short_v1',\n    generated_at: cleanedShortProfile.generated_at || new Date().toISOString(),\n    workflow_id: $workflow.id || null,\n    execution_id: $execution.id || null,\n    processing_timestamp: new Date().toISOString(),\n    score_confidence: cleanedShortProfile.score_confidence || null\n  };\n  \n  const supabaseRecord = {\n    student_id: profile.student_id,\n    context_key: profile.context_key,\n    short_profile: cleanedShortProfile,\n    summary_text: cleanedSummary,\n    generator_meta: generatorMeta\n  };\n  \n  supabaseRecords.push(supabaseRecord);\n  console.log('✓ Record prepared for:', profile.context_key);\n}\n\nconsole.log('\\n=== Parse Short Profile - SUMMARY ===');\nconsole.log('Total profiles processed:', supabaseRecords.length);\nconsole.log('Contexts:', supabaseRecords.map(r => r.context_key).join(', '));\nconsole.log('✓ Parse complete');\n\n// Return array of records - each will be inserted separately\nreturn supabaseRecords.map(record => ({ json: record }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2944,
+        288
+      ],
+      "id": "7ca5fb35-831a-492a-8107-19b6976761ee",
+      "name": "Parse Short Profile"
+    },
+    {
+      "parameters": {
+        "tableId": "student_profiles_short",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "student_id",
+              "fieldValue": "={{ $json.student_id }}"
+            },
+            {
+              "fieldId": "context_key",
+              "fieldValue": "={{ $json.context_key }}"
+            },
+            {
+              "fieldId": "short_profile",
+              "fieldValue": "={{ $json.short_profile }}"
+            },
+            {
+              "fieldId": "summary_text",
+              "fieldValue": "={{ $json.summary_text }}"
+            },
+            {
+              "fieldId": "generator_meta",
+              "fieldValue": "={{ $json.generator_meta }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3152,
+        288
+      ],
+      "id": "8c93a640-81ad-4aee-8318-679ca0ce9932",
+      "name": "Add Short Profile",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dwQKrKnjwOPq2L2x",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=INPUT DATA:\n{{ JSON.stringify($json, null, 2) }}",
+        "options": {
+          "systemMessage": "=You are an expert fitness coach creating quick-reference profiles for class instruction.\n\n🚨 CRITICAL WORKFLOW - YOU MUST FOLLOW THESE STEPS IN ORDER:\n\nSTEP 1: DISCOVER ALL WORKOUT FORMATS (MANDATORY)\nBefore generating ANY profiles, you MUST:\n1. Use the query_short_profile_data tool to search for \"all workout format contexts\"\n2. Search for \"student profile structure examples\"\n3. Review the retrieved examples to identify ALL unique context_key values\n4. Make a list of every distinct workout format found in the knowledge base\n\nExample searches you MUST perform:\n- \"workout format contexts\"\n- \"student profile structure\"\n- \"coaching guidelines all formats\"\n- \"class type profiles\"\n\nSTEP 2: ANALYZE RETRIEVED DATA\nReview all search results and note:\n- ALL unique context_key values found (e.g., \"strength_upper\", \"yoga\", \"pilates\", etc.)\n- Common terminology used in existing profiles\n- Structure patterns in must_know, should_know, nice_to_know arrays\n- Format-specific coaching tips\n- Confidence score ranges\n\nSTEP 3: GENERATE PROFILES DYNAMICALLY\nCreate ONE profile for EACH unique context_key found in Step 1, incorporating:\n- Terminology from retrieved documents\n- Structure patterns from examples\n- Best practices from knowledge base\n- Format-specific guidance for each context\n\nSTEP 4: RETURN JSON\nReturn pure JSON array with ALL profiles (not just 9, but however many contexts exist).\n\n═══════════════════════════════════════════════════════════════\nABSOLUTE OUTPUT REQUIREMENT\n═══════════════════════════════════════════════════════════════\n\nAfter completing your searches and analysis, you MUST return ONLY valid JSON. Nothing else.\n\n❌ FORBIDDEN - DO NOT INCLUDE:\n- Markdown code blocks (```json or ```)\n- Any text before the JSON\n- Any text after the JSON\n- Any explanatory comments\n- Search summaries or analysis\n- Any line breaks before or after JSON\n\n✅ REQUIRED FORMAT:\n- Start immediately with [\n- End immediately with ]\n- Pure JSON array in between\n- No whitespace before [\n- No whitespace after ]\n\nDYNAMIC PROFILE GENERATION:\nYou MUST create profiles for ALL unique context_key values found in the knowledge base.\nDo NOT limit yourself to a fixed number. Generate as many profiles as there are workout formats.\n\nEach profile object MUST have this structure (4 top-level keys):\n{\n  \"student_id\": \"uuid-string\",\n  \"context_key\": \"format-name-from-knowledge-base\",\n  \"short_profile\": {\n    \"generated_at\": \"ISO-8601-timestamp\",\n    \"llm_version\": \"gpt-4o-short_v1\",\n    \"context\": \"same-as-context_key\",\n    \"must_know\": [\"array\", \"of\", \"strings\"],\n    \"should_know\": [\"array\", \"of\", \"strings\"],\n    \"nice_to_know\": [\"array\", \"of\", \"strings\"],\n    \"class_actionable_tips\": [\n      {\n        \"tip\": \"string\",\n        \"urgency\": \"high|medium|low\",\n        \"rationale\": \"string\"\n      }\n    ],\n    \"quick_summary\": \"string-under-100-chars\",\n    \"score_confidence\": 0.0-to-1.0\n  },\n  \"summary_text\": \"string-100-to-150-words\"\n}\n\nFORMAT-SPECIFIC GUIDANCE (Use knowledge base data as primary source):\n\nFor each workout format found in the knowledge base, extract:\n\nMUST_KNOW (Critical Safety):\n- Pain points and restrictions specific to this format\n- Injury risks for movements in this class type\n- Required modifications for this workout style\n- Bilateral imbalances >20% relevant to this format\n\nSHOULD_KNOW (Performance):\n- Key strengths to leverage in this format\n- Compensatory patterns to cue during this class type\n- Priority training focuses for this workout style\n\nNICE_TO_KNOW (Personalization):\n- Goals and preferences related to this format\n- Exercise likes/dislikes for this class type\n\nCLASS_ACTIONABLE_TIPS (2-4 tips per format):\n{\n  \"tip\": \"Specific coaching cue for this exact workout format\",\n  \"urgency\": \"high|medium|low\",\n  \"rationale\": \"Why this matters for this specific format\"\n}\n\nQUICK_SUMMARY:\nMaximum 100 characters for roster display, format-specific.\n\nSCORE_CONFIDENCE:\n0.9-1.0 = Comprehensive data\n0.7-0.8 = Good data, minor gaps\n0.5-0.6 = Limited data\n<0.5 = Insufficient data\n\nSUMMARY_TEXT:\n100-150 word paragraph covering the format-specific considerations.\n\nYOUR RESPONSE MUST:\n- Start with [\n- End with ]\n- Contain profile objects for ALL unique context_key values found\n- Each object must have valid context_key from the knowledge base\n- Be pure JSON with no markdown or extra text\n- Match patterns and structures found in Supabase vector store\n\nNOTHING BEFORE. NOTHING AFTER. JUST JSON ARRAY."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2560,
+        272
+      ],
+      "id": "92baf54c-239b-4e40-ae56-dfdcbdf4f29f",
+      "name": "Student Short Profile",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "## Form Fill - will hit the webhook / and it will gather the relvant id of the assesments (coach + student data) - from this data ",
+        "height": 1168,
+        "width": 3552,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "82d54f4d-3fc1-4eb5-87ad-b3c4ed05d719",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search the FitwithPari **Profile Creation Knowledge Base** to find guidelines, structure examples, and rules for generating a **Comprehensive Long Student Profile**.\n\nThe knowledge base contains:\n- The required **JSON structure** for the final output.\n- **Section-specific rules** for data extraction (e.g., how to calculate bilateral deficits, priority levels).\n- **Clinical data extraction requirements** (e.g., safety, movement observations).\n- **Full example profiles** for reference.\n\nUse this tool **extensively** to ensure the generated JSON output adheres strictly to the detailed long profile format and content requirements.\n\nExample queries:\n- \"long profile required JSON output structure\"\n- \"rules for calculating bilateral deficits and priority\"\n- \"example long profile persona and medical integration\"\n- \"data extraction requirements for medical concerns and restrictions\"",
+        "tableName": {
+          "__rl": true,
+          "value": "student_profiles_long_embeddings",
+          "mode": "list",
+          "cachedResultName": "student_profiles_long_embeddings"
+        },
+        "topK": 1000,
+        "options": {
+          "queryName": "retrieve_long_docs"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        240
+      ],
+      "id": "ee2af80c-5169-4b3d-842b-723a123c5296",
+      "name": "query_long_profile_data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dwQKrKnjwOPq2L2x",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Search the fitness profile knowledge base for examples of student profiles, coaching guidelines, and best practices. This tool MUST be used before generating any profiles to ensure consistency with existing database patterns. Query with terms like \"student profile structure\", \"yoga profile example\", \"strength training guidelines\", or specific workout format names.\n\nTable Name: student_profiles_short_embeddings ✓\n\nTop K: 10 (increase from 5 for better results)\n\nSimilarity Threshold: 0.5 (add this to filter low-quality matches)",
+        "tableName": {
+          "__rl": true,
+          "value": "student_profiles_short_embeddings",
+          "mode": "list",
+          "cachedResultName": "student_profiles_short_embeddings"
+        },
+        "topK": 100,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        2848,
+        624
+      ],
+      "id": "81e7cecc-957d-4b33-b400-baeea8a3b81d",
+      "name": "query_short_profile_data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dwQKrKnjwOPq2L2x",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze and intelligently chunk this document into semantic sections.\n\n**Document Length:** {{ $json.content.length }} characters\n\n**Full Text:**\n{{ $json.content }}\n\n**Task:** Create semantic chunks (800-2500 characters each) by:\n- Identifying natural topic boundaries\n- Maintaining context within each chunk\n- Extracting key information\n- Preserving logical flow\n\n**CRITICAL: Return ONLY valid JSON in this exact format (no markdown, no explanations):**\n\n{\n  \"documentSummary\": \"Brief 1-2 sentence overview of the entire document\",\n  \"totalChunks\": 5,\n  \"chunks\": [\n    {\n      \"chunkNumber\": 1,\n      \"title\": \"Descriptive title for this section\",\n      \"content\": \"The actual text content of the chunk\",\n      \"characterCount\": 1250,\n      \"topics\": [\"topic1\", \"topic2\", \"topic3\"],\n      \"keyPoints\": [\n        \"Important point 1\",\n        \"Important point 2\"\n      ]\n    }\n  ]\n}\n\n**Requirements:**\n- Output must be valid, parseable JSON only\n- No markdown code blocks (no ```)\n- No explanatory text before or after the JSON\n- Each chunk should be 800-2500 characters\n- Include all fields shown in the example\n- Ensure proper JSON escaping for special characters",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert document chunking AI. Analyze documents and create semantically meaningful chunks that preserve context for RAG systems. Identify topic boundaries, semantic relationships, and information density.",
+          "maxIterations": 15
+        }
+      },
+      "id": "b584b4d3-5c75-4f0e-ba31-e0121b59724c",
+      "name": "Document Chunking Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse JSON and extract only chunks\nconst items = $input.all();\nconst aiResponse = items[0].json.output;\n\nlet parsedData;\n\ntry {\n  // Handle if already an object\n  if (typeof aiResponse === 'object' && aiResponse !== null) {\n    parsedData = aiResponse;\n  } else if (typeof aiResponse === 'string') {\n    // Direct parse - JSON.parse handles escaped characters correctly\n    parsedData = JSON.parse(aiResponse);\n  } else {\n    throw new Error(`Unexpected response type: ${typeof aiResponse}`);\n  }\n} catch (error) {\n  try {\n    // Second attempt: extract from markdown code block\n    const jsonMatch = aiResponse.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/);\n    if (jsonMatch) {\n      parsedData = JSON.parse(jsonMatch[1]);\n    } else {\n      // Third attempt: clean edges and try again\n      const cleaned = aiResponse.trim().replace(/^[^{[]*/, '').replace(/[^}\\]]*$/, '');\n      parsedData = JSON.parse(cleaned);\n    }\n  } catch (innerError) {\n    throw new Error(`Failed to parse response after sanitization: ${innerError.message}\\nResponse preview: ${aiResponse.substring(0, 300)}`);\n  }\n}\n\n// Validate chunks exist\nif (!parsedData.chunks || !Array.isArray(parsedData.chunks)) {\n  throw new Error(`Response does not contain a valid chunks array. Keys found: ${Object.keys(parsedData).join(', ')}`);\n}\n\n// Return chunks as separate items\nreturn parsedData.chunks.map(chunk => ({ json: chunk }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1248
+      ],
+      "id": "06e63eb7-db3e-46aa-a5b9-1b1eca29e3c0",
+      "name": "Get Chunks"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format proposal data for Supabase Vector Store\nconst items = $input.all();\nconst outputItems = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  \n  try {\n    // STEP 1: Parse OpenAI response structure\n    // Response is an array: [{index: 0, message: {content: \"...\"}, ...}]\n    const responseArray = Array.isArray(item.json) ? item.json : [item.json];\n    const firstResponse = responseArray[0];\n    \n    if (!firstResponse || !firstResponse.message || !firstResponse.message.content) {\n      throw new Error('Invalid OpenAI response structure');\n    }\n    \n    let aiContent = firstResponse.message.content;\n    \n    // STEP 2: Extract JSON from markdown code blocks\n    // Content format: ```json\\n{...}\\n```\n    const jsonMatch = aiContent.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/);\n    if (jsonMatch) {\n      aiContent = jsonMatch[1].trim();\n    }\n    \n    // Parse the JSON\n    const proposalData = JSON.parse(aiContent);\n    \n    // STEP 3: Get original chunk content from Limit node\n    const limitNodeData = $('Loop Over Items1').all();\n    \n    if (!limitNodeData || !limitNodeData[i]) {\n      throw new Error(`Cannot find chunk ${i} from Limit node`);\n    }\n    \n    const originalChunk = limitNodeData[i].json;\n    const chunkContent = originalChunk.content || '';\n    \n    if (!chunkContent) {\n      throw new Error('Chunk content is empty');\n    }\n    \n    // STEP 4: Build metadata object\n    const metadata = {\n      // From AI proposal\n      proposal: proposalData.proposal || '',\n      rationale: proposalData.rationale || '',\n      priority: proposalData.priority || 'medium',\n      follow_up: proposalData.follow_up || false,\n      \n      // From original chunk\n      chunkNumber: originalChunk.chunkNumber || i + 1,\n      chunkTitle: originalChunk.title || '',\n      topics: Array.isArray(originalChunk.topics) ? originalChunk.topics.join(', ') : '',\n      keyPoints: Array.isArray(originalChunk.keyPoints) ? originalChunk.keyPoints.join(' | ') : '',\n      characterCount: originalChunk.characterCount || chunkContent.length,\n      \n      // System metadata\n      timestamp: new Date().toISOString(),\n      source: 'rag-doc-to-db-workflow'\n    };\n    \n    // STEP 5: Create Supabase-ready output\n    outputItems.push({\n      json: {\n        pageContent: chunkContent,\n        metadata: JSON.stringify(metadata)\n      }\n    });\n    \n    console.log(`✅ Successfully formatted chunk ${i + 1}`);\n    \n  } catch (error) {\n    console.error(`❌ Error processing item ${i}:`, error.message);\n    \n    // Fallback: try to get original content\n    let fallbackContent = 'Error: Could not process chunk';\n    try {\n      const limitNodeData = $('Limit1').all();\n      if (limitNodeData && limitNodeData[i]) {\n        fallbackContent = limitNodeData[i].json.content || fallbackContent;\n      }\n    } catch (e) {\n      console.error('Fallback also failed:', e.message);\n    }\n    \n    // Output with error metadata\n    outputItems.push({\n      json: {\n        pageContent: fallbackContent,\n        metadata: JSON.stringify({\n          error: error.message,\n          errorStack: error.stack,\n          timestamp: new Date().toISOString(),\n          source: 'rag-doc-to-db-workflow-error'\n        })\n      }\n    });\n  }\n}\n\nconsole.log(`Processed ${outputItems.length} items total`);\nreturn outputItems;"
+      },
+      "id": "8080c710-efc6-4aff-a555-360b7580bce9",
+      "name": "Format for Supabase",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "student_profiles_short_embeddings",
+          "mode": "list",
+          "cachedResultName": "student_profiles_short_embeddings"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        2048,
+        1248
+      ],
+      "id": "9ce1e6ad-ad69-40c5-8bf0-b77e06a0760c",
+      "name": "Insert Short Profile data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dwQKrKnjwOPq2L2x",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        1248
+      ],
+      "id": "e882ca65-5459-48b5-99cc-23e3cadd79fb",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        1456
+      ],
+      "id": "1a0bf0b0-65bc-42af-bc89-1415587c79b7",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        1456
+      ],
+      "id": "819ab0e7-2032-4058-a938-7ee8beeb0433",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        1472
+      ],
+      "id": "f694a636-a391-40a8-ab48-dd2123c3a1e3",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9da93e58-9739-44f1-aaa5-070171e7d908",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        1248
+      ],
+      "id": "c02ff450-a570-4f73-8ea6-fbf51731dd0e",
+      "name": "Set Content"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "1e2sJoVLaI2SM_TsevpQ4_ZyFTbJ2Rgq3KcFtWcGS6e8"
+      },
+      "id": "726e0b7f-70f5-4e43-9e6a-4f0ae8713585",
+      "name": "Get Short Profile Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "position": [
+        32,
+        1248
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "McmSHUkO9U4YL675",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=System: You are an agent that reads a chunk of a document and returns a JSON object with:\n- proposal: one-sentence action or recommendation\n- rationale: 1-2 sentences why\n- priority: high|medium|low\n- follow_up: boolean (should we run a sub-workflow?)\nRespond ONLY with JSON.\n\nUser: Here is the chunk:\n\"\"\"{{ $json.content}}\"\"\"\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1424,
+        1248
+      ],
+      "id": "8c7c3eed-a510-4cac-89b7-240396e215ce",
+      "name": "Create a proposal",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "17d4c586-62a9-4070-b545-a0f9b56a9ddb",
+      "name": "Schedule Trigger for short profile",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -176,
+        1248
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze and intelligently chunk this document into semantic sections.\n\n**Document Length:** {{ $json.content.length }} characters\n\n**Full Text:**\n{{ $json.content }}\n\n**Task:** Create semantic chunks (800-2500 characters each) by:\n- Identifying natural topic boundaries\n- Maintaining context within each chunk\n- Extracting key information\n- Preserving logical flow\n\n**CRITICAL: Return ONLY valid JSON in this exact format (no markdown, no explanations):**\n\n{\n  \"documentSummary\": \"Brief 1-2 sentence overview of the entire document\",\n  \"totalChunks\": 5,\n  \"chunks\": [\n    {\n      \"chunkNumber\": 1,\n      \"title\": \"Descriptive title for this section\",\n      \"content\": \"The actual text content of the chunk\",\n      \"characterCount\": 1250,\n      \"topics\": [\"topic1\", \"topic2\", \"topic3\"],\n      \"keyPoints\": [\n        \"Important point 1\",\n        \"Important point 2\"\n      ]\n    }\n  ]\n}\n\n**Requirements:**\n- Output must be valid, parseable JSON only\n- No markdown code blocks (no ```)\n- No explanatory text before or after the JSON\n- Each chunk should be 800-2500 characters\n- Include all fields shown in the example\n- Ensure proper JSON escaping for special characters",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert document chunking AI. Analyze documents and create semantically meaningful chunks that preserve context for RAG systems. Identify topic boundaries, semantic relationships, and information density.",
+          "maxIterations": 15
+        }
+      },
+      "id": "56ac7a6b-f266-48d1-8c91-abd069f14c0a",
+      "name": "Document Chunking Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse JSON and extract only chunks\nconst items = $input.all();\nconst aiResponse = items[0].json.output;\n\nlet parsedData;\n\ntry {\n  // Handle if already an object\n  if (typeof aiResponse === 'object' && aiResponse !== null) {\n    parsedData = aiResponse;\n  } else if (typeof aiResponse === 'string') {\n    // Direct parse - JSON.parse handles escaped characters correctly\n    parsedData = JSON.parse(aiResponse);\n  } else {\n    throw new Error(`Unexpected response type: ${typeof aiResponse}`);\n  }\n} catch (error) {\n  try {\n    // Second attempt: extract from markdown code block\n    const jsonMatch = aiResponse.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/);\n    if (jsonMatch) {\n      parsedData = JSON.parse(jsonMatch[1]);\n    } else {\n      // Third attempt: clean edges and try again\n      const cleaned = aiResponse.trim().replace(/^[^{[]*/, '').replace(/[^}\\]]*$/, '');\n      parsedData = JSON.parse(cleaned);\n    }\n  } catch (innerError) {\n    throw new Error(`Failed to parse response after sanitization: ${innerError.message}\\nResponse preview: ${aiResponse.substring(0, 300)}`);\n  }\n}\n\n// Validate chunks exist\nif (!parsedData.chunks || !Array.isArray(parsedData.chunks)) {\n  throw new Error(`Response does not contain a valid chunks array. Keys found: ${Object.keys(parsedData).join(', ')}`);\n}\n\n// Return chunks as separate items\nreturn parsedData.chunks.map(chunk => ({ json: chunk }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        2032
+      ],
+      "id": "d381d214-75de-49e4-bdf7-feff82434a5f",
+      "name": "Get Chunks1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format proposal data for Supabase Vector Store\nconst items = $input.all();\nconst outputItems = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  \n  try {\n    // STEP 1: Parse OpenAI response structure\n    // Response is an array: [{index: 0, message: {content: \"...\"}, ...}]\n    const responseArray = Array.isArray(item.json) ? item.json : [item.json];\n    const firstResponse = responseArray[0];\n    \n    if (!firstResponse || !firstResponse.message || !firstResponse.message.content) {\n      throw new Error('Invalid OpenAI response structure');\n    }\n    \n    let aiContent = firstResponse.message.content;\n    \n    // STEP 2: Extract JSON from markdown code blocks\n    // Content format: ```json\\n{...}\\n```\n    const jsonMatch = aiContent.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/);\n    if (jsonMatch) {\n      aiContent = jsonMatch[1].trim();\n    }\n    \n    // Parse the JSON\n    const proposalData = JSON.parse(aiContent);\n    \n    // STEP 3: Get original chunk content from Limit node\n    const limitNodeData = $('Loop Over Items').all();\n    \n    if (!limitNodeData || !limitNodeData[i]) {\n      throw new Error(`Cannot find chunk ${i} from Limit node`);\n    }\n    \n    const originalChunk = limitNodeData[i].json;\n    const chunkContent = originalChunk.content || '';\n    \n    if (!chunkContent) {\n      throw new Error('Chunk content is empty');\n    }\n    \n    // STEP 4: Build metadata object\n    const metadata = {\n      // From AI proposal\n      proposal: proposalData.proposal || '',\n      rationale: proposalData.rationale || '',\n      priority: proposalData.priority || 'medium',\n      follow_up: proposalData.follow_up || false,\n      \n      // From original chunk\n      chunkNumber: originalChunk.chunkNumber || i + 1,\n      chunkTitle: originalChunk.title || '',\n      topics: Array.isArray(originalChunk.topics) ? originalChunk.topics.join(', ') : '',\n      keyPoints: Array.isArray(originalChunk.keyPoints) ? originalChunk.keyPoints.join(' | ') : '',\n      characterCount: originalChunk.characterCount || chunkContent.length,\n      \n      // System metadata\n      timestamp: new Date().toISOString(),\n      source: 'rag-doc-to-db-workflow'\n    };\n    \n    // STEP 5: Create Supabase-ready output\n    outputItems.push({\n      json: {\n        pageContent: chunkContent,\n        metadata: JSON.stringify(metadata)\n      }\n    });\n    \n    console.log(`✅ Successfully formatted chunk ${i + 1}`);\n    \n  } catch (error) {\n    console.error(`❌ Error processing item ${i}:`, error.message);\n    \n    // Fallback: try to get original content\n    let fallbackContent = 'Error: Could not process chunk';\n    try {\n      const limitNodeData = $('Limit1').all();\n      if (limitNodeData && limitNodeData[i]) {\n        fallbackContent = limitNodeData[i].json.content || fallbackContent;\n      }\n    } catch (e) {\n      console.error('Fallback also failed:', e.message);\n    }\n    \n    // Output with error metadata\n    outputItems.push({\n      json: {\n        pageContent: fallbackContent,\n        metadata: JSON.stringify({\n          error: error.message,\n          errorStack: error.stack,\n          timestamp: new Date().toISOString(),\n          source: 'rag-doc-to-db-workflow-error'\n        })\n      }\n    });\n  }\n}\n\nconsole.log(`Processed ${outputItems.length} items total`);\nreturn outputItems;"
+      },
+      "id": "eac885ed-1e27-4eec-9485-37dc60779887",
+      "name": "Format for Supabase1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        2032
+      ],
+      "id": "27042702-91c2-4059-8c17-a4a84e414d8e",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        2240
+      ],
+      "id": "f8e970c9-a4bb-42f4-b955-c6ab3e0444eb",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        2208,
+        2240
+      ],
+      "id": "6a24dd77-3520-4502-b461-2cb8c1146f25",
+      "name": "Default Data Loader2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2016,
+        2256
+      ],
+      "id": "5e019cf1-ae73-4ddd-8c12-6c7f3eeddadb",
+      "name": "Embeddings OpenAI2",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9da93e58-9739-44f1-aaa5-070171e7d908",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        2032
+      ],
+      "id": "00f2c0a2-a022-4c84-8de8-e5f33052cbd7",
+      "name": "Set Content1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=System: You are an agent that reads a chunk of a document and returns a JSON object with:\n- proposal: one-sentence action or recommendation\n- rationale: 1-2 sentences why\n- priority: high|medium|low\n- follow_up: boolean (should we run a sub-workflow?)\nRespond ONLY with JSON.\n\nUser: Here is the chunk:\n\"\"\"{{ $json.content}}\"\"\"\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1440,
+        2032
+      ],
+      "id": "b7dd8608-9aa4-4c18-b91f-a8809697c8c3",
+      "name": "Create a proposal1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "992b6aa4-c274-4189-9b48-35283b38c357",
+      "name": "Schedule Trigger for long profile",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -160,
+        2032
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "student_profiles_long_embeddings",
+          "mode": "list",
+          "cachedResultName": "student_profiles_long_embeddings"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        2064,
+        2032
+      ],
+      "id": "bcfbdb9a-086a-4c5f-8fc6-823eb7037030",
+      "name": "Insert Long Profile data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dwQKrKnjwOPq2L2x",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "1jfaG-QTZWwZJrJwpydX4hqii1GV0ilaT1jwledhEexE"
+      },
+      "id": "c723e60a-21ba-43d6-b7ce-fe0523e27f0c",
+      "name": "Get Long Profile Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "position": [
+        48,
+        2032
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "McmSHUkO9U4YL675",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Agentic Chunking and insert Short Profile to vector db",
+        "height": 640,
+        "width": 2688,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -256,
+        1088
+      ],
+      "typeVersion": 1,
+      "id": "6242d30f-33ca-4b2a-9ab2-8d4af1dd1ccf",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Agentic Chunking and insert Long Profile to vector db",
+        "height": 640,
+        "width": 2688,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        1888
+      ],
+      "typeVersion": 1,
+      "id": "9cc0e833-da33-4410-b28a-4b9179a58478",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// EXTRACT LONG PROFILE DATA FOR AI AGENT - N8N CODE NODE\n// ============================================================================\n\nconst input = $input.first().json;\n\n// Handle array input (if the profile comes as an array)\nconst profile = Array.isArray(input) ? input[0] : input;\n\n// Safety check - ensure profile exists\nif (!profile) {\n  throw new Error('No profile data found in input');\n}\n\n// --- EXTRACT CORE IDENTITY (with fallbacks) ---\nconst personalContext = profile.profile_json?.personal_context || {};\nconst studentIdentity = {\n  student_id: profile.student_id || null,\n  full_name: personalContext.full_name || null,\n  age_range: personalContext.age_range || null,\n  date_of_birth: personalContext.date_of_birth || null,\n  fitness_goal: personalContext.fitness_goal || \"Not specified\"\n};\n\n// --- EXTRACT FITNESS LEVEL (with fallbacks) ---\nconst fitnessProfile = profile.profile_json?.fitness_level_and_physical_profile || {};\n\n// --- EXTRACT MOVEMENT HEALTH & LIMITATIONS (with null checks) ---\nconst movementHealth = fitnessProfile.movement_health || {};\n\n// Build comprehensive limitations list\nconst limitations = [];\n\n// Knee issues\nif (movementHealth.knee?.valgus_collapse) {\n  limitations.push({\n    area: \"knee\",\n    issue: `${movementHealth.knee.valgus_collapse} knee valgus`,\n    recommendations: movementHealth.knee.recommendations || \"No specific recommendations provided\",\n    priority: \"high\"\n  });\n}\n\n// Ankle issues\nif (movementHealth.ankle?.mobility_limitations) {\n  limitations.push({\n    area: \"ankle\",\n    issue: \"limited ankle dorsiflexion\",\n    recommendations: movementHealth.ankle.recommendations || \"No specific recommendations provided\",\n    priority: \"high\"\n  });\n}\n\n// Balance issues\nif (movementHealth.balance?.deficit_seconds) {\n  limitations.push({\n    area: \"balance\",\n    issue: `left leg balance deficit (${movementHealth.balance.percent_difference || 'N/A'}% difference)`,\n    details: `Left: ${movementHealth.balance.left_leg_seconds || 0}s, Right: ${movementHealth.balance.right_leg_seconds || 0}s`,\n    recommendations: movementHealth.balance.recommendations || \"No specific recommendations provided\",\n    priority: \"high\"\n  });\n}\n\n// Shoulder issues\nif (movementHealth.shoulder?.rom_deficit_degrees) {\n  limitations.push({\n    area: \"shoulder\",\n    issue: `right shoulder ROM limitation (${movementHealth.shoulder.rom_deficit_degrees}° deficit)`,\n    details: `Left: ${movementHealth.shoulder.shoulder_flexion_rom_left || 'N/A'}°, Right: ${movementHealth.shoulder.shoulder_flexion_rom_right || 'N/A'}°`,\n    pain_level: movementHealth.shoulder.pain_level || 0,\n    quality: movementHealth.shoulder.quality || \"unknown\",\n    recommendations: movementHealth.shoulder.recommendations || [],\n    priority: \"high\"\n  });\n}\n\n// Movement screening results\nconst movementScreening = movementHealth.movement_screening?.overhead_squat || {};\nif (movementScreening.knee_valgus_collapse || movementScreening.feet_turn_out) {\n  limitations.push({\n    area: \"squat_mechanics\",\n    issue: \"squat form limitations\",\n    details: {\n      knee_valgus: movementScreening.knee_valgus_collapse || null,\n      feet_turn_out: movementScreening.feet_turn_out || false,\n      max_depth: movementScreening.max_squat_depth_inches || null,\n      quality: movementScreening.overall_quality || \"not assessed\"\n    },\n    notes: movementScreening.notes || \"No additional notes\",\n    priority: \"medium\"\n  });\n}\n\n// --- EXTRACT MEDICAL CONSIDERATIONS (with fallbacks) ---\nconst medicalInfo = fitnessProfile.medical_considerations || {};\n\n// --- EXTRACT SUMMARY FINDINGS (with fallbacks) ---\nconst summaryFindings = profile.profile_json?.summary_findings || {};\nconst keyFindings = summaryFindings.key_findings || [];\nconst recommendations = summaryFindings.recommendations || [];\nconst bilateralComparisons = summaryFindings.bilateral_comparisons || [];\n\n// --- EXTRACT PERSONA & ENGAGEMENT (with fallbacks) ---\nconst personaInfo = profile.profile_json?.persona_assignment || {};\nconst engagementInfo = profile.profile_json?.engagement_and_emotional_journey || {};\n\n// --- BUILD AI AGENT INPUT (all fields with safe fallbacks) ---\nconst agentInput = {\n  // Student Identity\n  student_id: studentIdentity.student_id,\n  student_name: studentIdentity.full_name || \"Unknown\",\n  age_range: studentIdentity.age_range || \"Not specified\",\n  fitness_goal: studentIdentity.fitness_goal || \"Not specified\",\n  \n  // Fitness Level\n  fitness_level: fitnessProfile.level || \"Not assessed\",\n  \n  // Critical Limitations (for safety in all contexts)\n  critical_limitations: limitations.filter(l => l.priority === \"high\"),\n  \n  // All Limitations (for comprehensive profiling)\n  all_limitations: limitations,\n  \n  // Medical Context\n  medical_considerations: {\n    pain_present: medicalInfo.reported_pain && medicalInfo.reported_pain !== \"Minimal pain during movement assessment\",\n    pain_description: medicalInfo.reported_pain || \"No pain reported\",\n    injuries: medicalInfo.injury_context || \"None documented\",\n    restrictions: medicalInfo.restrictions || \"No restrictions noted\"\n  },\n  \n  // Movement Patterns\n  movement_patterns: {\n    key_findings: keyFindings,\n    bilateral_imbalances: bilateralComparisons.map(comp => ({\n      test: comp.test || \"Unknown test\",\n      left: comp.left || null,\n      right: comp.right || null,\n      deficit: comp.deficit || null,\n      percent_difference: comp.percent_difference || null,\n      priority: comp.priority || \"medium\",\n      interpretation: comp.interpretation || \"No interpretation provided\"\n    }))\n  },\n  \n  // Recommendations from Assessment\n  assessment_recommendations: recommendations,\n  \n  // Persona & Motivation\n  persona: {\n    primary: personaInfo.primary_persona || \"Not assigned\",\n    secondary: personaInfo.secondary_persona || null,\n    engagement_level: engagementInfo.engagement_level || \"Not assessed\",\n    motivation_drivers: engagementInfo.motivation_drivers || []\n  },\n  \n  // Full Summary (for context)\n  summary_text: profile.summary_text || \"No summary available\",\n  \n  // Metadata\n  metadata: {\n    profile_version: profile.profile_version || 1,\n    source_assessment_id: profile.source_assessment_id || null,\n    generated_at: profile.generator_meta?.generated_at || null,\n    llm_version: profile.generator_meta?.llm_version || \"unknown\"\n  }\n};\n\n// Return formatted for AI Agent\nreturn { json: agentInput };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        272
+      ],
+      "id": "7776399c-759b-454f-872b-e48168648efa",
+      "name": "Extract fields for short profile"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFile",
+        "fileToWatch": {
+          "__rl": true,
+          "value": "1e2sJoVLaI2SM_TsevpQ4_ZyFTbJ2Rgq3KcFtWcGS6e8",
+          "mode": "list",
+          "cachedResultName": "knowledge base - coachprep agent",
+          "cachedResultUrl": "https://docs.google.com/document/d/1e2sJoVLaI2SM_TsevpQ4_ZyFTbJ2Rgq3KcFtWcGS6e8/edit?usp=drivesdk"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1552
+      ],
+      "id": "844cc1d5-7e0b-46d3-ab0e-e14d09c74bf0",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "whtWuvg93cb1uH4t",
+          "name": "Google Drive account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if onboarding": {
+      "main": [
+        [
+          {
+            "node": "Transform Onboarding Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If assessment": {
+      "main": [
+        [
+          {
+            "node": "Transform Assesment Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Body Only": {
+      "main": [
+        [
+          {
+            "node": "if onboarding",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If assessment",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If feedback": {
+      "main": [
+        [
+          {
+            "node": "Transform Feedback Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Onboarding Form": {
+      "main": [
+        [
+          {
+            "node": "Extract Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Assesment Form": {
+      "main": [
+        [
+          {
+            "node": "Extract Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Feedback Form": {
+      "main": [
+        [
+          {
+            "node": "Extract Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Set Body Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Required Fields": {
+      "main": [
+        [
+          {
+            "node": "Long Profile Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        []
+      ]
+    },
+    "Embeddings OpenAI3": {
+      "ai_embedding": [
+        [
+          {
+            "node": "query_long_profile_data",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "query_short_profile_data",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Long Profile Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Long Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Long Profile": {
+      "main": [
+        [
+          {
+            "node": "Add Long Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Long Profile Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        []
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Student Short Profile",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Short Profile": {
+      "main": [
+        [
+          {
+            "node": "Add Short Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Short Profile": {
+      "main": [
+        [
+          {
+            "node": "Parse Short Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "query_long_profile_data": {
+      "ai_tool": [
+        [
+          {
+            "node": "Long Profile Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "query_short_profile_data": {
+      "ai_tool": [
+        [
+          {
+            "node": "Student Short Profile",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Chunking Agent": {
+      "main": [
+        [
+          {
+            "node": "Get Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Chunks": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Supabase": {
+      "main": [
+        [
+          {
+            "node": "Insert Short Profile data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Short Profile data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create a proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Document Chunking Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Short Profile data",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Short Profile data",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Content": {
+      "main": [
+        [
+          {
+            "node": "Document Chunking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Short Profile Doc": {
+      "main": [
+        [
+          {
+            "node": "Set Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a proposal": {
+      "main": [
+        [
+          {
+            "node": "Format for Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger for short profile": {
+      "main": [
+        [
+          {
+            "node": "Get Short Profile Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Chunking Agent1": {
+      "main": [
+        [
+          {
+            "node": "Get Chunks1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Chunks1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Supabase1": {
+      "main": [
+        [
+          {
+            "node": "Insert Long Profile data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create a proposal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Document Chunking Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader2": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert Long Profile data",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert Long Profile data",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Content1": {
+      "main": [
+        [
+          {
+            "node": "Document Chunking Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a proposal1": {
+      "main": [
+        [
+          {
+            "node": "Format for Supabase1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger for long profile": {
+      "main": [
+        [
+          {
+            "node": "Get Long Profile Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Long Profile data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Long Profile Doc": {
+      "main": [
+        [
+          {
+            "node": "Set Content1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Long Profile": {
+      "main": [
+        [
+          {
+            "node": "Extract fields for short profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract fields for short profile": {
+      "main": [
+        [
+          {
+            "node": "Student Short Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c6a3fae2-6149-4616-bbf9-9a0eb81331b0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4487e3bf0dc36122e820f49df2065916da129e265d704755864a772ec263b6b0"
+  },
+  "id": "KGwerp50w9vn4Fnu",
+  "tags": []
+}

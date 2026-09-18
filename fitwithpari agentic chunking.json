@@ -1,0 +1,283 @@
+{
+  "name": "fitwithpari agentic chunking",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "193a2377-aec3-4afb-afb0-4bcc4fb8961c",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -1008,
+        304
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/1aO0dNf8GUFRaNLzFjDV4Blnp2bn7Aq61j64RIwHfEi8/"
+      },
+      "id": "6648ad1a-fcca-4668-b6ea-178b252bea55",
+      "name": "Get Document",
+      "type": "n8n-nodes-base.googleDocs",
+      "position": [
+        -784,
+        304
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "8qhis65GMrcNAKf9",
+          "name": "Google Docs account -cognigenai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract full text from Google Doc\nconst items = $input.all();\nconst outputItems = [];\n\nfor (const item of items) {\n  const text = item.json.text || item.json.content || '';\n  \n  // Clean and prepare text\n  const cleanText = text.trim();\n  \n  outputItems.push({\n    json: {\n      fullText: cleanText,\n      documentId: item.json.documentId,\n      title: item.json.title || 'Untitled Document',\n      textLength: cleanText.length,\n      wordCount: cleanText.split(/\\s+/).length\n    }\n  });\n}\n\nreturn outputItems;"
+      },
+      "id": "extract-prepare-node",
+      "name": "Extract and Prepare Text",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -560,
+        304
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create initial chunks for AI analysis\nconst items = $input.all();\nconst outputItems = [];\n\nfor (const item of items) {\n  const fullText = item.json.fullText;\n  const chunkSize = 1500; // Larger initial chunks for AI to analyze\n  const overlap = 300;\n  \n  const chunks = [];\n  \n  for (let i = 0; i < fullText.length; i += (chunkSize - overlap)) {\n    const start = i;\n    const end = Math.min(i + chunkSize, fullText.length);\n    const chunkText = fullText.substring(start, end);\n    \n    chunks.push({\n      text: chunkText,\n      start: start,\n      end: end,\n      chunkNumber: chunks.length + 1\n    });\n    \n    // Stop if we've reached the end\n    if (end >= fullText.length) break;\n  }\n  \n  outputItems.push({\n    json: {\n      fullText: fullText,\n      documentId: item.json.documentId,\n      documentTitle: item.json.title,\n      totalChunks: chunks.length,\n      chunks: chunks\n    }\n  });\n}\n\nreturn outputItems;"
+      },
+      "id": "initial-chunks-node",
+      "name": "Break Into Initial Chunks",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -336,
+        304
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse AI response and create final chunks\nconst items = $input.all();\nconst outputItems = [];\n\nfor (const item of items) {\n  let aiResponse;\n  \n  try {\n    // The OpenAI node returns the message content directly\n    // It could be in item.json.message or item.json directly\n    let content = '';\n    \n    if (typeof item.json === 'string') {\n      // If the entire response is a string\n      content = item.json;\n    } else if (item.json.message) {\n      // If it's in a message property\n      content = item.json.message;\n    } else if (item.json.content) {\n      // If it's in a content property\n      content = item.json.content;\n    } else if (item.json.choices && item.json.choices[0]) {\n      // Standard OpenAI API format (fallback)\n      content = item.json.choices[0].message.content;\n    } else {\n      // Try to stringify and parse the entire object\n      content = JSON.stringify(item.json);\n    }\n    \n    // Remove markdown code blocks if present\n    content = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n    \n    // Parse the JSON content\n    aiResponse = JSON.parse(content);\n    \n    // Validate structure\n    if (!aiResponse.refinedChunks || !Array.isArray(aiResponse.refinedChunks)) {\n      throw new Error('Invalid response structure from AI');\n    }\n    \n    // Get document metadata from previous node\n    const docData = $('Break Into Initial Chunks').first().json;\n    \n    // Create output items for each refined chunk\n    for (const chunk of aiResponse.refinedChunks) {\n      outputItems.push({\n        json: {\n          pageContent: chunk.text,\n          metadata: {\n            chunkId: chunk.chunkId,\n            totalChunks: aiResponse.totalChunks,\n            topic: chunk.topic,\n            importance: chunk.importance,\n            keywords: chunk.keywords || [],\n            documentId: docData.documentId,\n            documentTitle: docData.documentTitle,\n            documentSummary: aiResponse.documentSummary,\n            chunkingMethod: 'agentic-ai-refined',\n            timestamp: new Date().toISOString()\n          }\n        }\n      });\n    }\n    \n  } catch (e) {\n    // Fallback: use the initial chunks if AI parsing fails\n    console.error('AI parsing failed:', e.message);\n    console.error('Raw item.json:', JSON.stringify(item.json, null, 2));\n    \n    const docData = $('Break Into Initial Chunks').first().json;\n    \n    for (let i = 0; i < docData.chunks.length; i++) {\n      const chunk = docData.chunks[i];\n      outputItems.push({\n        json: {\n          pageContent: chunk.text,\n          metadata: {\n            chunkId: i + 1,\n            totalChunks: docData.totalChunks,\n            topic: 'Fallback chunk ' + (i + 1),\n            importance: 5,\n            keywords: [],\n            documentId: docData.documentId,\n            documentTitle: docData.documentTitle,\n            chunkingMethod: 'fallback-initial',\n            error: e.message,\n            rawResponse: JSON.stringify(item.json),\n            timestamp: new Date().toISOString()\n          }\n        }\n      });\n    }\n  }\n}\n\nreturn outputItems;"
+      },
+      "id": "parse-json-node",
+      "name": "Parse JSON Response",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        240,
+        304
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "student_profiles_short_embeddings",
+          "cachedResultName": "student_profiles_short_embeddings"
+        },
+        "embeddingBatchSize": 1000,
+        "options": {}
+      },
+      "id": "548044f4-3b67-48fb-9a6b-96fd3e1c4f1f",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        464,
+        304
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "supabaseApi": {
+          "id": "VKoabbJQnegsVFoB",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d005f638-a908-487c-b94f-ba012f9bcda5",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "position": [
+        472,
+        528
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "HICWIosPabWx10xu",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6a4dcfee-ba08-4baf-b285-a5fbc84f098d",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        600,
+        528
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert document chunking AI. Your task is to analyze text chunks and refine their boundaries based on semantic meaning and topic changes. Always return ONLY valid JSON with no additional text or explanation.",
+              "role": "system"
+            },
+            {
+              "content": "=Analyze the following document chunks and create semantically coherent chunks with clear topic boundaries.\n\n**Document Title:** {{ $json.documentTitle }}\n**Total Initial Chunks:** {{ $json.totalChunks }}\n\n**Preliminary Chunks:**\n{{ JSON.stringify($json.chunks, null, 2) }}\n\n**Your Task:**\n1. Identify natural semantic boundaries (topic changes, section breaks, context shifts)\n2. Merge or split chunks as needed for semantic coherence\n3. Assign a descriptive topic to each chunk\n4. Rate importance (1-10) based on information density\n5. Extract 3-7 key terms/keywords per chunk\n\n**Required JSON Response Format:**\n```json\n{\n  \"refinedChunks\": [\n    {\n      \"chunkId\": 1,\n      \"text\": \"The actual refined chunk text\",\n      \"topic\": \"Brief descriptive topic\",\n      \"importance\": 8,\n      \"keywords\": [\"keyword1\", \"keyword2\", \"keyword3\"]\n    }\n  ],\n  \"totalChunks\": 5,\n  \"documentSummary\": \"A brief 1-2 sentence summary of the entire document\"\n}\n```\n\n**Important Rules:**\n- Return ONLY the JSON object, no markdown formatting, no explanatory text\n- Each chunk should be 500-2000 characters\n- Maintain all original content - don't lose any text\n- Ensure chunks don't overlap\n- Topic should be 3-8 words maximum\n- Keywords should be single words or short phrases"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "maxTokens": 4000,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -112,
+        304
+      ],
+      "id": "31ecb631-42a6-4f4a-9fb6-40fbd48d861c",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "HICWIosPabWx10xu",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document": {
+      "main": [
+        [
+          {
+            "node": "Extract and Prepare Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract and Prepare Text": {
+      "main": [
+        [
+          {
+            "node": "Break Into Initial Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Break Into Initial Chunks": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Response": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "main": [],
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "main": [],
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9fa27cc6-00b5-413e-aed8-3d7dc16964f8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "42abd1b1c7df812105bbfd3bb50b2e1728db05a238f0d03e8ea5bcd929351fe0"
+  },
+  "id": "7J2xcwflT9cQenjZ",
+  "tags": []
+}

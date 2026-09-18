@@ -1,0 +1,1377 @@
+{
+  "name": "WhatsApp Marketing Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/1025906847269955/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"91{{ $json['Phone Number'] }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"onboarding_workflow\",\n    \"language\": { \"code\": \"en\" },\n    \"components\": [\n      {\n        \"type\": \"header\",\n        \"parameters\": [\n          {\n            \"type\": \"image\",\n            \"image\": {\n              \"link\": \"https://images2.imgbox.com/ad/0a/4nF3IurN_o.jpg\"\n            }\n          }\n        ]\n      },\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"{{ $json['Name '] }}\"\n          }\n        ]\n      }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        -736
+      ],
+      "id": "721a5c05-4dd5-4f9a-9d69-c139b705105f",
+      "name": "Send Message (WhatsApp API)"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        -752
+      ],
+      "id": "e47ad5d0-f697-418d-90dd-d61553f3d77e",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        -736
+      ],
+      "id": "66e90fde-9cc7-429b-8b3c-9c3ae1ffdf7d",
+      "name": "Wait",
+      "webhookId": "57afa2b4-330e-4d5a-a7f7-98538f5e3765"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        -752
+      ],
+      "id": "640e105d-e6ae-49f8-9926-ea3e091a1f6b",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/1025906847269955/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"91{{ $json[\"Phone Number\"] }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"exam_strategy_template\",\n    \"language\": { \"code\": \"en\" },\n    \"components\": [\n      {\n        \"type\": \"header\",\n        \"parameters\": [\n          {\n            \"type\": \"image\",\n            \"image\": {\n              \"link\": \"https://images2.imgbox.com/ad/0a/4nF3IurN_o.jpg\"\n            }\n          }\n        ]\n      }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        -432
+      ],
+      "id": "cdad467a-6d57-4b31-915d-f5672090fda6",
+      "name": "Send Message (WhatsApp API)1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        -448
+      ],
+      "id": "2bd17edb-e6d6-40a7-bc9a-668e95798ad3",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        -432
+      ],
+      "id": "9331bc97-8110-4930-9d12-bc244ade3805",
+      "name": "Wait1",
+      "webhookId": "57afa2b4-330e-4d5a-a7f7-98538f5e3765"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        -448
+      ],
+      "id": "f9073085-b643-4208-b88e-7bf1110a589d",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/1025906847269955/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"91{{ $json[\"Phone Number\"] }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"class_upgrade\",\n    \"language\": { \"code\": \"en\" },\n    \"components\": [\n      {\n        \"type\": \"header\",\n        \"parameters\": [\n          {\n            \"type\": \"image\",\n            \"image\": {\n              \"link\": \"https://images2.imgbox.com/ad/0a/4nF3IurN_o.jpg\"\n            }\n          }\n        ]\n      }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        -80
+      ],
+      "id": "acf14de1-6eef-49f0-b7b0-5f3e01a233c2",
+      "name": "Send Message (WhatsApp API)2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        -96
+      ],
+      "id": "4382147a-33fa-4751-8bc6-2385ab2fca57",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        -80
+      ],
+      "id": "55ae7203-75f9-429e-a732-d6f2b07349d9",
+      "name": "Wait2",
+      "webhookId": "57afa2b4-330e-4d5a-a7f7-98538f5e3765"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        -96
+      ],
+      "id": "876564e6-bcb5-4602-8928-13c7ba9483e4",
+      "name": "Get row(s) in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/1025906847269955/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"messaging_product\": \"whatsapp\",\n\"to\": \"91{{ $json[\"Phone Number\"] }}\",\n\"type\": \"template\",\n\"template\": {\n\"name\": \"maths_tricks_template_\",\n\"language\": { \"code\": \"en\" },\n\"components\": [\n{\n\"type\": \"header\",\n\"parameters\": [\n{\n\"type\": \"image\",\n\"image\": {\n\"link\": \"https://images2.imgbox.com/b9/95/YiRONpyc_o.png\"\n}\n}\n]\n},\n{\n\"type\": \"body\",\n\"parameters\": [\n{\n\"type\": \"text\",\n\"text\": \"{{ $('Maths Trick Messaging Workflow Trigger').item.json['Paste the Maths Trick here'] }}\"\n}\n]\n}\n]\n}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1744,
+        -576
+      ],
+      "id": "9beac706-8cf3-4837-9549-d3dbe8e145a4",
+      "name": "Send Message (WhatsApp API)3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        -592
+      ],
+      "id": "2c4686c6-c821-4491-939e-2ba531ec76f8",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        -576
+      ],
+      "id": "d5dd6e19-39c4-47d8-be79-b725acd94a49",
+      "name": "Wait3",
+      "webhookId": "57afa2b4-330e-4d5a-a7f7-98538f5e3765"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        -592
+      ],
+      "id": "54c34074-1c13-4fa0-9507-c695fb63ffe6",
+      "name": "Get row(s) in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/1025906847269955/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"messaging_product\": \"whatsapp\",\n\"to\": \"91{{ $json[\"Phone Number\"] }}\",\n\"type\": \"template\",\n\"template\": {\n\"name\": \"science_trick\",\n\"language\": { \"code\": \"en\" },\n\"components\": [\n{\n\"type\": \"header\",\n\"parameters\": [\n{\n\"type\": \"image\",\n\"image\": {\n\"link\": \"https://images2.imgbox.com/b9/95/YiRONpyc_o.png\"\n}\n}\n]\n},\n{\n\"type\": \"body\",\n\"parameters\": [\n{\n\"type\": \"text\",\n\"text\": \"{{ $('Science Messaging Trigger Workflow').item.json['Paste the Science Trick here'] }}\"\n}\n]\n}\n]\n}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        -208
+      ],
+      "id": "bc01d09d-eb0d-4c99-a153-45674a2bd298",
+      "name": "Send Message (WhatsApp API)4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1536,
+        -224
+      ],
+      "id": "d3d214ac-bd50-418e-9204-8e7e8c4f9c31",
+      "name": "Loop Over Items4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        -208
+      ],
+      "id": "2edb65f7-c333-4761-80fc-f6060a6746c7",
+      "name": "Wait4",
+      "webhookId": "57afa2b4-330e-4d5a-a7f7-98538f5e3765"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        -224
+      ],
+      "id": "511c1647-ea4d-4c5e-a7ef-8cc27425d956",
+      "name": "Get row(s) in sheet4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Class Upgrade Form Trigger ",
+        "formDescription": "🎉 Congratulations on Upgrading to the Next Class! Welcome to your new journey with Vidya Mine 🚀  Why wait for school to start? Begin learning early, build strong basics, and stay ahead from Day 1.  📚 Explore CBSE-aligned Science & Math, practice quizzes, and smart tools - all in one place.  Start preparing for your next class today! ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Have you Updated the Google Sheets",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  }
+                ]
+              },
+              "limitSelection": "exact",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -128,
+        -96
+      ],
+      "id": "08d0c6c4-3081-4ed0-bcb3-4b6dc2eeb27b",
+      "name": "Class Upgrade Messsaging Workflow Trigger",
+      "webhookId": "984693d0-b35f-432e-9fab-9ab2152bf927"
+    },
+    {
+      "parameters": {
+        "formTitle": "Exam Message Template ",
+        "formDescription": "🚀 Want Better Marks in Exams?  \nFollow this smart plan: \n1️⃣ Revise using Mind Maps \n2️⃣ Read Quick Summaries \n3️⃣ Attempt Practice Quizzes \n4️⃣ Solve Previous Papers  Consistency = Confidence = Good Marks 🎯 \nHappy Learning! Team Vidya Mine",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Have you Updated the Google Sheets",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -128,
+        -448
+      ],
+      "id": "7fa32736-dbda-46d8-82a8-ebf2551bd57f",
+      "name": "Better Marks Messaging Workflow Trigger",
+      "webhookId": "c30e673c-d172-4c0a-8c19-00f05557cff0"
+    },
+    {
+      "parameters": {
+        "formTitle": "Onboarding Messaging Trigger ",
+        "formDescription": "Message template:\n\nHi {{Name}}, 🎉 \nWelcome to Vidya Mine! Your smart learning partner for Class 6 to 10 (CBSE) 📚  Here’s what you can explore: ✔ NCERT Aligned Science & Math ✔ Easy Hinglish Explanations ✔ Interactive Quizzes ✔ Assignments & Practice ✔ Progress Tracking Dashboard ✔ Interactive tools in Power Suite  \n\nHappy Learning! – Team Vidya Mine",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Have You Updated the Google Sheet ",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -128,
+        -752
+      ],
+      "id": "a32ca0e4-ca39-40f0-be6c-8c228ba55fa2",
+      "name": "Onboarding Messaging Workflow Trigger",
+      "webhookId": "efd361a0-b27e-4890-b209-87341fccfded"
+    },
+    {
+      "parameters": {
+        "formTitle": "Maths Trick Messaging Trigger",
+        "formDescription": "⚡ Maths Trick of the Day\n\nAttach the trick Here\n\nPractice inside Vidya Mine to improve speed & accuracy.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Paste the Maths Trick here"
+            },
+            {
+              "fieldLabel": "Have you updated the Google Sheets",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        1120,
+        -592
+      ],
+      "id": "3772b9fa-8bc4-4680-bff6-4e74a9077f4a",
+      "name": "Maths Trick Messaging Workflow Trigger",
+      "webhookId": "6070a118-0806-42f5-bfbd-7cb845341a86"
+    },
+    {
+      "parameters": {
+        "formTitle": "Science Trick Messaging Trigger",
+        "formDescription": "⚡ Science Trick of the Day\n\nPut trick here\n\nMaster elements, numericals, and chemistry concepts — all in one place.\n\nPractice inside Element Mine + OptiMine + Chem Mine to improve speed, accuracy & conceptual clarity.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Paste the Science Trick here"
+            },
+            {
+              "fieldLabel": "Have you updated the Google Sheets",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        1120,
+        -224
+      ],
+      "id": "e1e3a66c-fe2c-4405-b8fa-d766a06bbc10",
+      "name": "Science Messaging Trigger Workflow",
+      "webhookId": "b15bec80-28aa-4c77-adde-9e0de3857abe"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE",
+          "mode": "list",
+          "cachedResultName": "Vidya Mine WhatsApp Marketing Test Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Over Items').item.json.row_number }}",
+            "Status ": "={{ $json.messages[0].message_status }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        -736
+      ],
+      "id": "02cc6955-1327-44eb-91db-e10830bd2f95",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE",
+          "mode": "list",
+          "cachedResultName": "Vidya Mine WhatsApp Marketing Test Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Over Items1').item.json.row_number }}",
+            "Status ": "={{ $json.messages[0].message_status }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        -432
+      ],
+      "id": "4ed85cd1-6a37-4fb7-98e8-be314f22794f",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE",
+          "mode": "list",
+          "cachedResultName": "Vidya Mine WhatsApp Marketing Test Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Over Items2').item.json.row_number }}",
+            "Status ": "={{ $json.messages[0].message_status }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        704,
+        -80
+      ],
+      "id": "682d0662-9a91-478a-8b84-4f47759cfce3",
+      "name": "Update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE",
+          "mode": "list",
+          "cachedResultName": "Vidya Mine WhatsApp Marketing Test Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Over Items3').item.json.row_number }}",
+            "Status ": "={{ $json.messages[0].message_status }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1936,
+        -576
+      ],
+      "id": "b18339ac-8e14-4ff8-a111-3354d4b77f95",
+      "name": "Update row in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE",
+          "mode": "list",
+          "cachedResultName": "Vidya Mine WhatsApp Marketing Test Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vcYlx-R4vQyoE2QjqikXD72eYHFGUa22tLGXSdAoOKE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Over Items4').item.json.row_number }}",
+            "Status ": "={{ $json.messages[0].message_status }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1936,
+        -208
+      ],
+      "id": "b565b6d0-969f-4294-b3e6-b5a5076dbf3f",
+      "name": "Update row in sheet4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "U2TmGST9CsTJduqB",
+          "name": "Unfazed Dev - Google Auth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send Message (WhatsApp API)": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Message (WhatsApp API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message (WhatsApp API)1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Message (WhatsApp API)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message (WhatsApp API)2": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Message (WhatsApp API)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message (WhatsApp API)3": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Message (WhatsApp API)3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message (WhatsApp API)4": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Message (WhatsApp API)4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Class Upgrade Messsaging Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Better Marks Messaging Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Onboarding Messaging Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Maths Trick Messaging Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Science Messaging Trigger Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet3": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet4": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "51a6f31f-913d-46b3-b5a9-e3dab8956fe1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcc9a0a1e9fb50ed5875b5c43fbd8606f5910728c5bd86e52dab9a01ca3cb988"
+  },
+  "id": "J2eRG-YlWjcrPNhGd9Jbc",
+  "tags": []
+}
