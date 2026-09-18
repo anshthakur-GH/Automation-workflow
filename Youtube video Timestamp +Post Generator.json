@@ -1,0 +1,276 @@
+{
+  "name": "Youtube video Timestamp +Post Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Youtube Video Transcript generator",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Youtube video Link",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -256,
+        16
+      ],
+      "id": "803da176-f097-454e-959c-cb60310bc120",
+      "name": "On form submission",
+      "webhookId": "7a099334-d147-4214-8aaa-25dcded4e0ba"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "bbqmsPr0r519A0ZaV",
+          "mode": "list",
+          "cachedResultName": "YouTube Transcript Extractor - Fast & Accurate (akash9078/youtube-transcript-extractor)",
+          "cachedResultUrl": "https://console.apify.com/actors/bbqmsPr0r519A0ZaV/input"
+        },
+        "customBody": "={\n    \"videoUrl\": \"{{ $json[\"Youtube video Link\"] }}\"\n} ",
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        16
+      ],
+      "id": "c5134fac-2e57-421f-8c0e-bcd039936382",
+      "name": "Run an Actor and get dataset",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "5kkjAe4yUQpjyh0F",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Role:\nYou are an AI content processor specialized in reading YouTube video transcripts and generating structured timestamps and engaging social media content.\n\nInput You Will Receive:\nA complete or partial YouTube video transcription.\nTranscription: {{ $json.transcript }}\n\nYour Tasks:\n\n1. Generate YouTube-Ready Timestamps\n\nDetect topic changes, new ideas, chapters, or scene shifts.\n\nCreate clear, viewer-friendly timestamps in this exact format:\n\n00:00 – Introduction  \n01:12 – Main Concept Explained  \n03:45 – Key Insight #1  \n05:20 – Example / Demo  \n07:55 – Final Thoughts  \n\n\nRules:\n\nKeep each chapter concise (3–6 words).\n\nEnsure timestamps are accurate and sequential.\n\nNo unnecessary filler or fluff.\n\n2. Generate Social Media Posts (Multiple Platforms)\n\nCreate platform-specific posts based on the video content:\n\na) Instagram Caption\n\nHook in the first line (scroll-stopping).\n\n2–4 value-packed lines.\n\n3–5 targeted hashtags.\n\nb) LinkedIn Post\n\nProfessional tone.\n\n3–5 sentences.\n\nHighlight key insights or takeaways.\n\nEnd with a soft CTA or question.\n\nc) X (Twitter) Posts\n\nGenerate 3 tweet variations, each:\n\nMax 280 characters.\n\nPunchy, concise, actionable.\n\n3. Output Format\n\nReturn your results exactly in this structure:\n\n### 📌 TIMESTAMPS\n[insert timestamps]\n\n### 📌 INSTAGRAM CAPTION\n[insert caption]\n\n### 📌 LINKEDIN POST\n[insert post]\n\n### 📌 X POSTS\n1. [tweet 1]\n2. [tweet 2]\n3. [tweet 3]\n\nTone & Style Guidelines\n\nClear, easy-to-read language.\n\nNo repetition.\n\nMaintain logical flow.\n\nAlways optimize for engagement.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        160,
+        16
+      ],
+      "id": "31083787-6c86-40b6-bc6d-8c6e3c45d506",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        160,
+        176
+      ],
+      "id": "fc5e66fc-45a0-40e9-af22-6f0a0dcf1c56",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "vG5N0diaUaVSwaFk",
+          "name": "Unfazed Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get AI text output\nconst aiText = items[0].json.output;\n\n// Helper function to extract block by heading\nfunction extractBlock(text, heading) {\n  const regex = new RegExp(`### 📌 ${heading}[\\\\s\\\\S]*?(?=### 📌|$)`, \"g\");\n  const match = text.match(regex);\n  if (!match) return \"\";\n  return match[0]\n    .replace(`### 📌 ${heading}`, \"\")\n    .trim();\n}\n\n// Extract sections\nconst timestamps = extractBlock(aiText, \"TIMESTAMPS\");\nconst instagram = extractBlock(aiText, \"INSTAGRAM CAPTION\");\nconst linkedin = extractBlock(aiText, \"LINKEDIN POST\");\nconst xBlock = extractBlock(aiText, \"X POSTS\");\n\n// Extract X/twitter posts into array\nlet x_posts = [];\nif (xBlock) {\n  x_posts = xBlock\n    .split(/\\n\\d+\\.\\s+/)        // split by 1. 2. 3.\n    .map(t => t.trim())\n    .filter(t => t.length > 0);\n}\n\n// Return parsed JSON\nreturn [\n  {\n    json: {\n      timestamps,\n      instagram,\n      linkedin,\n      x_posts\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        16
+      ],
+      "id": "5d60e62d-9d81-4372-881e-f1477d19d4e9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1p8x9tVqDI0DaFGXNg2VHgKAxXyy0b_KLQ5UeAIOmcOc",
+          "mode": "list",
+          "cachedResultName": "Youtube video Timestamp + Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p8x9tVqDI0DaFGXNg2VHgKAxXyy0b_KLQ5UeAIOmcOc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1p8x9tVqDI0DaFGXNg2VHgKAxXyy0b_KLQ5UeAIOmcOc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Video url": "={{ $('On form submission').item.json[\"Youtube video Link\"] }}",
+            "Timestamp": "={{ $json.timestamps }}",
+            "Linkedin": "={{ $json.linkedin }}",
+            "Instagram": "={{ $json.instagram }}",
+            "X": "={{ $json.x_posts }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Video url",
+              "displayName": "Video url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Linkedin",
+              "displayName": "Linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Instagram",
+              "displayName": "Instagram",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "X",
+              "displayName": "X",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        16
+      ],
+      "id": "d26fc9d8-787d-46d3-b50f-96d6b00bac84",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JkiDB0vyqzn1ZMMY",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "Youtube video Link": "https://youtu.be/CFMqmbB0VUk?si=IbgqJzk9NCS_-BpD",
+          "submittedAt": "2025-11-22T12:57:30.418+05:30",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Run an Actor and get dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run an Actor and get dataset": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "399e55ff-71d1-4a5f-8b0f-f6d97c7f4467",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eb8593d7e36fdb520d1b4569d7d18f1b767df8cded04c5b3886bc948bbea7431"
+  },
+  "id": "Iy5H2yVnalGHVN81",
+  "tags": []
+}
