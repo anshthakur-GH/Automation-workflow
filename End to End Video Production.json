@@ -1,0 +1,556 @@
+{
+  "name": "End to End Video Production",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b9d85951-9225-4ed1-8667-4176cdfccd6a",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        0,
+        800
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1VHJFdJjqKWT973NK4TVTdzodAiHM4Zzb4tIkK-kqqGc",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/YOUR_AWS_SECRET_KEY_HERE-kqqGc/edit?usp=drivesdk",
+          "cachedResultName": "VEO3 Video Generation"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/YOUR_AWS_SECRET_KEY_HERE-kqqGc/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "ready"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "304c75f9-a31b-4645-8f8c-3b4a0dbfd4d9",
+      "name": "📊 Fetch Ready Ideas from Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        224,
+        800
+      ],
+      "typeVersion": 4.6
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User Idea: {{ $json.Idea }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=SYSTEM PROMPT TO GENERATE PROMPT FOR VEO3\n\nThe key to crafting a strong prompt in Veo 3 is understanding what truly matters in a video. To ensure you include all the essential details, we recommend starting by breaking your prompt down into clear categories:\n\nScene description: Overall description of the scene you want to create — what’s happening, who’s involved, and the general atmosphere.\nVisual style: Defines the overall look and feel of the video — for example, cinematic, realistic, animated, stylized, or surreal.\nCamera movement: Describes how the camera should move during the scene — for instance, slow pan, static shot, tracking shot, or aerial zoom. Avoid using slang terms (eg ‘robo-arm’ or ‘lens crack’). Be clear and descriptive.\nMain subject: The primary person, character, or object that should be the focus of the video. Clearly describe who is doing what in the scene.\nBackground setting: The specific location or environment where the scene takes place — such as a city street at night, a forest during sunrise, or a futuristic lab., traditional village, etc.\nLighting/mood: Describes the type of lighting and the emotional tone you want — for example, soft natural light with a warm tone, or harsh lighting for a dramatic or tense mood.\nAudio cue (optional): Any specific sound or music that should be heard during the scene — such as a song starting when the character dances, or ambient sounds like rain, footsteps, or birdsong.\nColor palette: The dominant colors or tones used in the video — such as bold and bright, pastel, muted earth tones, or monochrome. This influences the emotional and visual impact.\nDialog / Background Noise (optional): If characters are speaking, specify exactly what they should say and when. You can also include environmental sounds like crowds, wind, or traffic.\nSubtitles and Language : Clearly state whether you want subtitles included or not (e.g., “Do not include subtitles” or “Include subtitles in English”). Note that mentioning a language can influence cultural context (clothing, signs, architecture) even if no spoken language is rendered. To imply language or culture, you can write things like: dialogue in Spanish, with English subtitles, on-screen text in Japanese, Arabic calligraphy visible on walls, Korean street signs in the background, etc.\nAdditional Planning Notes\nUsing ” or ” or ( ) or [ ] for the dialogue may generate subtitles – avoid these if you don’t want them.\nUse natural language\nUse long prompts. The more information and direction you can give, the better your output.\nUse a solid prompting structure, like the one outlined above.\nWriting Your Prompt\nOnce you’ve outlined the key information you want to include using the above structure (or something similar), you need to write your prompt. You can write this prompt yourself, or use a tool like Chat GPT to transform your dot point plan into a fully fledged prompt.\n\nCheck out the examples below to see how your prompt should look before hitting ‘Generate’!\n\nExample\nPrompt Plan:\n\nScene description: A glamorous woman with an afro hairstyle and gold jewellery shares a pool at night with a calm alligator, surrounded by dimly lit classical decor and blue ceramic vases.\nVisual style: Cinematic\nCamera movement: Slow zoom-in on the woman’s face from water level\nMain subject: Elegant woman in the pool next to an alligator, making intense eye contact with the camera\nBackground setting: Luxurious outdoor pool area with classical statues and large ceramic vases\nLighting/mood: Moody and soft, with candlelight reflections and subtle fill light on the face\nAudio cue: Slow ambient electronic music with occasional water ripple sounds\nColor palette: Deep slate gray, ocean blue, and warm gold tones\nDialog: “I’m not afraid of anything… except Sundays without drama.\nSubtitles: Off\nComplete Prompt:\n\nA cinematic scene set at night: a glamorous woman with an afro hairstyle and gold jewellery shares a luxurious outdoor pool with a calm alligator. The pool area is surrounded by classical statues and large blue ceramic vases, all dimly lit. The camera starts at water level and slowly zooms in on the woman’s face as she makes intense eye contact with the camera. The lighting is moody and soft, with candlelight reflections on the water and a subtle fill light on her face. The audio features slow ambient electronic music, with occasional water ripple sounds. The color palette includes deep slate gray, ocean blue, and warm gold tones. The woman says, “I’m not afraid of anything… except Sundays without drama.” No subtitles.\n\n\nNote:\n- At the end just provide me single prompt which contain every details just like \"Complete Prompt above\"\n- Make sure no double qoute is there in the response"
+        }
+      },
+      "id": "84059860-541d-404f-a0d8-274f1fdcdb6d",
+      "name": "🤖 VEO3 Prompt Generator (GPT-4.1)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        592,
+        784
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "id": "ae85a8b3-5857-41e1-a74e-d34c65dab273",
+      "name": "🧠 OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        576,
+        992
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"prompt\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t}\n}"
+      },
+      "id": "59a00350-7e6a-48b7-af86-1751b55ced40",
+      "name": "📝 Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        816,
+        944
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/veo3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n\"prompt\": \"{{ $json.output.prompt }}\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "id": "6e6ba2d5-a04e-4dde-864b-9c999a0093d7",
+      "name": "🎬 Create Video with VEO3 (Fal AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1232,
+        784
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $json.request_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "2073fa22-664b-450a-8cc1-de9f0c3530d5",
+      "name": "🔍 Check Video Generation Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1456,
+        784
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "571d2dfe-8a0c-416a-8780-3f47b17286b3",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ce819db0-82d7-4bcf-a934-4a9260754a0f",
+      "name": "✅ Is Video Generation Complete?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1680,
+        720
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "e0ba4048-4dd7-4a62-8044-25fe7a6d1e7c",
+      "name": "⏰ Wait Before Retry",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1904,
+        880
+      ],
+      "webhookId": "0f17aa86-f5f6-424c-b302-91bc70001367",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "bc286e3a-b631-4085-9db1-bb1f9038fda6",
+      "name": "📥 Download Generated Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1904,
+        672
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1VHJFdJjqKWT973NK4TVTdzodAiHM4Zzb4tIkK-kqqGc",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/YOUR_AWS_SECRET_KEY_HERE-kqqGc/edit?usp=drivesdk",
+          "cachedResultName": "VEO3 Video Generation"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/YOUR_AWS_SECRET_KEY_HERE-kqqGc/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "value": {
+            "Status": "completed",
+            "Video URL": "={{ $json.video.url }}",
+            "row_number": "={{ $('📊 Fetch Ready Ideas from Sheet').item.json.row_number }}"
+          },
+          "schema": [
+            {
+              "id": "Idea",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Idea",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video URL",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Video URL",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "row_number"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e0cdb624-fd39-4161-98ad-90daf5d3c4db",
+      "name": "📊 Update Sheet with Video URL",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        2352,
+        800
+      ],
+      "typeVersion": 4.6
+    },
+    {
+      "parameters": {
+        "content": "## 🎬 VEO3 AI Video Generation Pipeline\n**Automated video creation from ideas to final output**\n\n### 🔄 Workflow Steps:\n1. **Data Input** → Fetch video ideas from Google Sheets\n2. **Prompt Engineering** → AI generates optimized VEO3 prompts  \n3. **Video Creation** → Submit to VEO3 via Fal AI platform\n4. **Status Monitoring** → Poll until video generation completes\n5. **Result Storage** → Save video URL back to Google Sheets\n\n### 📝 Useful Docs\nVeo 3 Model Link - [Fal.ai](https://fal.ai/models/fal-ai/veo3)\n\n⚡ **Auto-retry system included for reliable video generation**",
+        "height": 288,
+        "width": 500,
+        "color": 6
+      },
+      "id": "48cb88c8-1ce8-4ebf-a518-f0cfa3605a56",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 📊 Data Input & Trigger System\n**Fetches ready video ideas from Google Sheets**\n\n### 🔧 Configuration Required:\n- Set correct Google Sheets document ID\n- Filter for \"Status = ready\" rows\n- Ensure \"Idea\" column contains video concepts",
+        "height": 432,
+        "width": 520
+      },
+      "id": "1a2d64af-28f6-4b17-90e3-b4bf2be22a2f",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        560
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI-Powered Prompt Engineering\n**Transforms simple ideas into detailed VEO3 prompts**\n\n### 🎯 Process:\n1. **Input:** Basic video idea from sheet\n2. **AI Analysis:** GPT-4 enhances with VEO3 best practices\n3. **Output:** Structured prompt with all required elements\n\n### 📝 Prompt Elements Generated:\n- Scene description & visual style\n- Camera movements & lighting\n- Main subjects & background settings\n- Color palette & audio cues\n- Subtitle preferences",
+        "height": 740,
+        "width": 700,
+        "color": 2
+      },
+      "id": "312f02ad-5684-4e9e-877a-d921158b8463",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        416,
+        432
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 🎬 VEO3 Video Generation & Monitoring\n**Handles video creation with smart retry system**\n\n### ⚙️ Generation Settings:\n- **Aspect Ratio:** 9:16 (Mobile optimized)\n- **Duration:** 5 seconds\n- **Audio:** Generated automatically\n- **Prompt Enhancement:** Enabled\n\n### 🔄 Smart Monitoring:\n- Checks status every 30 seconds\n- Auto-retries until \"COMPLETED\"\n- Downloads final video when ready",
+        "height": 740,
+        "width": 980,
+        "color": 3
+      },
+      "id": "7fc31b02-dec7-40c2-bdaa-bd5f1d038e69",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1184,
+        432
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Results Processing & Storage\n**Saves generated video URLs back to Google Sheets**\n\n### 💾 What Gets Saved:\n- Final video download URL\n- Updates same row where idea was fetched\n- Status automatically changes to \"completed\"\n\n### ✅ Success Indicators:\n- Video URL populated in sheet\n- File accessible via direct link\n- Ready for download/sharing",
+        "height": 740,
+        "width": 400,
+        "color": 4
+      },
+      "id": "e6fb7575-f249-4b76-b612-d8966be3e332",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2224,
+        432
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {
+    "🤖 VEO3 Prompt Generator (GPT-4.1)": [
+      {
+        "json": {
+          "output": {
+            "prompt": "A cozy and enchanting scene of a friendly yeti giving a house tour inside his winter cabin. The visual style is whimsical and slightly animated with soft textures to evoke warmth and charm. The camera operates with gentle tracking shots as it follows the yeti moving through different rooms, highlighting the various quirky and snowy decor. The main subject is the yeti, a large, fluffy white creature with expressive eyes and a warm smile, gesturing enthusiastically as he shows his house. The background setting is a rustic, snow-covered wooden cabin filled with winter-themed decorations, plush furniture, and icicle-shaped lights. The lighting is soft and warm with a golden hue, creating a welcoming and cheerful atmosphere. Ambient sounds include crackling of a fireplace, soft wind blowing outside, and light, playful background music to enhance the friendly mood. The color palette features cool whites and blues mixed with warm wooden browns and soft yellows. The yeti occasionally speaks in a gentle, friendly tone, saying things like I hope you like it here and This is my favorite room to relax. Subtitles are not included."
+          }
+        }
+      }
+    ],
+    "🎬 Create Video with VEO3 (Fal AI)": [
+      {
+        "json": {
+          "logs": null,
+          "status": "IN_QUEUE",
+          "metrics": {},
+          "cancel_url": "https://queue.fal.run/fal-ai/veo3/requests/00900707-dbe9-4fa9-ad55-3297bfc4362b/cancel",
+          "request_id": "00900707-dbe9-4fa9-ad55-3297bfc4362b",
+          "status_url": "https://queue.fal.run/fal-ai/veo3/requests/00900707-dbe9-4fa9-ad55-3297bfc4362b/status",
+          "response_url": "https://queue.fal.run/fal-ai/veo3/requests/00900707-dbe9-4fa9-ad55-3297bfc4362b",
+          "queue_position": 0
+        }
+      }
+    ],
+    "🔍 Check Video Generation Status": [
+      {
+        "json": {
+          "logs": null,
+          "status": "COMPLETED",
+          "metrics": {
+            "inference_time": 146.31277418136597
+          },
+          "cancel_url": "https://queue.fal.run/fal-ai/veo3/requests/00900707-dbe9-4fa9-ad55-3297bfc4362b/cancel",
+          "request_id": "00900707-dbe9-4fa9-ad55-3297bfc4362b",
+          "status_url": "https://queue.fal.run/fal-ai/veo3/requests/00900707-dbe9-4fa9-ad55-3297bfc4362b/status",
+          "response_url": "https://queue.fal.run/fal-ai/veo3/requests/00900707-dbe9-4fa9-ad55-3297bfc4362b"
+        }
+      }
+    ],
+    "📥 Download Generated Video": [
+      {
+        "json": {
+          "video": {
+            "url": "https://v3.fal.media/files/elephant/iFIb2SSbBVpakelQJR8NF_output.mp4",
+            "file_name": "output.mp4",
+            "file_size": 7960317,
+            "content_type": "video/mp4"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "📊 Fetch Ready Ideas from Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Fetch Ready Ideas from Sheet": {
+      "main": [
+        [
+          {
+            "node": "🤖 VEO3 Prompt Generator (GPT-4.1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 VEO3 Prompt Generator (GPT-4.1)": {
+      "main": [
+        [
+          {
+            "node": "🎬 Create Video with VEO3 (Fal AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🤖 VEO3 Prompt Generator (GPT-4.1)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "🤖 VEO3 Prompt Generator (GPT-4.1)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎬 Create Video with VEO3 (Fal AI)": {
+      "main": [
+        [
+          {
+            "node": "🔍 Check Video Generation Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Check Video Generation Status": {
+      "main": [
+        [
+          {
+            "node": "✅ Is Video Generation Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Is Video Generation Complete?": {
+      "main": [
+        [
+          {
+            "node": "📥 Download Generated Video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⏰ Wait Before Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏰ Wait Before Retry": {
+      "main": [
+        [
+          {
+            "node": "🔍 Check Video Generation Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Download Generated Video": {
+      "main": [
+        [
+          {
+            "node": "📊 Update Sheet with Video URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1cfe7cfc-cb7a-4b6b-846e-74da33f56a64",
+  "meta": {
+    "instanceId": "dad92da0da58425e2abc6cda71910771f198cd0fd3b8d62c4f257e4a93512e54"
+  },
+  "nodeGroups": [],
+  "id": "rn673z5sPjGFyylo",
+  "tags": []
+}

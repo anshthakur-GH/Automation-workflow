@@ -1,0 +1,317 @@
+{
+  "name": "Notice Reminder via Email",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "19932b47-1b6b-4885-9bdc-77424021e30e",
+      "name": "Daily Notice Check - 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -64,
+        336
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.title}}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{$json.message}}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{$json.targetAudience}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "655288a9-9a05-4f37-a804-0982d267fd99",
+      "name": "Validate Notice Data",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        384,
+        336
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "const notices = $('Read Notices').all();\nconst contacts = $('Read Stakeholder Contacts').all();\n\nconst processedNotices = [];\n\nfor (const notice of notices) {\n  const noticeData = notice.json;\n  \n  const targetAudience = noticeData.targetAudience.toLowerCase();\n  const relevantContacts = contacts.filter(contact => {\n    const contactData = contact.json;\n    \n    if (targetAudience === 'all') return true;\n    if (targetAudience === 'students' && contactData.type === 'Student') return true;\n    if (targetAudience === 'parents' && contactData.type === 'Parent') return true;\n    if (targetAudience === 'teachers' && contactData.type === 'Teacher') return true;\n    if (targetAudience === 'staff' && contactData.type === 'Staff') return true;\n    \n    return false;\n  });\n  \n  for (const contact of relevantContacts) {\n    processedNotices.push({\n      noticeId: noticeData.noticeId || 'NOTICE-' + Date.now(),\n      title: noticeData.title,\n      message: noticeData.message,\n      priority: noticeData.priority || 'Medium',\n      targetAudience: noticeData.targetAudience,\n      contactName: contact.json.name,\n      contactEmail: contact.json.email,\n      contactPhone: contact.json.phone,\n      contactType: contact.json.type,\n      distributionDate: new Date().toISOString().split('T')[0],\n      status: 'Ready for Distribution'\n    });\n  }\n}\n\nreturn processedNotices.map(item => ({ json: item }));"
+      },
+      "id": "b25c8659-d872-4258-8842-9f7f5933ffcd",
+      "name": "Process Notice Distribution",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        592,
+        336
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const noticeData = $input.first().json;\n\nconst emailSubject = `[${noticeData.priority} Priority] ${noticeData.title}`;\nconst emailBody = `Dear ${noticeData.contactName},\n\n${noticeData.message}\n\n---\nNotice Details:\n- Priority: ${noticeData.priority}\n- Target Audience: ${noticeData.targetAudience}\n- Distribution Date: ${noticeData.distributionDate}\n- Notice ID: ${noticeData.noticeId}\n\nFor any questions or concerns, please contact the school administration.\n\nBest regards,\nSchool Administration Team`;\n\nreturn [{\n  json: {\n    to: noticeData.contactEmail,\n    subject: emailSubject,\n    body: emailBody,\n    recipientName: noticeData.contactName,\n    noticeId: noticeData.noticeId,\n    priority: noticeData.priority\n  }\n}];"
+      },
+      "id": "6c04b180-3e4b-4f32-a408-cca58ddf99b5",
+      "name": "Prepare Email Content",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        816,
+        240
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const noticeData = $input.first().json;\n\nconst whatsappMessage = `🏫 *${noticeData.title}*\\n\\n${noticeData.message}\\n\\n📋 Notice ID: ${noticeData.noticeId}\\n⚡ Priority: ${noticeData.priority}\\n📅 Date: ${noticeData.distributionDate}\\n\\n_This is an official school notice. Please keep this for your records._`;\n\nreturn [{\n  json: {\n    phone: noticeData.contactPhone,\n    message: whatsappMessage,\n    recipientName: noticeData.contactName,\n    noticeId: noticeData.noticeId,\n    priority: noticeData.priority\n  }\n}];"
+      },
+      "id": "874951e5-1d65-4149-af5b-da283a325206",
+      "name": "Prepare WhatsApp Content",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        816,
+        432
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "fromEmail": "user@example.com",
+        "toEmail": "={{$json.to}}",
+        "subject": "={{$json.subject}}",
+        "emailFormat": "text",
+        "text": "={{$json.body}}",
+        "options": {}
+      },
+      "id": "eb63ba65-53bd-48a9-8470-d135d43a9953",
+      "name": "Send Email Notice",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1040,
+        240
+      ],
+      "webhookId": "adef7634-8e55-45e9-a79e-89aaac2a2b70",
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v17.0/FROM_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.message }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "ff2452c5-7fc8-437d-8e63-066c2a571345",
+      "name": "Send WhatsApp Notice",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1040,
+        432
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "resource": "worksheet",
+        "operation": "update",
+        "workbook": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=notices-workbook-001"
+        },
+        "worksheet": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=notices-sheet-001"
+        },
+        "dataMode": "autoMap",
+        "columnToMatchOn": "=title",
+        "options": {}
+      },
+      "id": "06613813-111e-48a6-8386-2572bdf53e9b",
+      "name": "Update Notice Status",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "position": [
+        1264,
+        336
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "content": "### ** Notice Distribution Workflow Components**\n\n**📅 Triggers:**\n* **Daily Notice Check - 9 AM** - Scheduled trigger for automated daily notice distribution\n\n**📊 Data Processing:**\n* **Read Notices** - Fetches notices from Excel database\n* **Validate Notice Data** - Ensures notice data completeness and format\n* **Process Notice Distribution** - Matches notices with target audiences\n\n**📧 Communication:**\n* **Prepare Email Content** - Creates personalized email messages\n* **Prepare WhatsApp Content** - Formats WhatsApp messages with emojis\n* **Send Email Notice** - Distributes via email to stakeholders\n* **Send WhatsApp Notice** - Sends WhatsApp messages via Business API\n\n**📈 Reporting:**\n* **Update Notice Status** - Marks notices as distributed",
+        "height": 400,
+        "width": 640,
+        "color": 4
+      },
+      "id": "c3168dc8-ecc9-4a1f-b0e9-681b73ad1bc6",
+      "name": "Workflow Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -64,
+        -128
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "worksheet",
+        "workbook": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=notices-workbook-001"
+        },
+        "filters": {
+          "fields": [
+            {
+              "value": "Pending",
+              "column": "Status"
+            }
+          ]
+        }
+      },
+      "id": "afc14701-9b2d-4038-b129-3c7f3b2bce8f",
+      "name": "Read Notices",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "position": [
+        160,
+        336
+      ],
+      "typeVersion": 2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Notice Check - 9 AM": {
+      "main": [
+        [
+          {
+            "node": "Read Notices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Notice Data": {
+      "main": [
+        [
+          {
+            "node": "Process Notice Distribution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Notice Distribution": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Content",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare WhatsApp Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Content": {
+      "main": [
+        [
+          {
+            "node": "Send Email Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare WhatsApp Content": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Notice": {
+      "main": [
+        [
+          {
+            "node": "Update Notice Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Notice": {
+      "main": [
+        [
+          {
+            "node": "Update Notice Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Notices": {
+      "main": [
+        [
+          {
+            "node": "Validate Notice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c59c60b6-99ab-4687-bf97-94323f00b9bf",
+  "meta": {
+    "instanceId": "dad92da0da58425e2abc6cda71910771f198cd0fd3b8d62c4f257e4a93512e54"
+  },
+  "nodeGroups": [],
+  "id": "0M2uljrKPsWjqoIy",
+  "tags": []
+}

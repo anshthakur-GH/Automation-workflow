@@ -1,0 +1,260 @@
+{
+  "name": "Short Profile Generation Sub workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        176
+      ],
+      "id": "a552aa14-6e4c-462c-ae43-794257c56c90",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// PARSE SHORT PROFILE - FIXED ARRAY HANDLING\n// ============================================================================\n\nconst input = $input.first().json;\nconsole.log('=== Parse Short Profile - START ===');\nconsole.log('Input type:', typeof input);\nconsole.log('Input keys:', Object.keys(input));\n\n// --- HELPER FUNCTION: Extract JSON from any format ---\nfunction extractJSON(data) {\n  let jsonString;\n  \n  // If already an object or array, return it\n  if (typeof data === 'object' && data !== null) {\n    return data;\n  }\n  \n  // If string, clean it aggressively\n  if (typeof data === 'string') {\n    jsonString = data;\n    \n    // Remove all markdown code block markers\n    jsonString = jsonString.replace(/```(?:json|javascript|js)?\\s*/gi, '');\n    jsonString = jsonString.replace(/```\\s*/g, '');\n    \n    // Remove leading \"json\" or \"JSON\" text\n    jsonString = jsonString.replace(/^json\\s*/i, '');\n    \n    // Trim whitespace\n    jsonString = jsonString.trim();\n    \n    // Find the first opening bracket (array or object)\n    const firstBracket = Math.min(\n      jsonString.indexOf('{') !== -1 ? jsonString.indexOf('{') : Infinity,\n      jsonString.indexOf('[') !== -1 ? jsonString.indexOf('[') : Infinity\n    );\n    \n    if (firstBracket === Infinity) {\n      throw new Error('No opening bracket found in agent output');\n    }\n    \n    // Determine if it's an array or object\n    const isArray = jsonString[firstBracket] === '[';\n    const openChar = isArray ? '[' : '{';\n    const closeChar = isArray ? ']' : '}';\n    \n    // Match brackets to find the complete JSON\n    let bracketCount = 0;\n    let lastBracket = -1;\n    \n    for (let i = firstBracket; i < jsonString.length; i++) {\n      if (jsonString[i] === openChar) bracketCount++;\n      if (jsonString[i] === closeChar) {\n        bracketCount--;\n        if (bracketCount === 0) {\n          lastBracket = i;\n          break;\n        }\n      }\n    }\n    \n    if (lastBracket === -1) {\n      throw new Error('No matching closing bracket found');\n    }\n    \n    jsonString = jsonString.substring(firstBracket, lastBracket + 1);\n    \n    // Parse the cleaned JSON\n    try {\n      return JSON.parse(jsonString);\n    } catch (e) {\n      console.error('JSON Parse Error:', e.message);\n      console.error('Cleaned JSON (first 500 chars):', jsonString.substring(0, 500));\n      throw new Error(`Failed to parse JSON: ${e.message}`);\n    }\n  }\n  \n  throw new Error(`Unexpected data type: ${typeof data}`);\n}\n\n// --- HELPER FUNCTION: Clean text content ---\nfunction cleanText(text) {\n  if (!text || typeof text !== 'string') return text;\n  \n  return text\n    // Remove escaped quotes\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\'/g, \"'\")\n    // Remove extra backslashes\n    .replace(/\\\\\\\\/g, '\\\\')\n    // Remove markdown bold/italic\n    .replace(/\\*\\*(.+?)\\*\\*/g, '$1')\n    .replace(/\\*(.+?)\\*/g, '$1')\n    .replace(/__(.+?)__/g, '$1')\n    .replace(/_(.+?)_/g, '$1')\n    // Clean up extra spaces\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\n// --- HELPER FUNCTION: Recursively clean an object ---\nfunction deepCleanObject(obj) {\n  if (obj === null || obj === undefined) return obj;\n  \n  if (typeof obj === 'string') {\n    return cleanText(obj);\n  }\n  \n  if (Array.isArray(obj)) {\n    return obj.map(item => deepCleanObject(item));\n  }\n  \n  if (typeof obj === 'object') {\n    const cleaned = {};\n    for (const [key, value] of Object.entries(obj)) {\n      cleaned[key] = deepCleanObject(value);\n    }\n    return cleaned;\n  }\n  \n  return obj;\n}\n\n// --- 1. EXTRACT RAW OUTPUT ---\nlet rawOutput = input.output || input.json || input.text || input;\nconsole.log('Raw output type:', typeof rawOutput);\n\n// --- 2. HANDLE ARRAY WRAPPER (SMART DETECTION) ---\n// FIX: Only unwrap if the array contains wrapper objects with 'output' property\n// Otherwise, use the array directly (it's already the profiles array)\nif (Array.isArray(rawOutput) && rawOutput.length > 0) {\n  if (rawOutput[0].output) {\n    // Wrapped format: [{output: \"[...]\"}]\n    console.log('âœ“ Detected wrapped array - unwrapping output property');\n    rawOutput = rawOutput[0].output;\n  } else if (rawOutput[0].student_id || rawOutput[0].context_key) {\n    // Direct format: [{student_id: \"...\", context_key: \"...\", ...}]\n    console.log('âœ“ Detected direct profile array - using as-is');\n    // rawOutput is already correct - don't modify!\n  } else {\n    // Unknown format - log warning and try unwrapping\n    console.log('âš  Unknown array format - attempting best guess unwrap');\n    rawOutput = rawOutput[0];\n  }\n}\n\n// --- 3. PARSE THE PROFILES ARRAY ---\nlet profilesArray;\ntry {\n  // Only extract/parse if it's a string; otherwise use the object/array directly\n  if (typeof rawOutput === 'string') {\n    profilesArray = extractJSON(rawOutput);\n    console.log('âœ“ Extracted JSON from string');\n  } else if (Array.isArray(rawOutput)) {\n    profilesArray = rawOutput; // Already a parsed array!\n    console.log('âœ“ Using pre-parsed array directly');\n  } else if (typeof rawOutput === 'object' && rawOutput !== null) {\n    profilesArray = [rawOutput]; // Single object - wrap it\n    console.log('âœ“ Wrapped single object into array');\n  } else {\n    throw new Error(`Unexpected rawOutput type: ${typeof rawOutput}`);\n  }\n  \n  console.log('âœ“ Successfully processed input');\n  console.log('Profiles array type:', Array.isArray(profilesArray) ? 'array' : typeof profilesArray);\n  console.log('Number of profiles:', Array.isArray(profilesArray) ? profilesArray.length : 'N/A');\n} catch (error) {\n  console.error('âœ— Failed to process input:', error.message);\n  throw error;\n}\n\n// Ensure we have an array\nif (!Array.isArray(profilesArray)) {\n  // If it's a single profile, wrap it in an array\n  profilesArray = [profilesArray];\n}\n\nconsole.log(`âœ“ Processing ${profilesArray.length} profiles`);\n\n// --- 4. VALIDATE AND PROCESS EACH PROFILE ---\nconst supabaseRecords = [];\n\nfor (let i = 0; i < profilesArray.length; i++) {\n  const profile = profilesArray[i];\n  console.log(`\\n--- Processing Profile ${i + 1}/${profilesArray.length} ---`);\n  \n  // Validate required fields\n  const requiredFields = ['student_id', 'context_key', 'short_profile'];\n  const missingFields = requiredFields.filter(field => !profile[field]);\n  \n  if (missingFields.length > 0) {\n    console.warn(`âš  Skipping profile ${i + 1}: Missing fields: ${missingFields.join(', ')}`);\n    continue;\n  }\n  \n  if (typeof profile.short_profile !== 'object') {\n    console.warn(`âš  Skipping profile ${i + 1}: short_profile is not an object`);\n    continue;\n  }\n  \n  console.log('âœ“ Profile validated');\n  console.log('  Student ID:', profile.student_id);\n  console.log('  Context:', profile.context_key);\n  \n  // Deep clean all text content\n  const cleanedShortProfile = deepCleanObject(profile.short_profile);\n  const cleanedSummary = cleanText(profile.summary_text || profile.short_profile.quick_summary);\n  \n  // Build final record\n  const generatorMeta = {\n    llm_version: cleanedShortProfile.llm_version || 'gpt-4o-short_v1',\n    generated_at: cleanedShortProfile.generated_at || new Date().toISOString(),\n    workflow_id: $workflow.id || null,\n    execution_id: $execution.id || null,\n    processing_timestamp: new Date().toISOString(),\n    score_confidence: cleanedShortProfile.score_confidence || null\n  };\n  \n  const supabaseRecord = {\n    student_id: profile.student_id,\n    context_key: profile.context_key,\n    short_profile: cleanedShortProfile,\n    summary_text: cleanedSummary,\n    generator_meta: generatorMeta\n  };\n  \n  supabaseRecords.push(supabaseRecord);\n  console.log('âœ“ Record prepared for:', profile.context_key);\n}\n\nconsole.log('\\n=== Parse Short Profile - SUMMARY ===');\nconsole.log('Total profiles processed:', supabaseRecords.length);\nconsole.log('Contexts:', supabaseRecords.map(r => r.context_key).join(', '));\nconsole.log('âœ“ Parse complete');\n\n// Return array of records - each will be inserted separately\nreturn supabaseRecords.map(record => ({ json: record }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        0
+      ],
+      "id": "762669d1-ff6c-45bc-8de6-55b1f89b3201",
+      "name": "Parse Short Profile"
+    },
+    {
+      "parameters": {
+        "tableId": "student_profiles_short",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "student_id",
+              "fieldValue": "={{ $json.student_id }}"
+            },
+            {
+              "fieldId": "context_key",
+              "fieldValue": "={{ $json.context_key }}"
+            },
+            {
+              "fieldId": "short_profile",
+              "fieldValue": "={{ $json.short_profile }}"
+            },
+            {
+              "fieldId": "summary_text",
+              "fieldValue": "={{ $json.summary_text }}"
+            },
+            {
+              "fieldId": "generator_meta",
+              "fieldValue": "={{ $json.generator_meta }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        304,
+        0
+      ],
+      "id": "8f70a4cf-6c92-4922-a492-bdd7fc072ad9",
+      "name": "Add Short Profile",
+      "credentials": {
+        "supabaseApi": {
+          "id": "E5pKZtIHwJSCitPy",
+          "name": "Supabase account - dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=INPUT DATA: {{ $json.data }}",
+        "options": {
+          "systemMessage": "=You are an expert fitness coach creating quick-reference profiles for class instruction.\n\nðŸš¨ CRITICAL WORKFLOW - YOU MUST FOLLOW THESE STEPS IN ORDER:\n\nSTEP 1: DISCOVER ALL WORKOUT FORMATS (MANDATORY)\nBefore generating ANY profiles, you MUST:\n1. Use the query_short_profile_data tool to search for \"all workout format contexts\"\n2. Search for \"student profile structure examples\"\n3. Review the retrieved examples to identify ALL unique context_key values\n4. Make a list of every distinct workout format found in the knowledge base\n5. student_id: should be as same coming from the input field \"student_id\"\n\nExample searches you MUST perform:\n- \"workout format contexts\"\n- \"student profile structure\"\n- \"coaching guidelines all formats\"\n- \"class type profiles\"\n\nSTEP 2: ANALYZE RETRIEVED DATA\nReview all search results and note:\n- ALL unique context_key values found (e.g., \"strength_upper\", \"yoga\", \"pilates\", etc.)\n- Common terminology used in existing profiles\n- Structure patterns in must_know, should_know, nice_to_know arrays\n- Format-specific coaching tips\n- Confidence score ranges\n\nSTEP 3: GENERATE PROFILES DYNAMICALLY\nCreate ONE profile for EACH unique context_key found in Step 1, incorporating:\n- Terminology from retrieved documents\n- Structure patterns from examples\n- Best practices from knowledge base\n- Format-specific guidance for each context\n\nSTEP 4: RETURN JSON\nReturn pure JSON array with ALL profiles (not just 9, but however many contexts exist).\n\nâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\nABSOLUTE OUTPUT REQUIREMENT\nâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n\nAfter completing your searches and analysis, you MUST return ONLY valid JSON. Nothing else.\n\nâŒ FORBIDDEN - DO NOT INCLUDE:\n- Markdown code blocks (```json or ```)\n- Any text before the JSON\n- Any text after the JSON\n- Any explanatory comments\n- Search summaries or analysis\n- Any line breaks before or after JSON\n\nâœ… REQUIRED FORMAT:\n- Start immediately with [\n- End immediately with ]\n- Pure JSON array in between\n- No whitespace before [\n- No whitespace after ]\n\nDYNAMIC PROFILE GENERATION:\nYou MUST create profiles for ALL unique context_key values found in the knowledge base.\nDo NOT limit yourself to a fixed number. Generate as many profiles as there are workout formats.\n\nEach profile object MUST have this structure (4 top-level keys):\n{\n  \"student_id\": \"\"\n  \"context_key\": \"format-name-from-knowledge-base\",\n  \"short_profile\": {\n    \"generated_at\": \"ISO-8601-timestamp\",\n    \"llm_version\": \"gpt-4o-short_v1\",\n    \"context\": \"same-as-context_key\",\n    \"must_know\": [\"array\", \"of\", \"strings\"],\n    \"should_know\": [\"array\", \"of\", \"strings\"],\n    \"nice_to_know\": [\"array\", \"of\", \"strings\"],\n    \"class_actionable_tips\": [\n      {\n        \"tip\": \"string\",\n        \"urgency\": \"high|medium|low\",\n        \"rationale\": \"string\"\n      }\n    ],\n    \"quick_summary\": \"string-under-100-chars\",\n    \"score_confidence\": 0.0-to-1.0\n  },\n  \"summary_text\": \"string-100-to-150-words\"\n}\n\nFORMAT-SPECIFIC GUIDANCE (Use knowledge base data as primary source):\n\nFor each workout format found in the knowledge base, extract:\n\nMUST_KNOW (Critical Safety):\n- Pain points and restrictions specific to this format\n- Injury risks for movements in this class type\n- Required modifications for this workout style\n- Bilateral imbalances >20% relevant to this format\n\nSHOULD_KNOW (Performance):\n- Key strengths to leverage in this format\n- Compensatory patterns to cue during this class type\n- Priority training focuses for this workout style\n\nNICE_TO_KNOW (Personalization):\n- Goals and preferences related to this format\n- Exercise likes/dislikes for this class type\n\nCLASS_ACTIONABLE_TIPS (2-4 tips per format):\n{\n  \"tip\": \"Specific coaching cue for this exact workout format\",\n  \"urgency\": \"high|medium|low\",\n  \"rationale\": \"Why this matters for this specific format\"\n}\n\nQUICK_SUMMARY:\nMaximum 100 characters for roster display, format-specific.\n\nSCORE_CONFIDENCE:\n0.9-1.0 = Comprehensive data\n0.7-0.8 = Good data, minor gaps\n0.5-0.6 = Limited data\n<0.5 = Insufficient data\n\nSUMMARY_TEXT:\n100-150 word paragraph covering the format-specific considerations.\n\nYOUR RESPONSE MUST:\n- Start with [\n- End with ]\n- Contain profile objects for ALL unique context_key values found\n- Each object must have valid context_key from the knowledge base\n- Be pure JSON with no markdown or extra text\n- Match patterns and structures found in Supabase vector store\n\nNOTHING BEFORE. NOTHING AFTER. JUST JSON ARRAY."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "e1fb782a-6981-4b1f-b5a0-700b2803e433",
+      "name": "Student Short Profile",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Search the fitness profile knowledge base for examples of student profiles, coaching guidelines, and best practices. This tool MUST be used before generating any profiles to ensure consistency with existing database patterns. Query with terms like \"student profile structure\", \"yoga profile example\", \"strength training guidelines\", or specific workout format names.\n\nTable Name: student_profiles_short_embeddings âœ“\n\nTop K: 10 (increase from 5 for better results)\n\nSimilarity Threshold: 0.5 (add this to filter low-quality matches)",
+        "tableName": {
+          "__rl": true,
+          "value": "student_profiles_short_embeddings",
+          "mode": "list",
+          "cachedResultName": "student_profiles_short_embeddings"
+        },
+        "topK": 100,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        192
+      ],
+      "id": "f4c4cc6f-f6aa-49bc-8edb-2a50c9263d99",
+      "name": "query_short_profile_data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "E5pKZtIHwJSCitPy",
+          "name": "Supabase account - dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "data"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "6b9d724a-c0f9-4a8c-8071-3752964cdedd",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        336
+      ],
+      "id": "b7573efe-86bc-40ad-b747-4d75f4932c43",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "qreoOIh93DQJxynK",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "data": "[\n  {\n    \"student_id\": \"ade455b9-6c11-405d-a4d7-786053cd613b\",\n    \"student_name\": \"Unknown\",\n    \"age_range\": \"Not specified\",\n    \"fitness_goal\": \"Not specified\",\n    \"fitness_level\": \"Not assessed\",\n    \"critical_limitations\": [],\n    \"all_limitations\": [],\n    \"medical_considerations\": {\n      \"pain_description\": \"No pain reported\",\n      \"injuries\": \"None documented\",\n      \"restrictions\": \"No restrictions noted\"\n    },\n    \"movement_patterns\": {\n      \"key_findings\": [],\n      \"bilateral_imbalances\": []\n    },\n    \"assessment_recommendations\": [],\n    \"persona\": {\n      \"primary\": \"Not assigned\",\n      \"secondary\": null,\n      \"engagement_level\": \"Not assessed\",\n      \"motivation_drivers\": []\n    },\n    \"summary_text\": \"22-year-old Test7 has embarked on a fitness journey with various goals including losing weight, building muscle, toning up, and improving general fitness. As a beginner, Test7 has indicated a desire to develop experience in HIIT, yoga, cardio, pilates, and strength training, all currently at a beginner level. Test7 prefers early morning workouts and currently has no access to equipment, relying instead on bodyweight exercises. Fortunately, there are no reported medical concerns or allergies, allowing for a focus on building strength and endurance. With a commitment of 15 minutes per session, Test7 is motivated to engage in a consistent routine to track small improvements and foster a healthier lifestyle.\",\n    \"metadata\": {\n      \"profile_version\": 1,\n      \"source_assessment_id\": null,\n      \"generated_at\": \"2025-11-13T05:09:04.951Z\",\n      \"llm_version\": \"gpt-4o-long_v1\"\n    }\n  }\n]\n"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Student Short Profile",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Short Profile": {
+      "main": [
+        [
+          {
+            "node": "Add Short Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Short Profile": {
+      "main": [
+        [
+          {
+            "node": "Parse Short Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "query_short_profile_data": {
+      "ai_tool": [
+        [
+          {
+            "node": "Student Short Profile",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Student Short Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "query_short_profile_data",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "661f6e7a-dd75-4ceb-adbb-96134971b431",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4487e3bf0dc36122e820f49df2065916da129e265d704755864a772ec263b6b0"
+  },
+  "id": "56ZsKoDFWGjK0l1F",
+  "tags": []
+}

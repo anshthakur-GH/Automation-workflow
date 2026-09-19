@@ -1,0 +1,554 @@
+{
+  "name": "SEO Audit Generator - Phase 2 (Competitor Research)",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of items) {\n  const competitorEngineId = item.json.site_engine_id;\n  const keywords = item.json.keywords || [];\n\n  for (const kw of keywords) {\n    const posObj = kw.positions?.[0] || {};\n\n    output.push({\n      json: {\n        keyword: kw.name,\n        volume: Number(kw.volume || 0),\n        competitor_position: posObj.pos ?? null,\n        competitor_url: posObj.url ?? null,\n        competitor_engine_id: competitorEngineId\n      }\n    });\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -144
+      ],
+      "id": "d1c57ae3-4e51-4537-9bbe-ce365ae1dd55",
+      "name": "Flatten all keywords"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://searchconsole.googleapis.com/webmasters/v3/sites/sc-domain:dataclicks.nl/searchAnalytics/query\n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"startDate\": \"2025-10-15\",\n  \"endDate\": \"2025-11-15\",\n  \"dimensions\": [\"query\"],\n  \"rowLimit\": 5000,\n  \"searchType\": \"web\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        272
+      ],
+      "id": "f1fead26-2dd8-47c0-a3c5-a755036a13be",
+      "name": "Search Console"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $json.rows.map(r => ({\n  json: {\n    keyword: r.keys[0],\n    clicks: r.clicks,\n    impressions: r.impressions,\n    ctr: r.ctr,\n    position: r.position\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        272
+      ],
+      "id": "1d2e20f2-68a1-4b0c-a582-10aa321f1c60",
+      "name": "Clean + Flatten GSC Output"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "keyword",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        160,
+        272
+      ],
+      "id": "afab9e3f-9366-4ec4-861f-ab6f51ab1532",
+      "name": "Remove Duplicate Keyword From GSC"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "keyword",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        128,
+        64
+      ],
+      "id": "7e3b2ea0-c609-4773-8abc-6803c5aa8fe3",
+      "name": "Remove Duplicate Keyword SE Ranking"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  let kw = item.json.keyword || item.json.name || item.json.keys?.[0] || \"\";\n\n  kw = kw\n    .toString()\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9\\s]/g, \"\")  // remove hyphens, commas, symbols\n    .replace(/\\s+/g, \" \");        // collapse double spaces\n\n  item.json.keyword = kw;\n\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        272
+      ],
+      "id": "37cd209d-931b-4dfb-aa49-7187c2d69aca",
+      "name": "Keyword normalization GSC"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  let kw = item.json.keyword || item.json.name || item.json.keys?.[0] || \"\";\n\n  kw = kw\n    .toString()\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9\\s]/g, \"\")  // remove hyphens, commas, symbols\n    .replace(/\\s+/g, \" \");        // collapse double spaces\n\n  item.json.keyword = kw;\n\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        64
+      ],
+      "id": "d80c0183-60e8-423b-b570-e5db03007eaf",
+      "name": "Keyword normalization SE Ranking"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(i => {\n  const j = i.json;\n\n  j.bucket =\n    j.competitor_position !== undefined && j.position === undefined\n      ? \"competitor-only\"\n      : j.competitor_position === undefined && j.position !== undefined\n      ? \"gsc-only\"\n      : \"both\";\n\n  return { json: j };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        160
+      ],
+      "id": "112bd805-fd46-408a-81ca-cb7a84c724ae",
+      "name": "Categorizer based on Keyword"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "keyword",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        160
+      ],
+      "id": "5e361cee-3baf-4fba-a493-e7c529861a92",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items\n  .map(i => {\n    const d = { ...i.json };\n    let score = 0;\n    // Bucket weight\n    if (d.bucket === \"competitor-only\") score += 50;\n    else if (d.bucket === \"both\") score += 30;\n    else if (d.bucket === \"gsc-only\") score += 20;\n    // Volume weight\n    const volume = Number(d.volume || 0);\n    score += Math.min(volume, 50);\n    // Position weight (GSC position)\n    const position = Number(d.position || 0);\n    if (position > 0) {\n      score += (100 - position) / 2;\n    }\n    d.priority_score = Math.round(score);\n    return { json: d };\n  })\n  .sort((a, b) => b.json.priority_score - a.json.priority_score);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        160
+      ],
+      "id": "9977520d-5b8b-4b51-8925-8200f3a5586a",
+      "name": "Priority Scoring & Ordering"
+    },
+    {
+      "parameters": {
+        "url": "https://api4.seranking.com/sites",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Token YOUR_SERANKING_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        -160
+      ],
+      "id": "f33551e2-c4ee-4f69-91af-73363dd19f41",
+      "name": "Get All Projects"
+    },
+    {
+      "parameters": {
+        "jsCode": "const formDomain = $node[\"On form submission\"].json[\"Enter Domain for Analysis\"];\n\nconst inputDomain = formDomain\n  .replace(\"https://\", \"\")\n  .replace(\"http://\", \"\")\n  .replace(\"www.\", \"\")\n  .replace(\"/\", \"\")\n  .toLowerCase();\n\nfor (const item of items) {\n  const siteName = item.json.name || \"\";\n\n  const siteDomain = siteName\n    .replace(\"https://\", \"\")\n    .replace(\"http://\", \"\")\n    .replace(\"www.\", \"\")\n    .replace(\"/\", \"\")\n    .toLowerCase();\n\n  if (siteDomain.includes(inputDomain)) {\n    return [{ json: { site_id: item.json.id } }];\n  }\n}\n\nthrow new Error(\"No matching SE Ranking site found\");\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -160
+      ],
+      "id": "94bc7bca-44b4-4196-9da7-359d0fd53db8",
+      "name": "Match Site ID by Domain"
+    },
+    {
+      "parameters": {
+        "formTitle": "SEO Keyword Research",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Enter Website URL",
+              "placeholder": "https://www.dataclicks.nl",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Enter Domain for Analysis",
+              "placeholder": "dataclicks.nl",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -464,
+        64
+      ],
+      "id": "45bdf44f-0f7c-4736-ac00-60ba07d532f2",
+      "name": "On form submission",
+      "webhookId": "acef2ca6-b749-4eb3-a2da-9e76120d566a"
+    },
+    {
+      "parameters": {
+        "url": "=https://api4.seranking.com/competitors/site/{{$json.site_id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Token YOUR_SERANKING_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        -160
+      ],
+      "id": "5f8911af-1835-4f66-99ac-cc9cc7b08d5c",
+      "name": "Get Project Competitors"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        384,
+        -160
+      ],
+      "id": "3e95ee0c-1d26-4e30-99e4-e708d0a82f2c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "=https://api4.seranking.com/competitors/{{$json.id}}/positions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Token YOUR_SERANKING_TOKEN_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "se",
+              "value": "us"
+            },
+            {
+              "name": "sort",
+              "value": "traffic"
+            },
+            {
+              "name": "sort_order",
+              "value": "desc"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1500
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        -144
+      ],
+      "id": "14be59c4-165b-435d-a4c9-db755e13b273",
+      "name": "Get Competitor Keyword Positions"
+    },
+    {
+      "parameters": {
+        "jsCode": "const brand = $node[\"On form submission\"].json[\"Enter Domain for Analysis\"]\n  .replace(\"https://\", \"\")\n  .replace(\"http://\", \"\")\n  .replace(\"www.\", \"\")\n  .split(\".\")[0]\n  .toLowerCase();\n\nreturn items.filter(i => {\n  const kw = (i.json.keyword || \"\").toLowerCase();\n  return !kw.includes(brand);\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        160
+      ],
+      "id": "e182ba0f-3c1b-4a03-8e73-a8c94bf94237",
+      "name": "Remove Branded Keywords"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(i => ({\n  json: {\n    ...i.json,\n    keyword: (i.json.keyword || \"\").trim().toLowerCase()\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        64
+      ],
+      "id": "53237703-8d3e-4f25-9488-6b88abd26026",
+      "name": "Normalize Keyword for Dedup"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Flatten all keywords": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Console": {
+      "main": [
+        [
+          {
+            "node": "Clean + Flatten GSC Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean + Flatten GSC Output": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicate Keyword From GSC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicate Keyword SE Ranking": {
+      "main": [
+        [
+          {
+            "node": "Keyword normalization SE Ranking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicate Keyword From GSC": {
+      "main": [
+        [
+          {
+            "node": "Keyword normalization GSC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keyword normalization GSC": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Keyword normalization SE Ranking": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorizer based on Keyword": {
+      "main": [
+        [
+          {
+            "node": "Priority Scoring & Ordering",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Remove Branded Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Projects": {
+      "main": [
+        [
+          {
+            "node": "Match Site ID by Domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Site ID by Domain": {
+      "main": [
+        [
+          {
+            "node": "Get Project Competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Get All Projects",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Console",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Competitors": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Normalize Keyword for Dedup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Competitor Keyword Positions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Competitor Keyword Positions": {
+      "main": [
+        [
+          {
+            "node": "Flatten all keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Branded Keywords": {
+      "main": [
+        [
+          {
+            "node": "Categorizer based on Keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Keyword for Dedup": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicate Keyword SE Ranking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0d90e957-7838-40bf-bef5-aaee29b28d36",
+  "meta": {
+    "instanceId": "dad92da0da58425e2abc6cda71910771f198cd0fd3b8d62c4f257e4a93512e54"
+  },
+  "nodeGroups": [],
+  "id": "sR2hM0MqLeynZojy",
+  "tags": []
+}

@@ -1,0 +1,779 @@
+{
+  "name": "X - Gamdom Tweet Filtration",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.twitter.com/2/tweets/search/recent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{$json.search_query}}"
+            },
+            {
+              "name": "max_results",
+              "value": "100"
+            },
+            {
+              "name": "tweet.fields",
+              "value": "created_at,author_id,attachments,public_metrics"
+            },
+            {
+              "name": "user.fields",
+              "value": "username,name,verified"
+            },
+            {
+              "name": "expansions",
+              "value": "author_id,attachments.media_keys"
+            },
+            {
+              "name": "since_id",
+              "value": "={{ $json.tweet_id }}"
+            },
+            {
+              "name": "media.fields",
+              "value": "media_key,type,url,preview_image_url"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TWITTER_TOKEN_HERE"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {}
+          }
+        }
+      },
+      "name": "X Search - Page 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        288,
+        -80
+      ],
+      "id": "294ec9f0-784f-4f4a-8fa0-44982f3aafa0",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\n\nreturn [{\n  json: {\n    tweet_id: response.meta.newest_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        192
+      ],
+      "id": "e8fedda4-e2e3-47f0-81a4-5598936c44e9",
+      "name": "Extract Last Seen ID"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"ðŸš¨ Negative Gamdom Tweet Detected\",\n  \"blocks\": [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": \"ðŸš¨ ALERT: Negative Gamdom Tweet\",\n        \"emoji\": true\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Tweet Content:*\\n{{ $json.tweet_text }}\"\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Author:*\\n{{ $json.author_name }} (@{{ $json.author_username }})\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Tweet ID:*\\n{{ $json.tweet_id }}\"\n        }\n      ]\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Created At:*\\n{{ new Date($json.created_at).toLocaleString() }}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Reason:*\\n{{ $json.reason }}\"\n        }\n      ]\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"View Tweet\",\n            \"emoji\": true\n          },\n          \"url\": \"{{ $json.tweet_url }}\",\n          \"style\": \"danger\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        416
+      ],
+      "id": "46361546-f3e5-46a3-bb17-8cf08065b3b8",
+      "name": "Send Slack Notification"
+    },
+    {
+      "parameters": {
+        "jsCode": "function sanitize(text) {\n  if (!text) return '';\n\n  return String(text)\n    // escape backslashes\n    .replace(/\\\\/g, '\\\\\\\\')\n    // escape quotes\n    .replace(/\"/g, '\\\\\"')\n    // remove carriage returns\n    .replace(/\\r/g, '')\n    // replace newlines with Slack-safe line breaks\n    .replace(/\\n/g, '\\\\n')\n    // remove other control characters\n    .replace(/[\\u0000-\\u001F\\u007F]/g, '');\n}\n\nreturn $input.all().map(item => {\n  const tweetText = sanitize(item.json.tweet_text);\n  const reason = sanitize(item.json.reason);\n  const authorName = sanitize(item.json.author_name);\n  const authorUsername = sanitize(item.json.author_username);\n\n  return {\n    json: {\n      tweet_id: item.json.tweet_id,\n      tweet_text: tweetText,\n      author_name: authorName,\n      author_username: authorUsername,\n      created_at: item.json.created_at,\n      reason: reason,\n      tweet_url: item.json.tweet_url\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        416
+      ],
+      "id": "4b958a84-2937-4553-82f0-e1c42b6a6e80",
+      "name": "Parse specific tweet"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1168,
+        400
+      ],
+      "id": "678f4464-5e3c-460a-9f75-939a2f281ecc",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        560
+      ],
+      "id": "b84ef304-fe1f-4e2d-aab7-5984cc81e340",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "184f89c1-b81b-4830-b89e-3e4faf46614a",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        416
+      ],
+      "id": "a3b8eaf1-1747-4ea3-b33d-24ce986991ad",
+      "name": "If1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        912,
+        32
+      ],
+      "id": "13bc2ac3-42a5-495b-b5d8-0ccd505a92e9",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "eaf7dce5-9126-4d3e-9961-4ba66c7f3da9",
+              "leftValue": "={{ $('X Search - Page 1').item.json.meta.result_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        208
+      ],
+      "id": "436e71c0-9416-4d0e-b329-728dcb2dcd29",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        416
+      ],
+      "id": "98a067e4-1007-4ebc-a41f-b7ab555b0d33",
+      "name": "Filter -ve Tweets"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get OpenAI HTTP response safely\nconst response = $input.first().json;\n\n// Guard: no valid response\nif (\n  !response ||\n  !response.choices ||\n  !response.choices[0] ||\n  !response.choices[0].message ||\n  !response.choices[0].message.content\n) {\n  console.log('No valid response received');\n  return [];\n}\n\n// Raw AI output (string)\nconst rawContent = response.choices[0].message.content;\nconsole.log('Raw AI Content:', rawContent);\n\n// Parse JSON safely\nlet parsed;\ntry {\n  parsed = JSON.parse(rawContent);\n  console.log('Successfully parsed JSON');\n} catch (e) {\n  console.log('JSON Parse Error:', e.message);\n  return [];\n}\n\n// Ensure array exists\nconst negativeTweets = Array.isArray(parsed.negative_tweets)\n  ? parsed.negative_tweets\n  : [];\n\nconsole.log('Total negative tweets found:', negativeTweets.length);\n\n// Return each negative tweet as a separate n8n item\nreturn negativeTweets.map((tweet, index) => {\n  // Create X (Twitter) URL\n  const tweetUrl = `https://x.com/${tweet.author_username}/status/${tweet.tweet_id}`;\n  \n  console.log(`\\nTweet #${index + 1}:`);\n  console.log('  ID:', tweet.tweet_id);\n  console.log('  Text:', tweet.tweet_text);\n  console.log('  Author:', tweet.author_name, `(@${tweet.author_username})`);\n  console.log('  Created:', tweet.created_at);\n  console.log('  Reason:', tweet.reason);\n  console.log('  URL:', tweetUrl);\n  \n  return {\n    json: {\n      tweet_id: tweet.tweet_id,\n      tweet_text: tweet.tweet_text,\n      author_username: tweet.author_username,\n      author_name: tweet.author_name,\n      created_at: tweet.created_at,\n      reason: tweet.reason,\n      tweet_url: tweetUrl\n    }\n  };\n});"
+      },
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        416
+      ],
+      "id": "b6a23ad6-384e-4d7a-ae99-0ee9a42a3614",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get combined tweets array\nconst items = $input.all();\n\nif (!items.length || !items[0].json.data) {\n  return [{\n    json: {\n      tweets_for_ai: \"[]\"\n    }\n  }];\n}\n\n// Flatten tweets\nconst tweets = items[0].json.data;\n\n// Keep only fields needed for sentiment analysis\nconst cleanedTweets = tweets.map(t => ({\n  id: t.id,\n  text: t.text,\n  author_username: t.author_username,\n  author_name: t.author_name,\n  created_at: t.created_at,\n  metrics: t.public_metrics\n}));\n\n// OPTIONAL SAFETY: limit tweets per request (important for OpenAI)\nconst MAX_TWEETS = 30;\nconst limitedTweets = cleanedTweets.slice(0, MAX_TWEETS);\n\n// Stringify for OpenAI\nreturn [{\n  json: {\n    tweets_for_ai: JSON.stringify(limitedTweets)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        192
+      ],
+      "id": "915dce7a-6239-4644-a7c4-68db7761835d",
+      "name": "Extract required fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// tweets_for_ai is already a STRINGIFIED JSON array\nconst tweetsJsonString = $json.tweets_for_ai;\n\n// Build OpenAI payload with enhanced prompt\nconst body = {\n  model: \"gpt-4o-mini\",\n  temperature: 0.1,\n  messages: [\n    {\n      role: \"system\",\n      content:\n        \"You are a high-precision sentiment analysis engine designed to detect NEGATIVE tweets about the gambling platform Gamdom.\\n\\n\" +\n\n        \"You will receive a JSON array of tweets mentioning Gamdom (@gamdom, @GamdomHowly, @pnrGamdom, or @Gamdom).\\n\\n\" +\n\n        \"Your task is to extract ONLY tweets that indicate NEGATIVE RISK, COMPLAINTS, OR LOSS OF TRUST toward Gamdom AS A PLATFORM.\\n\\n\" +\n\n        \"IMPORTANT: NEGATIVE does NOT require anger, insults, or emotional language.\\n\" +\n        \"Calm, factual, or polite statements about money, bans, withdrawals, or platform behavior ARE NEGATIVE.\\n\\n\" +\n\n        \"ALWAYS FLAG AS NEGATIVE IF A TWEET MENTIONS ANY OF THE FOLLOWING:\\n\\n\" +\n\n        \"FINANCIAL / WITHDRAWAL ISSUES:\\n\" +\n        \"- Withdrawals blocked, delayed, disabled, or stuck\\n\" +\n        \"- Funds locked, frozen, or inaccessible\\n\" +\n        \"- Wallet liquidity issues or inability to process withdrawals\\n\" +\n        \"- Withdrawal-only mode that does not work\\n\" +\n        \"- Any amount (even small amounts) that cannot be withdrawn\\n\\n\" +\n\n        \"KYC / VERIFICATION PROBLEMS:\\n\" +\n        \"- KYC requested and then account banned or restricted\\n\" +\n        \"- Level 2 verification delays or failures\\n\" +\n        \"- KYC completed but funds still locked\\n\" +\n        \"- Documents pending for days, weeks, or months\\n\\n\" +\n\n        \"ACCOUNT ACCESS ISSUES:\\n\" +\n        \"- Account banned or suspended without clear reason\\n\" +\n        \"- Restrictions applied immediately after withdrawal attempts\\n\" +\n        \"- Account disabled while funds remain inside\\n\" +\n        \"- Unequal or discriminatory treatment between players\\n\\n\" +\n\n        \"SUPPORT / COMMUNICATION FAILURES:\\n\" +\n        \"- Support delays that prevent access to funds\\n\" +\n        \"- Promised timelines missed by support\\n\" +\n        \"- Escalation to Twitter due to unresolved issues\\n\\n\" +\n\n        \"PLATFORM TRUST & RELIABILITY ISSUES:\\n\" +\n        \"- Claims Gamdom cannot or will not pay users\\n\" +\n        \"- Comparisons showing Gamdom failing against competitors\\n\" +\n        \"- Statements implying loss of trust or disappointment in the platform\\n\\n\" +\n\n        \"CRITICAL DETECTION PRINCIPLES:\\n\" +\n        \"1. Tone does NOT matter â€” polite complaints are still NEGATIVE\\n\" +\n        \"2. Real money + problem = NEGATIVE\\n\" +\n        \"3. Time delays (hours/days/months) = NEGATIVE\\n\" +\n        \"4. Process failures (KYC â†’ ban, withdrawal mode â†’ failure) = NEGATIVE\\n\\n\" +\n\n        \"EXAMPLES THAT MUST BE FLAGGED:\\n\" +\n        \"\\\"They asked for KYC to withdraw and then banned my account\\\"\\n\" +\n        \"\\\"$45k stuck for 48 hours after completing KYC\\\"\\n\" +\n        \"\\\"Gamdom wallet had no funds to process my withdrawal\\\"\\n\" +\n        \"\\\"Account set to withdrawal-only mode but withdrawals donâ€™t work\\\"\\n\" +\n        \"\\\"Support is too slow and I canâ€™t access my money\\\"\\n\\n\" +\n\n        \"DO NOT FLAG AS NEGATIVE:\\n\" +\n        \"- Giveaway entries or promotional posts\\n\" +\n        \"- Gambling luck complaints not blaming Gamdom\\n\" +\n        \"- Bonus or free spin requests\\n\" +\n        \"- Neutral questions without describing a problem\\n\\n\" +\n\n        \"OUTPUT FORMAT RULES:\\n\" +\n        \"- Return ONLY valid JSON\\n\" +\n        \"- NO markdown\\n\" +\n        \"- NO explanations outside JSON\\n\" +\n        \"- ALWAYS return an object in this exact format:\\n\" +\n        \"{ \\\"negative_tweets\\\": [] }\\n\\n\" +\n\n        \"For EACH negative tweet, return:\\n\" +\n        \"- tweet_id\\n\" +\n        \"- tweet_text\\n\" +\n        \"- author_username\\n\" +\n        \"- author_name\\n\" +\n        \"- created_at\\n\" +\n        \"- reason (clear explanation of why this is negative toward Gamdom)\\n\\n\" +\n\n        \"FINAL RULE:\\n\" +\n        \"If a tweet describes money access problems, withdrawal issues, KYC delays, account restrictions, \" +\n        \"support failures, unfair treatment, or platform reliability issues â€” FLAG IT AS NEGATIVE regardless of tone.\"\n    },\n    {\n      role: \"user\",\n      content:\n        \"Analyze the following tweets array and return ONLY tweets that are negative toward Gamdom as a platform.\\n\\n\" +\n        tweetsJsonString\n    }\n  ]\n};\n\n// Return ONE clean JSON object for HTTP Request node\nreturn [\n  {\n    json: body\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        192
+      ],
+      "id": "74ac6140-a85d-4c09-be31-2ce1f258d18f",
+      "name": "Prepare Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine all pages of tweets\nconst allItems = $input.all();\n\nif (!allItems || allItems.length === 0) {\n  console.log('No items to combine');\n  return [];\n}\n\nlet allTweets = [];\n\n// Collect tweets from all pages\nfor (const item of allItems) {\n  if (item.json.tweets && Array.isArray(item.json.tweets)) {\n    allTweets = allTweets.concat(item.json.tweets);\n  }\n}\n\nif (allTweets.length === 0) {\n  console.log('No tweets found in any page');\n  return [];\n}\n\n// Remove duplicates by tweet ID\nconst uniqueTweets = [];\nconst seenIds = new Set();\n\nfor (const tweet of allTweets) {\n  if (tweet.id && !seenIds.has(tweet.id)) {\n    seenIds.add(tweet.id);\n    uniqueTweets.push(tweet);\n  }\n}\n\n// Sort by ID (newest first)\nuniqueTweets.sort((a, b) => {\n  const aId = BigInt(a.id);\n  const bId = BigInt(b.id);\n  return aId > bId ? -1 : 1;\n});\n\nconsole.log(`Combined ${uniqueTweets.length} unique tweets from ${allItems.length} pages`);\n\n// âœ… Return everything inside a single `data` field\nreturn [\n  {\n    json: {\n      data: uniqueTweets\n    }\n  }\n];\n"
+      },
+      "name": "Combine All Pages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        192
+      ],
+      "id": "f8d4b644-a4b8-4cfb-a9bb-757e1bd39bdb"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Twitter API response\nconst response = $input.item.json;\n\n// Check if we got an error\nif (response.error || response.errors) {\n  console.log('Twitter API error:', response);\n  return [];\n}\n\nconst tweets = response.data || [];\nconst users = response.includes?.users || [];\nconst nextToken = response.meta?.next_token || null;\n\n// If no tweets, return empty\nif (tweets.length === 0) {\n  console.log('No new tweets found');\n  return [];\n}\n\n// Map tweets to include author username\nconst tweetsWithAuthors = tweets.map(tweet => {\n  const author = users.find(u => u.id === tweet.author_id);\n  return {\n    id: tweet.id,\n    text: tweet.text,\n    created_at: tweet.created_at,\n    author_id: tweet.author_id,\n    author_username: author?.username || 'unknown',\n    author_name: author?.name || 'Unknown',\n    author_verified: author?.verified || false,\n    public_metrics: tweet.public_metrics\n  };\n});\n\nconsole.log(`Found ${tweetsWithAuthors.length} tweets`);\n\nreturn [{\n  json: {\n    tweets: tweetsWithAuthors,\n    next_token: nextToken,\n    result_count: tweets.length,\n    has_more: !!nextToken\n  }\n}];"
+      },
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        192
+      ],
+      "id": "8264991d-2483-46ef-b184-91c1470fd6b3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "16e26591-e66e-4cc8-9e94-3749952b7a9f",
+              "name": "tweet_id",
+              "value": "={{ $json.tweet_id }}",
+              "type": "string"
+            },
+            {
+              "id": "efa963b7-8cc7-4742-b1da-29bb65bec480",
+              "name": "search_query",
+              "value": "(@GamdomHowly OR @gamdom OR @pnrGamdom OR @Gamdom) -is:retweet -is:reply",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        -80
+      ],
+      "id": "3f82d714-4898-4956-9500-58f10518b162",
+      "name": "Get LastSeenID"
+    },
+    {
+      "parameters": {
+        "collection": "last_seen_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -80
+      ],
+      "id": "a55f859c-8ef9-4c67-8811-f6ea6921dbc4",
+      "name": "Find LastSeenID",
+      "credentials": {
+        "mongoDb": {
+          "id": "Xvjja5tfChncqhPv",
+          "name": "MongoDB account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "last_seen_id",
+        "fields": "tweet_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        208
+      ],
+      "id": "a927fd59-9cb8-4d05-aa23-9efd6388362a",
+      "name": "Insert LastSeenID",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "Xvjja5tfChncqhPv",
+          "name": "MongoDB account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50544ea2-ed09-4621-9a84-442fc5a6ce34",
+              "name": "tweet_id",
+              "value": "={{ $('Extract Last Seen ID').item.json.tweet_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        208
+      ],
+      "id": "878189d6-c5e4-420e-bf1d-5205f6687d8c",
+      "name": "Get Latest ID"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "collection": "last_seen_id"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        208
+      ],
+      "id": "daa1af28-ce29-4975-ac21-aa7ef1415843",
+      "name": "Delete Old LastSeenID",
+      "credentials": {
+        "mongoDb": {
+          "id": "Xvjja5tfChncqhPv",
+          "name": "MongoDB account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93627251-383f-4138-8438-b1ca93fe130e",
+              "name": "data",
+              "value": "={{ $('X Search - Page 1').item.json.data }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        192
+      ],
+      "id": "1e34a38a-c8aa-4471-b550-a0feb9bf20e8",
+      "name": "Extract X Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c3ffbb64-9e98-4e2a-972b-eacd168fb3ca",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "e1490316-7a88-4d5d-98f2-d8b8a81e316e",
+      "name": "If2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "b35bbad6-5385-4e97-b5aa-8c3eb8bd003f",
+      "name": "No Operation, do nothing2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */6 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Every 6 hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -80
+      ],
+      "id": "a72f0d59-c05b-46d6-89fb-341c828d27d1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "X Search - Page 1": {
+      "main": [
+        [
+          {
+            "node": "Extract Last Seen ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Last Seen ID": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Notification": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse specific tweet": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Parse specific tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract X Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter -ve Tweets": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract required fields": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "Filter -ve Tweets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine All Pages": {
+      "main": [
+        [
+          {
+            "node": "Extract required fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Combine All Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get LastSeenID": {
+      "main": [
+        [
+          {
+            "node": "X Search - Page 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find LastSeenID": {
+      "main": [
+        [
+          {
+            "node": "Get LastSeenID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert LastSeenID": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Latest ID": {
+      "main": [
+        [
+          {
+            "node": "Insert LastSeenID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old LastSeenID": {
+      "main": [
+        [
+          {
+            "node": "Get Latest ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract X Data": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Old LastSeenID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Every 6 hours": {
+      "main": [
+        [
+          {
+            "node": "Find LastSeenID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5c661e88-fe84-42a7-9242-33e255e86114",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f0e66c2cb06abb499e0c19ad6c91be46159283dfbd6968f357a3e6032f61c8f0"
+  },
+  "id": "sjfbpT6s65d6USk8",
+  "tags": []
+}
