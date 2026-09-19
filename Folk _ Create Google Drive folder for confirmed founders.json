@@ -1,0 +1,775 @@
+{
+  "name": "Folk > Create Google Drive folder for confirmed founders",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('Get Person Details from folk').item.json.data.fullName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "=11WyL4EuG--PRfMWsmCG0pf-pLDf41gcX",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "id": "58bc3e45-bc22-4350-8714-69f5f237e79f",
+      "name": "Create Main Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1152,
+        -352
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "confirmed-explore-google-drive-folder",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        -320
+      ],
+      "id": "1c785969-dec9-4fdf-93d4-4c17aa9813a5",
+      "name": "Webhook",
+      "webhookId": "f4bbc32a-0800-4ba4-b492-4b5e152fe206"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        416,
+        16
+      ],
+      "id": "b6fe2e2a-0e66-43d9-b474-55543613d46b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "name": "={{ $('Create Main Folder').item.json.name }} {{ $json.name.replace(/\\{\\{[^}]+\\}\\}\\s*/g, '').replace(/\\\\n|\\n|\\r/g, ' ').replace(/\\s*\\d+\\s*$/g, '').replace(/\\s+/g, ' ').trim() }}",
+        "sameFolder": false,
+        "driveId": {
+          "__rl": true,
+          "value": "11WyL4EuG--PRfMWsmCG0pf-pLDf41gcX",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Create Inner Folder').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        656,
+        64
+      ],
+      "id": "7e4d884e-7efb-4b3c-8081-54e2c2aa2cf0",
+      "name": "Copy file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "962fd7c6-dd83-4754-83e8-8e241cac5132",
+              "leftValue": "mimeType",
+              "rightValue": "application/vnd.google-apps.folder",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "454d0d85-95df-4f24-a20f-a0c587deaaef",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "\" \"",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        32
+      ],
+      "id": "563894cf-78dd-499a-af2b-2935d62d011d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $json.name }} & DQventures : Explore Stage",
+        "driveId": {
+          "__rl": true,
+          "value": "11WyL4EuG--PRfMWsmCG0pf-pLDf41gcX",
+          "mode": "id"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        -352
+      ],
+      "id": "8d8eb091-99e2-4939-9044-b80ae4c07872",
+      "name": "Create Inner Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "share",
+        "folderNoRootId": {
+          "__rl": true,
+          "value": "={{ $('Create Inner Folder').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "writer",
+            "type": "user",
+            "emailAddress": "={{ $('Get Person Details from folk').item.json.data.emails[0] }}"
+          }
+        },
+        "options": {
+          "sendNotificationEmail": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        832,
+        -112
+      ],
+      "id": "d860a839-3f4b-4e89-99c9-7f699e8d12df",
+      "name": "Share folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1CYlbFAWDZWioMtncyQHIEk6fQv3oSjYw",
+            "mode": "id"
+          },
+          "whatToSearch": "files"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        -352
+      ],
+      "id": "d92e8b67-d8d1-4c60-b2cf-8de4c25f2511",
+      "name": "Get all template folder files",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{$('Get Person Details from folk').item.json.data.id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Google Drive Link\": \"https://drive.google.com/drive/folders/{{ $('Create Main Folder').first().json.id }}?usp=drive_link\",\n      \"Explore Google Drive Link\": \"https://drive.google.com/drive/folders/{{ $('Create Inner Folder').first().json.id }}?usp=drive_link\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1008,
+        -112
+      ],
+      "id": "2e3ddcfa-fcb4-4535-8166-a9e632cdb754",
+      "name": "Update Folk with URLs"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1216,
+        -112
+      ],
+      "id": "be204eef-513e-4e08-864f-57fefb2c837c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7678c942-90fe-4d5d-b140-3d54517cb783",
+              "name": "body",
+              "value": "={{ $json.body}}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        -320
+      ],
+      "id": "468a1cc5-7869-4260-a4a6-bbff8e3daa43",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people/{{ $json.body.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        544,
+        -336
+      ],
+      "id": "6c89cb87-7e57-4845-8f71-999dbb491a0b",
+      "name": "Get Person Details from folk"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -112
+      ],
+      "id": "65be27a5-9bb1-408d-9f61-dc63df14932f",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "018db771-ba9e-4a5c-9d6e-f1507538a5d6",
+              "leftValue": "={{ JSON.stringify($json.body.data.changes[0].value) }}",
+              "rightValue": "=\"Confirmed: Explore\"",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        304,
+        -320
+      ],
+      "id": "ca615922-c79b-4f2e-bfe3-fd3bbf63372a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $json.data.fullName }}",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "11WyL4EuG--PRfMWsmCG0pf-pLDf41gcX",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        752,
+        -336
+      ],
+      "id": "4b3291ff-39d2-49eb-ad36-750559ea567a",
+      "name": "Search files and folders",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c722b4d9-627b-4c33-a1fd-869311ebaefc",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        -336
+      ],
+      "id": "dc33b15f-b0f0-4702-adbc-4b4761527211",
+      "name": "New?",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Do NOT remove context. Only filter template items.\nreturn $input.all().map(item => {\n  if (item.json.mimeType === \"application/vnd.google-apps.folder\") return null;\n  return item;\n}).filter(i => i);\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        32
+      ],
+      "id": "cabec257-7f44-4727-965e-4a52260bcb54",
+      "name": "Save Context"
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "json",
+        "responseBody": "{\n  \"message\": \"Folder already exists in google drive\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        944,
+        -480
+      ],
+      "id": "4c918d08-1b74-40cf-b369-b5ea3198cf3e",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/webhooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"Folk.app: (Status = Confirmed: Explore)\",\n  \"targetUrl\": \"<REDACTED_N8N_WEBHOOK_URL>\",\n  \"subscribedEvents\": [\n    {\n      \"eventType\": \"person.updated\",\n      \"filter\": {\n        \"path\": [\n          \"customFieldValues\",\n          \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\",\n          \"Status\"\n        ],\n        \"value\": \"Confirmed: Explore\"\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -16,
+        -528
+      ],
+      "id": "5b843e0a-943a-4da1-ba20-13c2db42f208",
+      "name": "Filter webhook (Status = Confirmed : Explore)"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "<REDACTED_N8N_HOST>",
+            "user-agent": "node",
+            "content-length": "476",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "44.205.221.8",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9d61232e3f3bc967-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "traceparent": "00-69a59f3e00000000527e3dc7efa55bfd-6e36eb288d10e118-01",
+            "tracestate": "dd=t.tid:69a59f3e00000000;t.dm:-1;s:1;p:6e36eb288d10e118",
+            "webhook-id": "evt_902a233d-983d-49a5-9854-4fa889dba234",
+            "webhook-signature": "v1,61QfMc7I2VYEh0nxUaBzh5Yxx86DAGWPuAL63c9WBZw=",
+            "webhook-timestamp": "1772461886",
+            "x-datadog-parent-id": "7941793552312361240",
+            "x-datadog-sampling-priority": "1",
+            "x-datadog-tags": "_dd.p.tid=69a59f3e00000000,_dd.p.dm=-1",
+            "x-datadog-trace-id": "5944256487104011261",
+            "x-forwarded-for": "44.205.221.8, 172.68.245.164",
+            "x-forwarded-host": "<REDACTED_N8N_HOST>",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-70-6d8d5988f7-9vfbn",
+            "x-is-trusted": "yes",
+            "x-real-ip": "44.205.221.8"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "evt_902a233d-983d-49a5-9854-4fa889dba234",
+            "type": "person.updated",
+            "createdAt": "2026-03-02T14:31:26.580Z",
+            "source": "https://api.folk.app/v1/webhooks/wbk_c6d9d22c-1d99-4774-b434-8892572ab675",
+            "data": {
+              "id": "per_5adb5ae9-2b53-4bca-81c9-7a02121cbbf3",
+              "url": "https://api.folk.app/v1/people/per_5adb5ae9-2b53-4bca-81c9-7a02121cbbf3",
+              "changes": [
+                {
+                  "type": "set",
+                  "path": [
+                    "groupCustomFieldValues",
+                    "grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f",
+                    "Status"
+                  ],
+                  "value": "Confirmed: Explore"
+                }
+              ]
+            }
+          },
+          "webhookUrl": "<REDACTED_N8N_WEBHOOK_URL>",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Create Main Folder": {
+      "main": [
+        [
+          {
+            "node": "Create Inner Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Copy file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Inner Folder": {
+      "main": [
+        [
+          {
+            "node": "Get all template folder files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share folder": {
+      "main": [
+        [
+          {
+            "node": "Update Folk with URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all template folder files": {
+      "main": [
+        [
+          {
+            "node": "Save Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Folk with URLs": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Person Details from folk": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Share folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get Person Details from folk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "New?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New?": {
+      "main": [
+        [
+          {
+            "node": "Create Main Folder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Context": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "GaBIkTJyHgyw25SQ"
+  },
+  "versionId": "b1b92038-e482-41d3-8583-a62e64a60a47",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "eR0EtcEPJq6XZi74",
+  "tags": []
+}

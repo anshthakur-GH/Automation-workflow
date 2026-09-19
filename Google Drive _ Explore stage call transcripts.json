@@ -1,0 +1,736 @@
+{
+  "name": "Google Drive > Explore stage call transcripts",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "13T3FDqgu1542HalfOHe17j3WZyexjXTT",
+          "mode": "list",
+          "cachedResultName": "Arjun: Meet Recordings",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/13T3FDqgu1542HalfOHe17j3WZyexjXTT"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "application/vnd.google-apps.document"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        1200
+      ],
+      "id": "cac624b5-4566-42e0-bdee-0bcc75436901",
+      "name": "Arjun: Meet Recordings",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1wTIjhZvq1pMQV7CI4afPJhv0Nub2E5DG",
+          "mode": "list",
+          "cachedResultName": "Oliver: Meet Recordings",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1wTIjhZvq1pMQV7CI4afPJhv0Nub2E5DG"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "application/vnd.google-apps.document"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        672
+      ],
+      "id": "9139f446-9cb1-4f98-a2b9-e50dfb270f18",
+      "name": "Oliver: Meet Recordings",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1E70LRTaIKAkFbAO5-XU446sf8q7ZhlsH",
+          "mode": "list",
+          "cachedResultName": "Sam: Meet Recordings",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1E70LRTaIKAkFbAO5-XU446sf8q7ZhlsH"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "application/vnd.google-apps.document"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        848
+      ],
+      "id": "f05603a5-ab12-40d7-afc8-b88eeb1fc89f",
+      "name": "Sam: Meet Recordings",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $json.id }}",
+        "simple": false
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        496,
+        672
+      ],
+      "id": "bdce7206-24a4-423a-ab7f-0d4323b8694f",
+      "name": "Get a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "h2Imz8jyFEC9cJir",
+          "name": "Google Docs: futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people?filter[emails][like]={{ $json.emails }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        688
+      ],
+      "id": "4d2ea8b1-83dc-4163-b5ba-efcce93999ce",
+      "name": "Get Person Details from folk"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "53bf5757-7ba4-4d9f-8fc0-93e71f22fc09",
+              "name": "data.items[0].customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Google Drive Link\"]",
+              "value": "={{ $json.data.items[0].customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Google Drive Link\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        928
+      ],
+      "id": "9e027309-f641-4193-85cf-df9e03342008",
+      "name": "Extract Drive Link"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json.data?.items?.[0];\nif (!item) {\n  return [{ json: { exploreFolderId: null, error: \"No items found\" }}];\n}\n\nconst groups = item.customFieldValues || {};\nconst groupKeys = Object.keys(groups);\n\nlet link = null;\n\n// Find the first non-null link\nfor (const key of groupKeys) {\n  const group = groups[key];\n  for (const fieldName in group) {\n    if (group[fieldName] && typeof group[fieldName] === \"string\") {\n      link = group[fieldName];\n      break;\n    }\n  }\n  if (link) break;\n}\n\n// If no valid link found\nif (!link || !link.includes(\"/folders/\")) {\n  return [{\n    json: {\n      exploreFolderId: null,\n      rawLink: link,\n      error: \"No valid drive link found\"\n    }\n  }];\n}\n\n// Extract folder ID\nconst folderId = link.split(\"/folders/\")[1]?.split(\"?\")[0] || null;\n\nreturn [{\n  json: {\n    exploreFolderId: folderId,\n    rawLink: link\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        912
+      ],
+      "id": "02a14e64-482a-4ae7-86a0-1dc20690f9c7",
+      "name": "Extracts the folder ID"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Extract founder email + docId').item.json.docId }}",
+          "mode": "id"
+        },
+        "name": "={{ $('Extract founder email + docId').item.json.title }}",
+        "sameFolder": false,
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1728,
+        912
+      ],
+      "id": "ff5ac81d-4850-4f1f-b91e-19c0936622a6",
+      "name": "Copy the transcript into this folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1aFwTsRFstKlkDrPWNIYjC81ppNCXqTsv",
+          "mode": "list",
+          "cachedResultName": "James: Meet Recordings",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1aFwTsRFstKlkDrPWNIYjC81ppNCXqTsv"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "application/vnd.google-apps.document"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        1024
+      ],
+      "id": "d0c339f2-8432-43ad-8b69-28b005017d31",
+      "name": "James: Meet Recordings",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b098d83b-0467-4ceb-b74c-eb24e7bffd97",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "Explore Stage",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        96,
+        672
+      ],
+      "id": "7d824bab-6a1c-4b55-8a61-3a06057de7a5",
+      "name": "Only Explore Stage"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: output of \"Get a document\" node (Google Docs full JSON)\nconst doc = $json || {}; // safe fallback\n\n// Get docId and title\nconst docId = doc.documentId || doc.documentId || (doc.documentId && String(doc.documentId)) || null;\nconst title = (doc.title || doc.name || \"\").toString();\n\n// Helper: recursively walk content blocks and collect person emails\nconst emailsSet = new Set();\nconst dqIgnore = \"@dqventures.com\";\n\nfunction walkContent(content) {\n  if (!Array.isArray(content)) return;\n  for (const block of content) {\n    // paragraph elements\n    if (block.paragraph?.elements && Array.isArray(block.paragraph.elements)) {\n      for (const el of block.paragraph.elements) {\n        // prefer explicit personProperties.email\n        const p = el.person?.personProperties;\n        if (p?.email) {\n          const e = String(p.email).trim().toLowerCase();\n          if (e && !e.endsWith(dqIgnore)) emailsSet.add(e);\n        }\n        // sometimes email stored in name field\n        if (p?.name && typeof p.name === \"string\") {\n          const n = p.name.trim().toLowerCase();\n          if (n.includes(\"@\") && !n.endsWith(dqIgnore)) emailsSet.add(n);\n        }\n      }\n    }\n\n    // tables -> cells -> content\n    if (block.table?.tableRows && Array.isArray(block.table.tableRows)) {\n      for (const row of block.table.tableRows) {\n        for (const cell of row.tableCells || []) {\n          walkContent(cell.content);\n        }\n      }\n    }\n\n    // nested content blocks (rare)\n    if (block.content && Array.isArray(block.content)) {\n      walkContent(block.content);\n    }\n  }\n}\n\n// run walker on top-level doc body\nwalkContent(doc.body?.content || []);\n\n// build unique array\nconst emails = Array.from(emailsSet);\n\n// Return single item that contains:\n// - emails: array of strings\n// - docId: string (Google doc id)\n// - title: string (document title)\nreturn [\n  {\n    json: {\n      emails,\n      docId,\n      title\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        672
+      ],
+      "id": "4797d115-fb5e-4f43-b1f6-23d1b9c91911",
+      "name": "Extract founder email + docId"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d9025c2-ecb5-4f12-b9f0-beebdbecf51b",
+              "leftValue": "={{ $json.data.items[0] }}",
+              "rightValue": "={{ $json.data.items[0].emails[0] }}",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        688
+      ],
+      "id": "32034c99-d083-4d98-ae3e-ec8c7b6c66e5",
+      "name": "Person found in Folk?"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $('Person found in Folk?').item.json.data.items[0].fullName }} : Explore Stage",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $('Extracts the folder ID').item.json.exploreFolderId }}",
+            "mode": "id"
+          },
+          "whatToSearch": "folders"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1184,
+        912
+      ],
+      "id": "723e163f-0b22-4730-92d8-5ef16e368a5f",
+      "name": "Find Explore Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('Person found in Folk?').item.json.data.items[0].fullName }} : Weekly DQ Explore Call Transcripts",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        912
+      ],
+      "id": "d5d46653-1c22-4840-9e2b-ea72ab467338",
+      "name": "Create Explore Call Transcripts folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        672
+      ],
+      "id": "0070db74-5852-40c8-9752-f82c6f0c235c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emails",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        880,
+        672
+      ],
+      "id": "507ef92b-07fb-4a7e-a5e0-710f99df86a7",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "06e1d0c6-b95f-4244-ae42-2cdbf07bc74e",
+              "leftValue": "={{ $json.data.items[0].customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Google Drive Link\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        928
+      ],
+      "id": "471966d6-5f01-4e1d-958a-2aa9e7999ba1",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        992,
+        1104
+      ],
+      "id": "a672e5eb-1198-4fce-84dc-5b34b53e750b",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        656
+      ],
+      "id": "92126a15-1ef6-4764-8294-43403c89c2f2",
+      "name": "Loop Over Items1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Arjun: Meet Recordings": {
+      "main": [
+        [
+          {
+            "node": "Only Explore Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Oliver: Meet Recordings": {
+      "main": [
+        [
+          {
+            "node": "Only Explore Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sam: Meet Recordings": {
+      "main": [
+        [
+          {
+            "node": "Only Explore Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Person Details from folk": {
+      "main": [
+        [
+          {
+            "node": "Person found in Folk?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Drive Link": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracts the folder ID": {
+      "main": [
+        [
+          {
+            "node": "Find Explore Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document": {
+      "main": [
+        [
+          {
+            "node": "Extract founder email + docId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "James: Meet Recordings": {
+      "main": [
+        [
+          {
+            "node": "Only Explore Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Explore Stage": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract founder email + docId": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Person found in Folk?": {
+      "main": [
+        [
+          {
+            "node": "Extract Drive Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Explore Folder": {
+      "main": [
+        [
+          {
+            "node": "Create Explore Call Transcripts folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Explore Call Transcripts folder": {
+      "main": [
+        [
+          {
+            "node": "Copy the transcript into this folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Person Details from folk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extracts the folder ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy the transcript into this folder": {
+      "main": [
+        [
+          {
+            "node": "Only Explore Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "Only Explore Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "df45e34f-8d0d-418d-bebc-620b14451b0b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "1zlS0NlK1Hm4kO3v",
+  "tags": []
+}

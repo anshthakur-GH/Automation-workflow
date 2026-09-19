@@ -1,0 +1,674 @@
+{
+  "name": "Fillout to Folk (application form)",
+  "nodes": [
+    {
+      "parameters": {
+        "form": "7xavuVux84us"
+      },
+      "id": "e3fa0df6-e78e-4f7f-a4eb-641ee37ca9f5",
+      "name": "New Application Submitted",
+      "type": "n8n-nodes-fillout.filloutTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "795a6198-b498-4ef5-a2a4-7844fea43982",
+      "credentials": {
+        "filloutApi": {
+          "id": "aTSoEZ6SFq5VQPFf",
+          "name": "Fillout account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n//  CONFIG\n//\n//  Option lists and question types are fetched live from Fillout by\n//  the previous node, so nothing here needs changing when you add a\n//  question, reword an option, or enable \"Other\".\n//\n//  \"Other\" behaviour: whatever the applicant types goes into the main\n//  Folk field verbatim. Answers that DO match a real Fillout option are\n//  written using Fillout's exact label, which strips stray whitespace\n//  and normalises quote characters. There is no companion field.\n//\n//  Note: free text therefore creates a new option on the Folk select,\n//  because Folk adds any value it has not seen before. Expect those\n//  fields to accumulate one-off options over time.\n// ================================================================\n\nconst FOLK_GROUP_ID = 'grp_411ea0ed-822d-4de9-80de-1a0512da709e';   // Pipeline (new)\n\n// Blank = auto-detect by label. Set a Fillout question ID to override.\nconst CORE = { firstName: '', lastName: '', email: '', phone: '' };\n\n// Never sent to Folk.\nconst SKIP = [\n  'Source',      // Fillout tracking object, not an answer\n  'Referral',    // no Folk field by design\n  'ref',         // no Folk field by design\n];\n\n// Fillout question label  ->  Folk field name. Only where they differ.\nconst RENAME = {\n  'Which country do you live in?': 'Country',\n  'Do you have a specific business idea already, or do you need help with ideation?': 'Do you have a business idea?',\n  \"What's your area of expertise?\": 'Area of expertise',\n  'How many years of work experience do you have?': 'Years of work experience',\n  'Are you Technical or Non-Technical?': 'Technical or Non-Technical',\n  'Do you have experience in any of these areas?': 'GTM experience',\n  'Tell us about your idea and why you think it will work': 'Idea',\n  'Do you already know someone in your own network that you think might pay for this?': 'Do you know someone in your network that will pay for this?',\n  'What type of business is it?': 'Type of business',\n  'Is the MVP already built?': 'Is the MVP built?',\n  'Please link to your MVP': 'MVP',\n  'Your website': 'Website URL',\n  'Who created your website?': 'Who built the website?',\n  'Is your business already generating revenue?': 'Is your business generating revenue?',\n  'How much revenue did it make last month (or a rolling average of the last 3 months)?': 'Revenue last month',\n  \"What is the total revenue you've generated over this business' lifetime?\": \"Total revenue over the business' lifetime\",\n  'What is your revenue model?': 'Revenue model',\n  'How many paying customers did it have last month?': 'Number of paying customers last month',\n  'How many customers have paid more than one time (renewed or expanded)?': 'Number of customers that paid more than once',\n  'Do you already have a way of winning paying customers that has worked more than once?': 'Do you have a way of winning paying customers that worked more than once?',\n  'Why does now feel like the right time for you to do this?': 'Why now?',\n  'Are you prepared to invest USD $2k into starting your own business?': 'Are you prepared to invest USD $2k into this?',\n  \"We don't take equity upfront. Instead we charge $2k for a 1 month deep dive into the business to identify growth opportunities.\": 'Are you prepared to invest USD $2k into this?',\n  'Which option do you want to move forwards with?': 'Which DQ Ideate option are you choosing?',\n};\n\n// Collapse verbose option labels into short Folk values.\n// Keyed by FOLK field name, so both branch questions share one entry.\nconst VALUE_MAP = {\n  'Are you prepared to invest USD $2k into this?': {\n    \"Yes - I'm able to invest $2k into starting my own business\": 'Yes',\n    \"Yes - I'm able to invest $2k into consulting from DQventures\": 'Yes',\n    \"No - i'm not ready for help from DQventures yet\": 'No',\n  },\n};\n\nconst VALUE_FALLBACK = [\n  { starts: 'yes', use: 'Yes' },\n  { starts: 'no',  use: 'No'  },\n];\n\n// Written on create AND update. Status resets on every submission\n// (overridden to Closed-lost further down when the $2k answer is No).\nconst ALWAYS = {\n  'Status': () => 'Applied',\n  'Fillout ID': (i) => i.json.submissionId,\n  'Date of Official Application': (i) => String(i.json.submissionTime || '').slice(0, 10),\n};\n\n// Note layout. Empty sections are omitted. Any question not listed here\n// still appears, under \"Other\" at the end.\nconst SECTIONS = [\n  { title: 'About them', fields: [\n    'Which country do you live in?',\n    \"What's your area of expertise?\",\n    'How many years of work experience do you have?',\n    'Are you Technical or Non-Technical?',\n    'Do you have experience in any of these areas?',\n  ]},\n  { title: 'Where they are at', fields: [\n    'Where are you at right now?',\n    'Do you have a specific business idea already, or do you need help with ideation?',\n  ]},\n  { title: 'The idea', fields: [\n    'Tell us about your idea and why you think it will work',\n    'Do you already know someone in your own network that you think might pay for this?',\n  ]},\n  { title: 'The business', fields: [\n    'What type of business is it?',\n    'Is the MVP already built?',\n    'Who built / is building the MVP?',\n    'Please link to your MVP',\n    'Do you have a website yet?',\n    'Your website',\n    'Who created your website?',\n  ]},\n  { title: 'Traction', fields: [\n    'Is your business already generating revenue?',\n    'How much revenue did it make last month (or a rolling average of the last 3 months)?',\n    \"What is the total revenue you've generated over this business' lifetime?\",\n    'How long ago did you launch this business?',\n    'What is your revenue model?',\n    'How many paying customers did it have last month?',\n    'How many customers have paid more than one time (renewed or expanded)?',\n    'How did your business win the existing paying customers?',\n    'Do you already have a way of winning paying customers that has worked more than once?',\n  ]},\n  { title: 'Motivation', fields: [\n    'Why do you want to start your own business?',\n    'Why did you start this business?',\n    'Why does now feel like the right time for you to do this?',\n    'Why do you want help from DQventures?',\n  ]},\n  { title: 'Commitment', fields: [\n    'Are you prepared to invest USD $2k into starting your own business?',\n    \"We don't take equity upfront. Instead we charge $2k for a 1 month deep dive into the business to identify growth opportunities.\",\n    'Which option do you want to move forwards with?',\n  ]},\n  { title: 'Source', fields: [\n    'How did you hear about DQventures?',\n  ]},\n];\n\n// Every custom field that exists in Pipeline (new). A question whose\n// target is not on this list is reported in _warnings and included in\n// the note, but never sent to Folk - so adding a question to the form\n// cannot break the write for the whole submission.\nconst FOLK_FIELDS = [\n  'Date of Official Application','Area of expertise','Idea','LinkedIn : Headline','Interview Date',\n  'Why do you want to start your own business?','Why do you want help from DQventures?','Status',\n  'Date of LinkedIn Application','Country','Do you have a business idea?','Years of work experience',\n  'Technical or Non-Technical','GTM experience','Why now?',\n  'Do you know someone in your network that will pay for this?','Type of business',\n  'Is the MVP built?','MVP','Do you have a website yet?','Website URL',\n  'Who built the website?','Is your business generating revenue?','Revenue last month',\n  \"Total revenue over the business' lifetime\",'How long ago did you launch this business?','Revenue model',\n  'Number of paying customers last month','Number of customers that paid more than once',\n  'How did your business win the existing paying customers?',\n  'Do you have a way of winning paying customers that worked more than once?','Why did you start this business?',\n  'Are you prepared to invest USD $2k into this?','Lead Score','Which DQ Ideate option are you choosing?',\n  'Who built / is building the MVP?','How did you hear about DQventures?','Where are you at right now?',\n  'Fillout ID','Time of withdrawal','Reason for withdrawal',\n];\n\nconst BRANCH_QUESTION = 'Where are you at right now?';\nconst ADD_GROUP_ON_UPDATE = false;\n\n// ================================================================\n//  Below here: no configuration.\n// ================================================================\n\nconst norm = (s) => String(s == null ? '' : s)\n  .replace(/[‘’ʼ]/g, \"'\")\n  .replace(/[“”]/g, '\"')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .toLowerCase();\n\nconst asText = (v) => {\n  if (v === null || v === undefined) return '';\n  if (Array.isArray(v)) return v.map(asText).filter(Boolean).join(', ');\n  if (typeof v === 'object') return JSON.stringify(v);\n  return String(v).trim();\n};\n\nconst asList = (v) => {\n  if (v === null || v === undefined) return [];\n  if (Array.isArray(v)) return v.map(asText).filter(Boolean);\n  const t = asText(v);\n  return t ? [t] : [];\n};\n\n// This node sits AFTER the schema fetch, so $input is the form\n// definition. Submissions come from the trigger explicitly.\nconst submissions = $('New Application Submitted').all();\n\n// Live form definition: authoritative option list and type for every\n// question. Used to detect single vs multi select, and to write the\n// exact Fillout label for answers that match a real option.\nconst schema = $('Fetch Form Definition').first().json || {};\nconst META = {};\nfor (const q of (schema.questions || [])) {\n  const opts = Array.isArray(q.options) ? q.options : [];\n  META[norm(q.name)] = {\n    multi: q.type === 'Checkboxes',\n    options: opts.length\n      ? new Map(opts.map(o => {\n          const label = String(o.label != null ? o.label : o.value).trim();\n          return [norm(label), label];\n        }))\n      : null,\n  };\n}\n\nconst FIELD_SET = new Set(FOLK_FIELDS.map(norm));\nconst SKIP_SET  = new Set(SKIP.map(norm));\n\nconst VALUE_LOOKUP = {};\nfor (const [field, pairs] of Object.entries(VALUE_MAP)) {\n  VALUE_LOOKUP[field] = {};\n  for (const [from, to] of Object.entries(pairs)) VALUE_LOOKUP[field][norm(from)] = to;\n}\n\nconst out = [];\n\nfor (const item of submissions) {\n  const questions = item.json.questions || {};\n  const params    = item.json.urlParameters || {};\n  const warnings  = [];\n\n  if (!schema.questions) {\n    warnings.push('Form definition unavailable - option labels not normalised for this run');\n  }\n\n  const lookup = (patterns) => {\n    for (const [id, q] of Object.entries(questions)) {\n      const label = norm(q.name);\n      if (patterns.some(p => label.includes(p))) return { id: id, raw: q.value };\n    }\n    for (const [k, v] of Object.entries(params)) {\n      if (patterns.some(p => norm(k).includes(p))) return { id: null, raw: v };\n    }\n    return { id: null, raw: '' };\n  };\n\n  const takeCore = (explicitId, patterns) => {\n    if (explicitId && questions[explicitId]) {\n      return { id: explicitId, value: asText(questions[explicitId].value) };\n    }\n    const hit = lookup(patterns);\n    return { id: hit.id, value: asText(hit.raw) };\n  };\n\n  const first = takeCore(CORE.firstName, ['first name']);\n  const last  = takeCore(CORE.lastName,  ['last name', 'surname']);\n  const mail  = takeCore(CORE.email,     ['email']);\n  const tel   = takeCore(CORE.phone,     ['phone', 'mobile']);\n\n  const coreIds = new Set([first.id, last.id, mail.id, tel.id].filter(Boolean));\n\n  const fields   = {};\n  const answers  = {};\n  let   branch   = '';\n\n  const put = (target, value) => {\n    if (!FIELD_SET.has(norm(target))) {\n      warnings.push('No Folk field named \"' + target + '\" - not written');\n      return;\n    }\n    fields[target] = value;\n  };\n\n  for (const [id, q] of Object.entries(questions)) {\n    if (coreIds.has(id)) continue;\n    const label = String(q.name || '').trim();\n    if (!label || SKIP_SET.has(norm(label))) continue;\n\n    const display = asText(q.value);\n    if (!display) continue;\n    if (norm(label) === norm(BRANCH_QUESTION)) branch = display;\n    answers[label] = display;\n\n    const target = RENAME[label] || label;\n    const meta   = META[norm(label)] || { multi: Array.isArray(q.value), options: null };\n\n    // Deliberate relabelling wins over everything else.\n    if (VALUE_LOOKUP[target]) {\n      let mapped = VALUE_LOOKUP[target][norm(display)];\n      if (!mapped) {\n        const hit = VALUE_FALLBACK.find(f => norm(display).startsWith(norm(f.starts)));\n        mapped = hit && hit.use;\n      }\n      if (mapped) {\n        put(target, mapped);\n      } else {\n        warnings.push('Unmapped value for \"' + target + '\": \"' + display + '\" - not written');\n      }\n      continue;\n    }\n\n    // Select questions: use Fillout's exact label where the answer\n    // matches a real option, otherwise pass the applicant's own words\n    // through unchanged.\n    if (meta.options) {\n      if (meta.multi) {\n        const seen = new Set();\n        const values = [];\n        for (const raw of asList(q.value)) {\n          const write = meta.options.get(norm(raw)) || raw.trim();\n          if (write && !seen.has(norm(write))) {\n            seen.add(norm(write));\n            values.push(write);\n          }\n        }\n        put(target, values);\n      } else {\n        put(target, meta.options.get(norm(display)) || display);\n      }\n      continue;\n    }\n\n    put(target, meta.multi ? asList(q.value) : display);\n  }\n\n  for (const [target, fn] of Object.entries(ALWAYS)) {\n    const v = asText(fn(item));\n    if (v) put(target, v);\n  }\n\n  // Applicants who answer \"No\" to the $2k investment question (either\n  // conditional variant - both map to the same Folk field via RENAME +\n  // VALUE_MAP) have withdrawn within the application. Override the\n  // default \"Applied\" status and record the withdrawal fields.\n  // Option labels below must match Folk exactly, including the\n  // \"WIthin\" capitalisation.\n  if (fields['Are you prepared to invest USD $2k into this?'] === 'No') {\n    put('Status', 'Closed-lost');\n    put('Time of withdrawal', 'WIthin application');\n    put('Reason for withdrawal', ['Unwilling to pay at all']);\n  }\n\n  const used = new Set();\n  const blocks = [];\n\n  for (const section of SECTIONS) {\n    const rows = [];\n    for (const label of section.fields) {\n      const key = Object.keys(answers).find(k => norm(k) === norm(label));\n      if (!key) continue;\n      used.add(key);\n      rows.push('**' + key + '**', '', answers[key], '');\n    }\n    if (rows.length) blocks.push('## ' + section.title, '', ...rows);\n  }\n\n  const leftovers = Object.keys(answers).filter(k => !used.has(k));\n  if (leftovers.length) {\n    blocks.push('## Other', '');\n    for (const k of leftovers) blocks.push('**' + k + '**', '', answers[k], '');\n  }\n\n  const submitted = String(item.json.submissionTime || '').slice(0, 10);\n  const header = ['# Application - ' + submitted, ''];\n  if (branch) header.push('**Track:** ' + branch, '');\n  header.push('**Fillout ID:** ' + (item.json.submissionId || 'unknown'), '');\n  const noteContent = header.concat(blocks).join('\\n');\n\n  const person = (cf) => ({\n    firstName: first.value,\n    lastName: last.value,\n    emails: mail.value ? [mail.value] : [],\n    phones: tel.value ? [tel.value] : [],\n    customFieldValues: { [FOLK_GROUP_ID]: cf },\n  });\n\n  out.push({\n    json: {\n      email: mail.value,\n      submissionId: item.json.submissionId,\n      branch: branch,\n      noteContent: noteContent,\n      createBody: Object.assign({}, person(fields), { groups: [{ id: FOLK_GROUP_ID }] }),\n      updateBody: ADD_GROUP_ON_UPDATE\n        ? Object.assign({}, person(fields), { groups: [{ id: FOLK_GROUP_ID }] })\n        : person(fields),\n      _fields: Object.keys(fields).sort(),\n      _warnings: warnings,\n    },\n  });\n}\n\nreturn out;"
+      },
+      "id": "e70d1527-eb16-476b-be6f-e0592106309a",
+      "name": "Build Folk Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.email }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c82c6209-06ef-40a7-b1ce-47c481f11adb",
+      "name": "Has Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people?filter[emails][eq]={{ encodeURIComponent($json.email) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "be6938df-8cc5-43de-a2d8-5ac2281cbb14",
+      "name": "Search Person In Folk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        -160
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.data.items[0].id }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "2f3f607a-3e5c-4875-a824-0aca8884afeb",
+      "name": "Person Already In Folk?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1744,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $json.data.items[0].id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(Object.assign({}, $('Build Folk Payload').item.json.updateBody, { groups: [...new Set([...($json.data.items[0].groups || []).map(g => g.id), 'grp_411ea0ed-822d-4de9-80de-1a0512da709e'])].map(id => ({ id })) })) }}",
+        "options": {}
+      },
+      "id": "9b5a30f3-a77c-42c8-92da-93125d1b8928",
+      "name": "Update Person In Folk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1968,
+        -320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pid-existing",
+              "name": "personId",
+              "type": "string",
+              "value": "={{ $('Person Already In Folk?').item.json.data.items[0].id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "db13926f-8543-43e9-a501-7ba77e3ea3db",
+      "name": "Existing Person Id",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2192,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: '**Re-application.** Previous status: ' + ($('Person Already In Folk?').item.json.data.items[0].customFieldValues?.['grp_411ea0ed-822d-4de9-80de-1a0512da709e']?.Status || 'none') + '\\n\\n' + $('Build Folk Payload').item.json.noteContent, entity: { id: $json.personId }, visibility: 'public' }) }}",
+        "options": {}
+      },
+      "id": "5c3f6d20-b614-40d3-b4fb-80645bb46ed6",
+      "name": "Log Re-application Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        -320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/people",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Build Folk Payload').item.json.createBody) }}",
+        "options": {}
+      },
+      "id": "47d3d7f6-1d02-4833-a39d-f00605bd529a",
+      "name": "Create Person In Folk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1968,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pid-new",
+              "name": "personId",
+              "type": "string",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89817484-36b8-4bde-a170-1a0ba1146277",
+      "name": "New Person Id",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2192,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: $('Build Folk Payload').item.json.noteContent, entity: { id: $json.personId }, visibility: 'public' }) }}",
+        "options": {}
+      },
+      "id": "fb1f9a0d-0391-422a-9e3d-0a0f79c08a68",
+      "name": "Log First Application Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "af55ba96-2348-4934-a3c9-2e7f988836ed",
+      "name": "No Email - Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        864,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Fillout to Folk\n\nApplications land in Folk → **Pipeline (new)**. Deduped by email: existing person is updated, new person is created. Every submission writes **two notes**: the sectioned application, then a Claude-written review of it.\n\n### How \"Other\" works\nWhatever an applicant types into an Other box goes into the **main Folk field, verbatim**. There is no companion field.\n\nOption lists and question types are fetched live from Fillout on every run, so:\n- answers matching a real option are written using Fillout's exact label (strips stray spaces, normalises quotes)\n- single vs multi select is detected automatically\n- adding a question, rewording an option or enabling Other needs **no change here**\n\nTrade-off: free text creates a new option on the Folk select, so those fields will accumulate one-off values. Worth an occasional tidy.\n\n### The AI review\nThree nodes sit between **Has Email?** and **Search Person In Folk**:\n\n1. **Build AI Review Request** — the only node to edit. Model, search budget and the full brief live in the CONFIG block at the top.\n2. **AI Application Review** — POSTs to the Anthropic Messages API with the `web_search` server tool switched on. Claude does the competitor research itself; there is no separate search credential.\n3. **Extract AI Review** — pulls the prose out and drops the search tool blocks.\n\nThe review covers: recommended programme (Grow / Explore / Ideate), revenue numbers if Grow, a summary of the business, competitors with funding and stage if Grow or Explore, and a fit read ending in a yes / no / borderline call.\n\nIt is posted as its **own note**, by **Log AI Review (new person)** or **Log AI Review (existing person)**, at the very end of each branch. Written after the application note so it is the newer of the two.\n\nExpect **30–90 seconds** per application and roughly **10–25 cents** in API spend, mostly web search.\n\n**If Anthropic fails**, the node retries once then carries on. Both notes still write; the review note carries a placeholder line. Check `_reviewOk` and `_reviewError` on Extract AI Review.\n\n### Editing\nOnly genuine decisions live in the CONFIG blocks of **Build Folk Payload** (field renames, Yes/No collapsing, note sections, list of Folk fields) and **Build AI Review Request** (model and prompt).\n\nAfter a run, check Build Folk Payload:\n- `_fields` — every Folk field written\n- `_warnings` — anything withheld\n\nA question with no matching Folk field is reported and skipped, never sent — so a form change cannot break the write. It still appears in the note under \"Other\".\n\n### Behaviour to remember\n**Status** resets to `Applied` on every submission, create or update. The re-application note records what it was before.\n\nField values are the latest answer only. Notes are the full history — two per submission, each application note carrying its own Fillout ID.\n\n### Wiring\n- Folk credential: **Folk API - new key**. Old workflows still use the old key.\n- Anthropic credential: **Anthropic account**.\n- Errors → **Error handler → Slack**, posts to #-dq-n8n-errors. Retries on every HTTP node first.\n- Form ID is set in **two** places: the trigger, and the Fetch Form Definition URL.",
+        "height": 1000,
+        "width": 520,
+        "color": 4
+      },
+      "id": "a892a55d-06e8-4e49-b466-b96663f00cf5",
+      "name": "Sticky Note 79b20d10",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.fillout.com/v1/api/forms/7xavuVux84us",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "filloutApi",
+        "options": {}
+      },
+      "id": "063924f2-2590-403d-8ee9-4017ed27e015",
+      "name": "Fetch Form Definition",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "filloutApi": {
+          "id": "aTSoEZ6SFq5VQPFf",
+          "name": "Fillout account"
+        }
+      },
+      "notes": "Authoritative option lists and question types, straight from Fillout."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================================\n//  AI APPLICATION REVIEW - request builder\n//\n//  Everything worth editing lives in this block: the model, how many\n//  web searches one review may run, and the wording of the brief.\n//  The next node just posts the object this builds to Anthropic.\n//\n//  Three things to keep if you rewrite the prompt:\n//   1. The <review> tags. Extract AI Review uses them to throw away\n//      the model's search narration. Drop them and that filler ends\n//      up in the Folk note.\n//   2. MAX_TOKENS headroom. It covers the model's reasoning as well as\n//      the visible answer. At 2500 reviews were cut off mid-sentence.\n//      Check _stopReason on Extract AI Review: 'end_turn' means it\n//      finished, 'max_tokens' means raise this.\n//   3. The <two_k_answer> tag. Build Folk Payload already resolves the\n//      $2k question to a clean Yes or No, so the model must never work\n//      it out from the note. It got this wrong in Aug 2026 on a Grow\n//      applicant, where the $2k item is worded as a statement about DQ\n//      pricing rather than a question, and reported a Yes as a No.\n// ================================================================\n\nconst MODEL        = 'claude-sonnet-5';\nconst MAX_TOKENS   = 6000;\nconst MAX_SEARCHES = 6;\n\n// The Folk field Build Folk Payload writes the resolved answer to.\nconst TWO_K_FIELD = 'Are you prepared to invest USD $2k into this?';\n\nconst SYSTEM = [\n  'You screen inbound applications for DQventures, an early-stage venture builder that works with experienced professionals across London, Singapore and Sydney.',\n  '',\n  'There are three programmes. Pick exactly one:',\n  '- DQ Grow: they already run a business and want help growing it.',\n  '- DQ Explore: they have one specific business idea they want to test.',\n  '- DQ Ideate: they have no idea, or several ideas and no way to choose between them.',\n  '',\n  'OUTPUT FORMAT. Wrap the finished review in <review> and </review> tags. Between those tags put nothing but the review itself, starting with the heading \"## Recommended programme\" and ending with the Worth an interview line. Never open the tags until you have finished searching and are ready to write the whole thing in one go. Anything you need to say while working - what you are about to search for, what you found, that you have enough to start - goes before the opening tag, never inside. Always close the tags.',\n  '',\n  'CALIBRATE FOR STAGE. Almost everyone who applies is pre-launch and pre-revenue. Doing the validation work with them is the whole point of DQventures. The following are normal at this stage and must never be written up as weaknesses, concerns, or reasons a partner would hesitate:',\n  '- no customers, no revenue, no product, no MVP',\n  '- no financial model, no pricing, no plan for what the money goes on',\n  '- no names or proof behind a claim that people in their network would buy',\n  '- a broad or unscoped idea, or a market they have not narrowed yet',\n  '- a crowded competitive space, which is true of most good ideas',\n  '- not having worked out positioning, differentiation or a wedge',\n  '',\n  'What IS worth flagging:',\n  '- an application answered in a few words with no thought behind it',\n  '- written English weak enough to be a problem on client calls',\n  '- someone who reads as a tyre-kicker, a student exercise, or an agency touting for work',\n  '- someone who wants a job, a co-founder, or free advice rather than to build something',\n  '- something OTHER THAN the $2k answer itself suggesting they cannot or will not spend the $2k, for example asking DQ for funding or investment',\n  '- a clear mismatch between what they are asking for and what DQ does',\n  '',\n  'THE $2k ANSWER. This one is given to you, not for you to work out. You will be handed it in a <two_k_answer> tag, resolved from the form data. That tag is the only source you may use for it.',\n  '- Never read, infer, quote or reason about the $2k answer from the application text. The wording in the application varies by track and is easy to misread. Ignore it entirely.',\n  '- If <two_k_answer> says Yes, or says Not asked, do not mention the $2k anywhere in the review at all. Not in Fit, not in the Worth an interview line, nowhere. A Yes tells a partner nothing.',\n  '- If <two_k_answer> says No, write exactly one line in the Fit section saying they answered No to the $2k, then move on.',\n  '',\n  'One more thing never to write inside the review:',\n  '- Do not mention, compare against, or endorse the track the applicant picked for themselves on the form. Just give your recommendation.',\n  '',\n  'How to write:',\n  '- Judge on the evidence in the application and on what you find by searching the web. Never invent facts.',\n  '- Plain English, short sentences, no buzzwords, no flattery.',\n  '- Everything in your own words. Never paste sentences out of search results.',\n  '- Where you are unsure, say so in a few words.',\n  '- Keep the review under 450 words. A partner should read it in a minute.',\n  '- You are writing for one reader: the DQ partner deciding whether to interview this person.',\n].join('\\n');\n\nconst BRIEF = [\n  'Search first, then write the review in one pass inside <review> tags, using exactly the sections below.',\n  '',\n  '## Recommended programme',\n  'DQ Grow, DQ Explore or DQ Ideate, then one or two sentences on why.',\n  '',\n  '## Revenue',\n  'Include this section only if you recommended DQ Grow. Otherwise leave it out completely.',\n  'A short list, numbers taken straight from the application: revenue last month, lifetime revenue, revenue model, paying customers last month, customers who paid more than once, how they won those customers. Write \"not answered\" against anything missing.',\n  '',\n  '## The business',\n  'Three to five sentences on what the business or idea actually is: who it serves, what it sells, how it makes money. Where the application does not tell you, say so plainly and move on. Do not treat a gap as a fault.',\n  'If you recommended DQ Ideate, use this section instead for what is useful about them: background, sectors they lean towards, constraints, any half-formed ideas.',\n  '',\n  '## Competitors',\n  'Leave this section out completely if you recommended DQ Ideate.',\n  'Otherwise use the searches you already ran. Three to five real companies doing something close, weighted towards the country and market the applicant is in where that matters.',\n  'One or two lines each, in your own words: what they do, how they differ from this applicant, and how established they are (funding, stage, age or headcount, whatever you can actually find). If you cannot find funding or size for one, say so in three words rather than padding.',\n  'Then two or three sentences on where an opening might be for this applicant. Frame it as where to aim, not as a problem with their idea.',\n  'If you could not find real companies, say so plainly instead of guessing.',\n  '',\n  '## Fit',\n  'Under 120 words on whether this is a good DQventures applicant. Only the things listed as worth flagging. If nothing is worth flagging, say the application is solid and keep it to a line or two.',\n  'Mention the $2k only if <two_k_answer> says No, and then only in the one line described above.',\n  'Finish with one line: \"Worth an interview: yes / no / borderline\", plus half a sentence of reason. Then close the tag.',\n].join('\\n');\n\n// ----------------------------------------------------------------\n//  Below here: no configuration.\n// ----------------------------------------------------------------\n\n// Build Folk Payload nests the resolved custom fields under the Folk\n// group id. Read the first (only) group rather than hardcoding the id,\n// so changing groups cannot silently blank this out.\nconst readTwoK = (j) => {\n  const cfMap = (j.createBody || {}).customFieldValues || {};\n  const cf = Object.values(cfMap)[0] || {};\n  const raw = String(cf[TWO_K_FIELD] == null ? '' : cf[TWO_K_FIELD]).trim();\n  return raw || 'Not asked';\n};\n\nconst items = $input.all();\nconst out = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const j = items[i].json || {};\n  const twoK = readTwoK(j);\n\n  const userText = [\n    'Here is the application, exactly as submitted.',\n    '',\n    '<application>',\n    j.noteContent || '(no application content)',\n    '</application>',\n    '',\n    'Here is the applicant\\'s answer to the $2k question, resolved from the form data. Treat it as fact. Do not check it against the application text or override it with your own reading.',\n    '',\n    '<two_k_answer>' + twoK + '</two_k_answer>',\n    '',\n    BRIEF,\n  ].join('\\n');\n\n  out.push({\n    json: Object.assign({}, j, {\n      aiModel: MODEL,\n      _twoKAnswer: twoK,\n      aiBody: {\n        model: MODEL,\n        max_tokens: MAX_TOKENS,\n        system: SYSTEM,\n        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: MAX_SEARCHES }],\n        messages: [{ role: 'user', content: userText }],\n      },\n    }),\n    pairedItem: { item: i },\n  });\n}\n\nreturn out;\n"
+      },
+      "id": "78bd1fd7-f2ee-49c6-8850-4f7077f482a0",
+      "name": "Build AI Review Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -160
+      ],
+      "notes": "Model, search budget and the review brief all live here."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.aiBody) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "0f63d01d-9e27-4c4f-a9fe-5c37b116c969",
+      "name": "AI Application Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1088,
+        -160
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "anthropicApi": {
+          "id": "8E1v5dU0H5FkNBwm",
+          "name": "Anthropic account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Anthropic Messages API with the web_search server tool. Slow by design: allow up to a couple of minutes."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pulls the review out of the Anthropic response.\n//\n// The model is told to wrap the review in <review> tags. Anything it\n// says while working - narrating searches, \"now I have enough\" - lives\n// outside those tags and gets thrown away. Position does not matter, so\n// it does not care what order the model searches and writes in.\n//\n// Four ways out, in order of preference. _reviewSource records which\n// one was used. If you ever see anything other than 'tags', the model\n// stopped closing its tags and the prompt needs a look.\n//   tags            both tags present. Normal.\n//   tags-truncated  opening tag only - it ran out of tokens mid-review.\n//   heading         no tags, cut from the first ## heading instead.\n//   all-text        no tags and no headings. Raw. Expect narration.\n//\n// The HTTP node before this carries on if the API call fails, so a bad\n// review never costs us the Folk note - we write a placeholder instead.\n//\n// Also worth checking after a run:\n//   _reviewOk     false means the review is a placeholder\n//   _stopReason   'max_tokens' means raise MAX_TOKENS upstream\n//   _usage        token spend, including web search\n\nconst OPEN  = '<review>';\nconst CLOSE = '</review>';\n\nfunction pickReview(blocks) {\n  const all = blocks\n    .filter((b) => b && b.type === 'text' && b.text)\n    .map((b) => b.text)\n    .join('\\n');\n\n  const open  = all.indexOf(OPEN);\n  const close = all.lastIndexOf(CLOSE);\n\n  if (open !== -1 && close > open) {\n    return { text: all.slice(open + OPEN.length, close), source: 'tags' };\n  }\n  if (open !== -1) {\n    return { text: all.slice(open + OPEN.length), source: 'tags-truncated' };\n  }\n\n  const heading = all.indexOf('## ');\n  if (heading !== -1) {\n    return { text: all.slice(heading), source: 'heading' };\n  }\n\n  return { text: all, source: 'all-text' };\n}\n\nconst items   = $input.all();\nconst sources = $('Build AI Review Request').all();\nconst out     = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const res    = items[i].json || {};\n  const blocks = Array.isArray(res.content) ? res.content : [];\n\n  const picked = pickReview(blocks);\n\n  // Belt and braces: no stray tag fragments reach Folk.\n  const text = picked.text.split(OPEN).join('').split(CLOSE).join('').trim();\n\n  let failure = '';\n  if (!text) {\n    failure = res.error\n      ? (typeof res.error === 'string' ? res.error : JSON.stringify(res.error))\n      : 'empty response from Anthropic';\n  }\n\n  const review = text\n    ? ['# AI review', '', text, '', '_Written by Claude from the application below, using web search. Competitor detail is a starting point, not fact-checked._'].join('\\n')\n    : ['# AI review', '', '_Not available for this submission: ' + failure + '_'].join('\\n');\n\n  const base = Object.assign({}, (sources[i] && sources[i].json) || {});\n  delete base.aiBody;\n  base.review        = review;\n  base._reviewOk     = Boolean(text);\n  base._reviewSource = picked.source;\n  base._reviewError  = failure;\n  base._stopReason   = res.stop_reason || null;\n  base._usage        = res.usage || null;\n\n  out.push({ json: base, pairedItem: { item: i } });\n}\n\nreturn out;"
+      },
+      "id": "84dc8b20-4f5a-4080-a937-8138f2bfcac6",
+      "name": "Extract AI Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -160
+      ],
+      "notes": "Prose out, search tool blocks dropped. Writes a placeholder if the call failed."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: $('Extract AI Review').item.json.review, entity: { id: $('Existing Person Id').item.json.personId }, visibility: 'public' }) }}",
+        "options": {}
+      },
+      "id": "352b7dad-abc3-4f4b-a68d-bf5e9500f3d1",
+      "name": "Log AI Review (existing person)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2624,
+        -320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      },
+      "notes": "Written after the application note so it is the newer of the two."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content: $('Extract AI Review').item.json.review, entity: { id: $('New Person Id').item.json.personId }, visibility: 'public' }) }}",
+        "options": {}
+      },
+      "id": "ae71168a-35b0-439b-9167-4c62d77e1e06",
+      "name": "Log AI Review (new person)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2624,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      },
+      "notes": "Written after the application note so it is the newer of the two."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build Folk Payload": {
+      "main": [
+        [
+          {
+            "node": "Has Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Email?": {
+      "main": [
+        [
+          {
+            "node": "Build AI Review Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Email - Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Person In Folk": {
+      "main": [
+        [
+          {
+            "node": "Person Already In Folk?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Person Already In Folk?": {
+      "main": [
+        [
+          {
+            "node": "Update Person In Folk",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Person In Folk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Person In Folk": {
+      "main": [
+        [
+          {
+            "node": "Existing Person Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing Person Id": {
+      "main": [
+        [
+          {
+            "node": "Log Re-application Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Person In Folk": {
+      "main": [
+        [
+          {
+            "node": "New Person Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Person Id": {
+      "main": [
+        [
+          {
+            "node": "Log First Application Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Application Submitted": {
+      "main": [
+        [
+          {
+            "node": "Fetch Form Definition",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Form Definition": {
+      "main": [
+        [
+          {
+            "node": "Build Folk Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Review Request": {
+      "main": [
+        [
+          {
+            "node": "AI Application Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Application Review": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Review": {
+      "main": [
+        [
+          {
+            "node": "Search Person In Folk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Re-application Note": {
+      "main": [
+        [
+          {
+            "node": "Log AI Review (existing person)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log First Application Note": {
+      "main": [
+        [
+          {
+            "node": "Log AI Review (new person)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "errorWorkflow": "ZgfYB1LYsCEGbsck",
+    "saveDataErrorExecution": "all"
+  },
+  "versionId": "4e59d5e0-c87c-4ecd-8af8-2be4683751f8",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "M1IGsDfTWCBeIDvj",
+  "tags": []
+}

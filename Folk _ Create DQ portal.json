@@ -1,0 +1,746 @@
+{
+  "name": "Folk > Create DQ portal",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.valuecase.com/spaces/api/spaces",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get ValueCase Auth Token').first().json.access_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"templateId\": \"{{ $('Edit Fields').item.json.templateId }}\",\n  \"ownerId\": null,\n  \"ownerEmail\": \"redacted-staff-6@dqventures.com\",\n  \"data\": {\n    \"companyName\": \"{{ $('Get Person Details from folk').item.json.data.firstName}} {{$('Get Person Details from folk').item.json.data.lastName}}\",\n    \"contactFirstName\": \"{{ $('Get Person Details from folk').item.json.data.firstName}}\",\n    \"contactLastName\": \"{{ $('Get Person Details from folk').item.json.data.lastName }}\",\n    \"contactEmail\": \"{{ $('Get Person Details from folk').item.json.data.emails[0] }}\"\n  }\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "0bd5d773-3215-45e1-a490-5b4bf3bc0166",
+      "name": "Create ValueCase Space1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2384,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.valuecase.com/dashboard/api/api-auth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"client_id\": \"REDACTED_VALUECASE_CLIENT_ID\",\n  \"client_secret\": \"REDACTED_VALUECASE_CLIENT_SECRET\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -608
+      ],
+      "id": "737f0172-5b87-431d-8d58-f48a4afb952c",
+      "name": "Get ValueCase Auth Token"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"ValueCase portal created successfully\",\n  \"space_url\": \"{{ $('Generate Custom Embed HTML1').item.json.spaceUrl }}\",\n  \"person_id\": \"{{ $('Webhook Trigger (Folk)1').item.json.body.person_id }}\",\n  \"investment_memo_embedded\": true\n}",
+        "options": {}
+      },
+      "id": "6fa3af11-33f3-40f9-950f-79149a17b5e2",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3232,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "folk-status-update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "068176c2-0212-4ed1-b954-fe1f5bb153eb",
+      "name": "Webhook Trigger (Folk)1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -592
+      ],
+      "webhookId": "auto-generated"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Retrieve Google Doc URL from Folk webhook data\nconst webhookData = $('Get Person Details from folk').first().json.data;\nconsole.log('webhook data:', webhookData);\n\n// ✅ Safely get the investment memo URL with null checks\nconst customFields = webhookData?.customFieldValues?.['grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f'];\nconst memoUrl = customFields?.['Investment Memo 1'] || null;\n\nconsole.log('memo URL:', memoUrl);\n\n// ✅ Only process if memoUrl exists and is not empty\nlet embedUrl = '';\nif (memoUrl && memoUrl.trim() !== '') {\n  embedUrl = memoUrl;\n  \n  // Convert Google Doc URL to embeddable/preview format\n  if (memoUrl.includes('docs.google.com/document')) {\n    embedUrl = memoUrl.replace(/\\/edit.*$/, '/preview');\n  }\n} else {\n  console.log('No memo URL found - will skip embedding');\n}\n\n// Get the space data from previous node\nconst spaceData = $('Create ValueCase Space1').first().json;\n\n// Return data with proper null handling\nreturn [{\n  json: {\n    embedUrl: embedUrl || '',\n    originalMemoUrl: memoUrl || '',\n    hasMemoUrl: !!memoUrl,  // ✅ Boolean flag to indicate if memo exists\n    spaceId: spaceData.id || spaceData.spaceId,\n    spaceSlug: spaceData.slug || spaceData.spaceSlug,\n    spaceUrl: spaceData.url || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        -624
+      ],
+      "id": "4748d309-090e-4c50-90a6-9a8ab98ab633",
+      "name": "Generate Custom Embed HTML1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://app.valuecase.com/spaces/api/spaces/{{$json.spaceSlug}}/custom-properties/investment_memo_url",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get ValueCase Auth Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"country_code\",\n  \"value\": \"{{$json.embedUrl}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        -624
+      ],
+      "id": "f0384978-828c-4c16-aa02-f7620ad723e3",
+      "name": "Embed Content into Space1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('If').item.json.body.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Portal Link\": \"{{ $('Generate Custom Embed HTML1').item.json.spaceUrl }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        -624
+      ],
+      "id": "0beb9a7b-4707-49de-96ab-39cb8c8c8570",
+      "name": "Update Folk Contact1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6655db06-55dc-4b2a-be03-8040137d4d53",
+              "name": "templateId",
+              "value": "refs41fdoug83jkzi6bvtoqr",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        -608
+      ],
+      "id": "fd514eb8-ee0a-4f14-9dd1-ce7f6f18c477",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "ValueCase Automation\n",
+        "height": 608,
+        "width": 3936
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        -816
+      ],
+      "typeVersion": 1,
+      "id": "3a63ed2f-797a-46b8-ae11-78df71190794",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "55e8e84e-b7e6-46fd-a46e-3550a8913dae",
+              "leftValue": "={{ JSON.stringify($json.body.data.changes[0].value) }}",
+              "rightValue": "\"Applied : accept\"",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        -592
+      ],
+      "id": "34566ba7-ebdc-4ada-bc45-7a9f0399fb9f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people/{{ $('If').item.json.body.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        -608
+      ],
+      "id": "60f7d771-8332-40e3-bc95-0e51fbf27307",
+      "name": "Get Person Details from folk"
+    },
+    {
+      "parameters": {
+        "url": "https://app.valuecase.com/spaces/api/spaces",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get ValueCase Auth Token').item.json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1648,
+        -608
+      ],
+      "id": "0d6a0a7f-4bac-4724-abf6-33b058527c15",
+      "name": "Get Value Space"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f7e9e433-a718-44bc-b3f1-8af205b2f4f1",
+              "leftValue": "={{$json.spaces.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        -608
+      ],
+      "id": "bccc73b4-e0ba-4899-a2f0-395e6929b25a",
+      "name": "Check if value space exists"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        -608
+      ],
+      "id": "b05dde7a-bd60-4234-95e5-ada63146f5f9",
+      "name": "Wait",
+      "webhookId": "d624b1e7-ab67-4740-abe5-8f8322be3c9e"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all spaces from the API response\nconst allSpaces = $input.first().json.spaces || [];\n\n// Get the email from Folk\nconst folkEmail = $('Get Person Details from folk').first().json.data.emails[0];\n\nconsole.log('Looking for email:', folkEmail);\nconsole.log('Total spaces:', allSpaces.length);\n\n// Filter to find matching spaces\nconst matchingSpaces = allSpaces.filter(space => \n  space.contactEmail === folkEmail\n);\n\nconsole.log('Matching spaces:', matchingSpaces.length);\n\n// Return in the same format as before\nreturn [{\n  json: {\n    spaces: matchingSpaces\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        -608
+      ],
+      "id": "b408ce32-9faa-45a0-9046-e639e85776ae",
+      "name": "Filter Value Space"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Retrieve Google Doc URL from Folk webhook data\nconst webhookData = $('Get Person Details from folk').first().json.data;\nconsole.log('webhook data:', webhookData);\n\n// ✅ Safely get the investment memo URL with null checks\nconst customFields = webhookData?.customFieldValues?.['grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f'];\nconst memoUrl = customFields?.['Investment Memo 1'] || null;\n\nconsole.log('memo URL:', memoUrl);\n\n// ✅ Only process if memoUrl exists and is not empty\nlet embedUrl = '';\nif (memoUrl && memoUrl.trim() !== '') {\n  embedUrl = memoUrl.trim();\n  \n  // Convert Google Doc URL to embeddable/preview format\n  if (embedUrl.includes('docs.google.com/document')) {\n    embedUrl = embedUrl.replace(/\\/edit.*$/, '/preview');\n  }\n} else {\n  console.log('No memo URL found - will skip embedding');\n}\n\n// ✅ Get the space data from previous node with null checks\nconst spaceResponse = $('Check if value space exists').first().json;\nconsole.log('space response:', spaceResponse);\n\n// ✅ Safely access the first space from the array\nconst spaceData = spaceResponse?.spaces?.[0];\n\nif (!spaceData) {\n  throw new Error('No space found in response');\n}\n\nconsole.log('space data is:', spaceData);\n\n// Return data with proper null handling\nreturn [{\n  json: {\n    embedUrl: embedUrl || '',\n    originalMemoUrl: memoUrl || '',\n    hasMemoUrl: !!memoUrl && memoUrl.trim() !== '',  // ✅ Boolean flag\n    spaceId: spaceData.id || '',\n    spaceSlug: spaceData.slug || '',\n    spaceUrl: spaceData.url || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2384,
+        -432
+      ],
+      "id": "bba69824-5bb8-4318-89bc-3bab406726f4",
+      "name": "Generate Custom Embed HTML"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://app.valuecase.com/spaces/api/spaces/{{$json.spaceSlug}}/custom-properties/investment_memo_url",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get ValueCase Auth Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"country_code\",\n  \"value\": \"{{$json.embedUrl}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2608,
+        -432
+      ],
+      "id": "5e51ce4c-16a4-47fc-b4ce-eebcd06f6b94",
+      "name": "Embed Content into Space"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('If').item.json.body.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Portal Link\": \"{{ $('Generate Custom Embed HTML').item.json.spaceUrl }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2832,
+        -432
+      ],
+      "id": "3cf5c3fe-0beb-4b97-94ed-33bbc817bf87",
+      "name": "Update Folk Contact"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3040,
+        -432
+      ],
+      "id": "62ebd4cc-66d4-4294-8e75-fb3331dd61cd",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "url": "https://api.folk.app/v1/groups",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1008,
+        -1040
+      ],
+      "id": "23e32cf4-7afe-4f77-8311-b15ee29b8ed2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/webhooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \" ValueCase (Status = Applied : accept)\",\n  \"targetUrl\": \"<REDACTED_N8N_WEBHOOK_URL>\",\n  \"subscribedEvents\": [\n    {\n      \"eventType\": \"person.updated\",\n      \"filter\": {\n        \"path\": [\n          \"customFieldValues\",\n          \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\",\n          \"Status\"\n        ],\n        \"value\": \"Applied : accept\"\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        528,
+        -1040
+      ],
+      "id": "f27909da-af35-43e4-9b61-15220f6dfce8",
+      "name": "Filter webhook (Status = Applied : accept)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/webhooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"Klaviyo: reject (Status = Applied : reject)\",\n  \"targetUrl\": \"<REDACTED_N8N_WEBHOOK_URL>\",\n  \"subscribedEvents\": [\n    {\n      \"eventType\": \"person.updated\",\n      \"filter\": {\n        \"path\": [\n          \"customFieldValues\",\n          \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\",\n          \"Status\"\n        ],\n        \"value\": \"Applied : reject\"\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        768,
+        -1040
+      ],
+      "id": "5c691e42-36f6-49ee-95bc-489ca3ad7915",
+      "name": "Filter Webhook (Status = Applied : reject)"
+    },
+    {
+      "parameters": {
+        "content": "[Part 2 Brief](https://docs.google.com/document/d/1WuOcty2A8dDKT5pUGYQulw29nxtrx8J_4MMIEEw2Vr8/edit?tab=t.0)",
+        "height": 256,
+        "width": 838
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        400,
+        -1120
+      ],
+      "typeVersion": 1,
+      "id": "1dfbe73b-e986-4e73-81d6-f04eb47710d1",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get ValueCase Auth Token": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (Folk)1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Custom Embed HTML1": {
+      "main": [
+        [
+          {
+            "node": "Embed Content into Space1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Content into Space1": {
+      "main": [
+        [
+          {
+            "node": "Update Folk Contact1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Folk Contact1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Person Details from folk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ValueCase Space1": {
+      "main": [
+        [
+          {
+            "node": "Generate Custom Embed HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get ValueCase Auth Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Person Details from folk": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Value Space": {
+      "main": [
+        [
+          {
+            "node": "Filter Value Space",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if value space exists": {
+      "main": [
+        [
+          {
+            "node": "Create ValueCase Space1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Custom Embed HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Value Space",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Value Space": {
+      "main": [
+        [
+          {
+            "node": "Check if value space exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Custom Embed HTML": {
+      "main": [
+        [
+          {
+            "node": "Embed Content into Space",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Content into Space": {
+      "main": [
+        [
+          {
+            "node": "Update Folk Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Folk Contact": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "GaBIkTJyHgyw25SQ"
+  },
+  "versionId": "a3595e68-ac5c-4b02-8902-0dd8e410d562",
+  "meta": {
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "wVKdNPthX8H5TaAy",
+  "tags": []
+}

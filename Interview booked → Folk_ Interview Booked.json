@@ -1,0 +1,506 @@
+{
+  "name": "Interview booked → Folk: Interview Booked",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "calendarId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "redacted-staff-2@dqventures.com",
+          "cachedResultName": "redacted-staff-2@dqventures.com"
+        },
+        "triggerOn": "eventCreated",
+        "options": {
+          "matchTerm": "interview"
+        }
+      },
+      "id": "71bd16d5-c767-45b6-b7a8-686e61297d38",
+      "name": "Sam Calendar",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        -304
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "67FY6516oCQZLYSI",
+          "name": "Sam Middlehurst (calendar)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const DQ = /@dqventures\\.com$/i;\nconst stripHtml = (html) => String(html || '')\n  .replace(/<br\\s*\\/?>/gi, '\\n')\n  .replace(/<\\/(p|div|li|ul|ol|h[1-6])>/gi, '\\n')\n  .replace(/<[^>]*>/g, '')\n  .replace(/&nbsp;/gi, ' ')\n  .replace(/&amp;/gi, '&')\n  .replace(/&lt;/gi, '<')\n  .replace(/&gt;/gi, '>');\n\nconst out = [];\nfor (const item of $input.all()) {\n  const ev = item.json || {};\n  const summary = String(ev.summary || '');\n  if (!/interview/i.test(summary)) continue;\n  if (ev.status === 'cancelled') continue;\n\n  const lines = stripHtml(ev.description).split('\\n').map(s => s.trim()).filter(Boolean);\n  let name = '';\n  let email = '';\n  const idx = lines.findIndex(l => /^booked by\\b/i.test(l));\n  if (idx >= 0) {\n    for (let i = idx + 1; i < Math.min(lines.length, idx + 6); i++) {\n      const line = lines[i];\n      const m = line.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/);\n      if (m) {\n        if (!email) email = m[0];\n        if (name) break;\n        continue;\n      }\n      if (!name && line.length <= 80) name = line;\n      if (name && email) break;\n    }\n  }\n  if (!name) {\n    const m = summary.match(/\\(([^()]+)\\)\\s*$/);\n    if (m) name = m[1];\n  }\n  name = String(name).replace(/\\s+/g, ' ').trim();\n  email = String(email).trim().toLowerCase();\n\n  if (!email) {\n    const guests = (ev.attendees || []).filter(a => a && a.email && !DQ.test(a.email) && a.resource !== true);\n    if (guests.length === 1) email = String(guests[0].email).trim().toLowerCase();\n  }\n\n  if (!email && !name) continue;\n\n  const start = ev.start || {};\n  const rawStart = start.dateTime || start.date || '';\n  const interviewDate = String(rawStart).slice(0, 10);\n  const gp = (ev.organizer && ev.organizer.email) || (ev.creator && ev.creator.email) || '';\n\n  out.push({\n    json: {\n      eventId: ev.id || '',\n      eventTitle: summary,\n      eventLink: ev.htmlLink || '',\n      eventStart: rawStart,\n      interviewDate,\n      gpEmail: gp,\n      name,\n      email,\n      folkEmailUrl: 'https://api.folk.app/v1/people?limit=50&filter[emails][eq]=' + encodeURIComponent(email || 'no-email-on-invite@example.invalid'),\n      folkNameUrl: 'https://api.folk.app/v1/people?limit=50&filter[fullName][like]=' + encodeURIComponent(name || '__no_name_on_invite__'),\n    },\n  });\n}\nreturn out;"
+      },
+      "id": "0403b588-029f-4e82-ab9a-1725c0d4a78b",
+      "name": "Extract Booking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "calendarId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "redacted-staff-1@dqventures.com",
+          "cachedResultName": "redacted-staff-1@dqventures.com"
+        },
+        "triggerOn": "eventCreated",
+        "options": {
+          "matchTerm": "interview"
+        }
+      },
+      "id": "609a6440-7f44-49c1-a1dd-906c445a05ce",
+      "name": "James Calendar",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        -128
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FZvAEZrEINNNwzIj",
+          "name": "James Green (calendar)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "calendarId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "redacted-staff-3@dqventures.com",
+          "cachedResultName": "redacted-staff-3@dqventures.com"
+        },
+        "triggerOn": "eventCreated",
+        "options": {
+          "matchTerm": "interview"
+        }
+      },
+      "id": "3f5b3896-fabe-4325-9ffe-cd513b6a3d75",
+      "name": "Oliver Calendar",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        64
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "a0YUX2vra3SQbYeN",
+          "name": "Oliver Palmer (calendar)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "calendarId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "redacted-staff-4@dqventures.com",
+          "cachedResultName": "redacted-staff-4@dqventures.com"
+        },
+        "triggerOn": "eventCreated",
+        "options": {
+          "matchTerm": "interview"
+        }
+      },
+      "id": "71f2798d-b165-4d18-bef5-8a9bf6949e63",
+      "name": "Arjun Calendar",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        240
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XManArMWVFdo8yR2",
+          "name": "Arjun Singh (calendar)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.folkEmailUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "6f765bc5-2843-4364-b28d-04a97c4537dd",
+      "name": "Find Lead By Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -96,
+        -32
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Extract Booking').item.json.folkNameUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "28b28941-01d6-47f4-bc3d-6c51068a0dcd",
+      "name": "Find Lead By Name",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        144,
+        -32
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const GROUP = 'grp_411ea0ed-822d-4de9-80de-1a0512da709e';\nconst ADVANCE_FROM = ['', 'lead', 'applied', 'qualified', 'invited to interview', 'interview booked'];\n\nconst booking = $('Extract Booking').item.json;\nconst emailRes = $('Find Lead By Email').item.json || {};\nconst nameRes = $input.item.json || {};\n\nconst emailItems = ((emailRes.data || {}).items) || [];\nconst nameItems = ((nameRes.data || {}).items) || [];\nconst inGroup = (p) => (p.groups || []).some(g => g.id === GROUP);\nconst statusOf = (p) => String((((p.customFieldValues || {})[GROUP]) || {}).Status || '').trim();\n\nlet person = null;\nlet route = '';\nlet reason = '';\n\nconst emailMatches = booking.email ? emailItems.filter(inGroup) : [];\n\nif (emailMatches.length === 1) {\n  person = emailMatches[0];\n  route = 'email';\n} else if (emailMatches.length > 1) {\n  reason = emailMatches.length + ' people in Leads & Applications share the email ' + booking.email + ', so the match is ambiguous.';\n} else {\n  const nameMatches = booking.name\n    ? nameItems.filter(p => inGroup(p) && statusOf(p).toLowerCase() === 'invited to interview')\n    : [];\n  if (nameMatches.length === 1) {\n    person = nameMatches[0];\n    route = 'name';\n  } else if (nameMatches.length > 1) {\n    reason = 'No Leads & Applications record has the email ' + (booking.email || 'none on the invite') + ', and the name \"' + booking.name + '\" matches ' + nameMatches.length + ' people sitting at \"Invited to interview\", so the match is ambiguous.';\n  } else if (emailItems.length > 0) {\n    reason = 'The email ' + booking.email + ' exists in Folk but not in the Leads & Applications group, and nobody named \"' + booking.name + '\" is sitting at \"Invited to interview\".';\n  } else {\n    reason = 'Nobody in Leads & Applications has the email ' + (booking.email || 'none on the invite') + ', and nobody named \"' + booking.name + '\" is sitting at \"Invited to interview\".';\n  }\n}\n\nconst head = ':calendar: *Interview booked, but Folk was not updated*';\nconst context = [\n  '*Applicant:* ' + (booking.name || 'no name on the invite') + ' <' + (booking.email || 'no email on the invite') + '>',\n  '*Interviewer:* ' + (booking.gpEmail || 'unknown'),\n  '*Interview date:* ' + (booking.interviewDate || 'unknown'),\n  '*Event:* ' + booking.eventTitle + (booking.eventLink ? ' - ' + booking.eventLink : ''),\n];\n\nif (!person) {\n  return {\n    json: {\n      update: false,\n      reason,\n      alertText: [head].concat(context, ['*Why:* ' + reason, 'Nothing was written. Match the person by hand in Folk and set the status yourself.']).join('\\n'),\n    },\n  };\n}\n\nconst currentStatus = statusOf(person);\nif (ADVANCE_FROM.indexOf(currentStatus.toLowerCase()) === -1) {\n  const why = (person.fullName || booking.name) + ' is already at \"' + currentStatus + '\", which is past Interview Booked, so nothing was changed.';\n  return {\n    json: {\n      update: false,\n      reason: why,\n      alertText: [head].concat(context, ['*Why:* ' + why, 'Update the record by hand if this booking should move them.']).join('\\n'),\n    },\n  };\n}\n\nconst fields = { Status: 'Interview Booked' };\nif (booking.interviewDate) fields['Interview Date'] = booking.interviewDate;\n\nconst updateBody = { customFieldValues: {} };\nupdateBody.customFieldValues[GROUP] = fields;\n\nlet emailAdded = false;\nif (route === 'name' && booking.email) {\n  const existing = (person.emails || []).map(e => String(e).trim()).filter(Boolean);\n  if (!existing.some(e => e.toLowerCase() === booking.email)) {\n    updateBody.emails = existing.concat([booking.email]).slice(0, 20);\n    emailAdded = true;\n  }\n}\n\nreturn {\n  json: {\n    update: true,\n    route,\n    emailAdded,\n    personId: person.id,\n    personName: person.fullName || booking.name,\n    previousStatus: currentStatus || '(blank)',\n    interviewDate: booking.interviewDate || '',\n    applicantEmail: booking.email,\n    eventTitle: booking.eventTitle,\n    updateBody,\n  },\n};"
+      },
+      "id": "59966768-f839-4ebd-9ee1-70b8f7695edb",
+      "name": "Resolve Folk Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "should-update",
+              "leftValue": "={{ $json.update }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a22ed413-0c77-462c-945c-65ed7f2e1199",
+      "name": "Update Folk?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $json.personId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.updateBody) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "8630fb5f-3094-4704-bbb8-e6df975a0602",
+      "name": "Set Interview Booked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        -144
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Vdj7kIZwwie6Ikz5",
+          "name": "Folk API - new key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "C0A8RQQ2P5F",
+          "cachedResultName": "-dq-n8n-errors"
+        },
+        "text": "={{ $json.alertText }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true,
+          "mrkdwn": true
+        }
+      },
+      "id": "29d97808-9a41-46a1-a97f-c29583cd37aa",
+      "name": "Alert Not Updated",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        880,
+        80
+      ],
+      "webhookId": "bc220104-a110-4bc9-ba1a-c5361c1de658",
+      "credentials": {
+        "slackApi": {
+          "id": "KgxLdLdH6tlcI6tK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Interview booked -> Folk status\n\nOne trigger per interviewing partner (Sam, James, Oliver, Arjun). When a new event lands on their calendar with **interview** anywhere in the title, the applicant is matched in **Leads & Applications** and moved to **Status = Interview Booked**, with **Interview Date** set to the day of the call.\n\nNothing is ever created in Folk. Anything that cannot be matched, or that would move someone backwards, posts to `#-dq-n8n-errors` instead.",
+        "height": 260,
+        "width": 600,
+        "color": 4
+      },
+      "id": "de2f89fb-629c-4262-9a0f-5511108dd348",
+      "name": "Note Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Who booked, not who attended\n\nThe applicant comes from the **Booked by** block in the invite description (name on one line, email on the next), because guests they add themselves also show up as attendees.\n\nFalls back to the name in brackets in the title, then to a single non-DQ attendee. An event with neither is skipped silently, which is what filters out internal calls that happen to say \"interview\".",
+        "height": 260,
+        "width": 580,
+        "color": 5
+      },
+      "id": "3221e00d-9347-46be-8374-7b933bcec81c",
+      "name": "Note Who Booked",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Matching, and never going backwards\n\n**1. Email** - exact match in Leads & Applications.\n\n**2. Name** - if the email is unknown, look for that name sitting at **Invited to interview**. On a single hit the booking email is added to their record and the status is set. Ambiguous or no hit means no write.\n\nThe status only moves from blank, Lead, Applied, Qualified, Invited to interview or Interview Booked. Anyone at Interview complete, Q&A, Offer sent, Closed or Unqualified is left alone and flagged in Slack, so a second call never knocks them back.",
+        "height": 260,
+        "width": 620,
+        "color": 3
+      },
+      "id": "0d18cd56-ca5c-4d70-8d6f-5c64dd2729a7",
+      "name": "Note Matching",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -624
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Sam Calendar": {
+      "main": [
+        [
+          {
+            "node": "Extract Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Booking": {
+      "main": [
+        [
+          {
+            "node": "Find Lead By Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "James Calendar": {
+      "main": [
+        [
+          {
+            "node": "Extract Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Oliver Calendar": {
+      "main": [
+        [
+          {
+            "node": "Extract Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Arjun Calendar": {
+      "main": [
+        [
+          {
+            "node": "Extract Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lead By Email": {
+      "main": [
+        [
+          {
+            "node": "Find Lead By Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Lead By Name": {
+      "main": [
+        [
+          {
+            "node": "Resolve Folk Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Folk Match": {
+      "main": [
+        [
+          {
+            "node": "Update Folk?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Folk?": {
+      "main": [
+        [
+          {
+            "node": "Set Interview Booked",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert Not Updated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "errorWorkflow": "ZgfYB1LYsCEGbsck",
+    "timezone": "Europe/London",
+    "saveDataErrorExecution": "all"
+  },
+  "versionId": "7e4a9efd-ad00-4ca2-b980-48894d3b47fc",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "LHETOEu929jq4Tdp",
+  "tags": []
+}

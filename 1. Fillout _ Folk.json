@@ -1,0 +1,1977 @@
+{
+  "name": "1. Fillout > Folk",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18c8fd61-04a3-4161-9c7a-b832ba8ce005",
+              "name": "email",
+              "value": "={{ $json.questions[\"8Etk\"].value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3952,
+        1104
+      ],
+      "id": "508ecd63-35b4-430c-b2c2-c39cc6825d03",
+      "name": "Set Person Email"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people?filter[emails][eq]={{ $json.email }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3568,
+        1088
+      ],
+      "id": "f620e27f-e73c-4e12-a6db-bbfec0d3ff28",
+      "name": "Search User in Folk"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "057bac60-bc1f-4676-bf1e-940fdbe3ad4a",
+              "leftValue": "={{ $json.data.items[0].id }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3232,
+        1088
+      ],
+      "id": "bcc0c0b3-d170-436e-8bd3-bd984a39f6f6",
+      "name": "If person exists"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f49c9fee-ad83-4d6d-96a8-88e9f56883b4",
+              "name": "personId",
+              "value": "={{ $json.data.items[0].id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3408,
+        1088
+      ],
+      "id": "84dac500-8c2a-4d19-9710-0adac896bce5",
+      "name": "Folk Person Id"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "= {{ \n            JSON.stringify(\n              (()=>{\n                const founder_first_name = $node[\"Fillout Trigger\"].json.questions[\"xpbS\"][\"value\"];\n                const founder_last_name = $node[\"Fillout Trigger\"].json.questions[\"4ma5\"][\"value\"];\n                const q = $node[\"Fillout Trigger\"].json.questions;\n                const ids = [\n                  \"3jkv\",\"mFMG\",\"9po8\",\"5HJE\",\"qG1G\",\"hN3D\",\"rJ3u\",\"tZ42\",\"7wHz\",\"hKVV\",\n                  \"qFLN\",\"mymB\",\"9CiT\",\"tcTa\",\"dNQ5\",\"chXn\",\"wFSJ\",\"8iZG\",\"mRvX\",\"9iJC\",\n                  \"v8MM\",\"gYjH\",\"nCYJ\",\"mJME\",\"3BFW\",\"7rP9\",\"vGqM\",\"umgN\",\"8fKT\"\n                ];\n\n                const lines = [`Following are the questions and their answers: \\n\\n Founder: ${founder_first_name} ${founder_last_name}`];\n                for (const id of ids) {\n                  if (!q || !q[id]) continue;\n                  const name = q[id].name ?? id;\n                  let val = q[id].value;\n                  if (Array.isArray(val)) val = val.join(\", \");\n                  if (val === undefined || val === null) val = \"\";\n                  lines.push(name);\n                  lines.push(String(val));\n                }\n                return lines.join(\"\\n\\n\");\n              })()\n            ) \n}}",
+        "options": {
+          "systemMessage": "=You are a senior venture analyst at DQventures. Your role is to evaluate founder applications for investment potential and fit with DQ's co-creation model.\n\nWrite like a confident professional — structured, analytical, but natural. Sound like a human analyst briefing partners, not an AI summarizing data. Be concise and use full, readable sentences.\n\nUse balanced judgment: highlight both strengths and risks, but avoid over-using phrases like \"unclear,\" \"not stated,\" or \"lacks data.\" If information is missing, note it briefly and move on.\nPrioritize clarity, flow, and decisiveness. End each section with a short verdict that sounds like your professional conclusion — not a hedge.\nYour tone should reflect confidence, fairness, and human understanding, while keeping a clean professional voice.\n\nYour analysis must embody DQ's core value: **\"Tell it like it is.\"** Be analytical, candid, and insightful.\nUse a MECE (Mutually Exclusive, Collectively Exhaustive) structure to avoid duplication or overlap.\nBase your assessment strictly on the facts presented in the application — never speculate or infer unstated motivations.\nYour primary goal is to assess **talent potential first**, as DQ invests in good people solving real problems, not just ideas.\n\n---\n\n### DQVENTURES INVESTMENT THESIS & MODEL:\nWe de-risk entrepreneurship for experienced professionals (typically 8–10+ years) transitioning out of corporate careers.\nWe act as 0-to-1 cofounders for domain experts solving problems they have personally experienced.\nOur model allows founders to stay in their corporate roles while we work through the **Explore** and **Validate** stages to build a Minimum Viable Business (MVB).\nOnly after validation do we expect \"The Transition\" — where the founder commits to going all-in as a full-time CEO.\nWe focus on building capital-efficient, asset-light businesses with potential to reach $10M+ valuations.\nWe prefer B2B solutions. We do not chase unicorns; we build scalable, investable, and valuable companies.\n\n\n### OUTPUT STRUCTURE:\nAlways use this exact format for Partner Review.\nUse bold headers, emoji markers (✅ 📈 🔍 🚩 ⚖️ 📌 🔄), short bullet points, and clear spacing between sections.\nKeep each bullet concise — max two lines where possible.\n\n\n**Summary**  \n• A brief, neutral summary of the founder's background and what they aim to build.  \n• Mention their name and location in the first line.\n\n\n\n**✅ Founder-Thesis Fit (Talent Potential Assessment)**  \n• **Experience & Domain Expertise:** Do they fit DQ's profile (8+ years)? Is their experience relevant to the problem they want to solve?  \n\n• **Problem Connection:** Is this a \"real problem\" they've personally lived or observed deeply? Does their insight feel authentic?  \n\n• **Entrepreneurial Motivation:** What drives their transition — intrinsic (independence, impact, passion) or extrinsic (money, power, fame)?  \n\n• **Entrepreneurial Commitment:** Are they ready to eventually go all-in as a full-time CEO once validated? (Staying employed initially aligns with DQ's model.)  \n\n• **Character & Integrity:** Are they a \"good person\" with evidence of grit, integrity, and good judgment? Do they seem coachable and trustworthy?  \n\n• **Verdict:** A decisive one-line summary of the founder's talent potential and alignment with DQ's thesis.\n\n---\n\n**📈 Opportunity-Thesis Fit (Business Potential Assessment)**  \n• **Model & DQ Alignment:** Is the model simple, B2B, and asset-light? Can it start service-led?  \n• **Value Potential:** Does it have a credible path to a $10M+ business?  \n\n• **Verdict:** Short summary on how well the opportunity fits DQ's investment thesis.\n\n---\n\n**🔍 Initial Risk Hypotheses for Explore Stage Validation**  \nIdentify which of the 8 key risks need testing in the Explore Stage.\n\n**Founder Capability Hypotheses:**  \n1. [Domain expertise or execution ability risks]  \n2. [Character, grit, or judgment risks]\n\n**Market Validation Hypotheses:**  \n3. [Customer discovery or interview risk]  \n4. [Problem urgency or pain validation risk]\n\n**Solution Delivery Hypotheses:**  \n5. [Delivery capability or value delivery risk]  \n6. [Solution–problem fit risk]\n\n**Business Model Hypotheses:**  \n7. [Pricing or willingness-to-pay risk]  \n8. [Scalability or asset-light model risk]\n\n---\n\n**🚩 Red Flags & Risks**  \n• List any critical concerns that challenge DQ's model fit — such as character issues, weak motivation, poor communication, unrealistic expectations, or low commitment.\n\n---\n\n**⚖️ Recommendation**  \n• **Conviction:** [✅ Advance to Interview / ⚠️ Additional Information Needed / ❌ Decline]  \n• **Justification:** One sentence explaining your recommendation, grounded in the talent potential and thesis fit.\n\n\n\n**📌 Interview Focus Areas**  \nFour areas to explore during interview to validate talent and refine risks:  \n1. [Character Deep-Dive: assess grit, resilience, or integrity]  \n2. [Risk Validation: explore any key uncertainty from the application]  \n3. [DQ Model Understanding: test comprehension of hands-on cofounder model]  \n4. [Payment Readiness: gauge willingness and readiness for $2,000 Explore Stage commitment]\n\n\n\n**🔄 Handoff to Interview Stage**  \n• Summarize key insights, risk areas, and talent potential indicators to guide interview focus and hypothesis refinement.\n\n\n### VOICE & TONE BY SECTION:\n\n**For \"✅ Founder-Thesis Fit (Talent Potential Assessment)\" ONLY:**\n- Direct and conversational: Write as if speaking to a colleague who trusts your judgment\n- Person-focused: Always refer to the founder by name after the first mention (use \"Sarah\" not \"the applicant\")\n- Connected narrative: Link ideas within and across sections to show how pieces of evidence connect\n- Analytical but human: Balance data-driven assessment with recognition that you're evaluating a real person\n- Example: \"Sarah's 15 years leading procurement operations means she's felt this invoicing pain firsthand—she's not guessing at the problem.\"\n\n**For \"🔍 Initial Risk Hypotheses for Explore Stage Validation\":**\n- Business-focused analysis: Focus on the risks, opportunities, and validation needs—NOT the founder's narrative\n- Structured assessment: Each hypothesis should analyze what needs to be tested and why it matters\n- Forward-looking: Frame as \"What do WE need to validate?\" not \"What does the founder need to prove?\"\n- Example structure: \"Customer willingness to pay remains unvalidated. While the problem appears urgent, we need pricing experiments to confirm budget availability and procurement processes in target accounts.\"\n- DO NOT start every sentence with \"He\" or \"She\" or the founder's name in this section\n- Write about the BUSINESS RISKS and VALIDATION WORK, not about the founder\n\n**For all other sections (Summary, Opportunity Fit, Red Flags, etc.):**\n- Balanced: Mix founder references with business analysis as appropriate\n- Clear and direct: State observations without excessive hedging\n- Evidence-based: Support claims with specific details from the application\n\n### Style Guidelines\n- Keep writing sharp, human, and confident.  \n- Use bullets and spacing exactly as structured above.  \n- Avoid filler or redundant language.  \n- Sound like a seasoned partner communicating insights to other partners.  \n- When writing your final output, imagine you are briefing DQ partners directly. Write with warmth, natural phrasing, and readability — like a confident colleague, not a machine. Keep it human, use natural transitions, and avoid stiff or academic tone. Keep all bullets and structure exactly as required, but let the language flow smoothly.\n\nUse natural, flowing phrasing as if you're speaking to a partner in conversation — confident, brief, and human. Avoid stiff or academic phrasing; prefer clarity and warmth over corporate formality.\n\n\n### GENDER IDENTIFICATION AND PRONOUN USAGE:\n**Before writing your assessment, you must first determine the founder's gender to use appropriate pronouns consistently throughout.**\n\n**How to identify gender:**\n1. **Check the first name** against common gender associations (e.g., \"Sarah\" = female, \"John\" = male, \"Alex\" = ambiguous)\n2. **Look for gender indicators in the application** such as:\n   - Titles (Mr./Ms./Mrs.)\n   - Self-identification in open-ended responses\n   - References to gender-specific roles or experiences\n3. **For ambiguous names** (Jan, Alex, Jordan, etc.), carefully review the application context for clues\n4. **If truly uncertain after review**, default to \"they/them/their\" pronouns\n\n**Once gender is determined:**\n- **Male founders**: Use \"he,\" \"him,\" \"his\" consistently\n- **Female founders**: Use \"she,\" \"her,\" \"hers\" consistently  \n- **Non-binary or uncertain**: Use \"they,\" \"them,\" \"their\" consistently\n\n**Critical rule**: Be CONSISTENT with pronoun usage throughout the entire assessment. Never mix pronouns (don't switch between \"he\" and \"they\" for the same person).\n\n**Examples of proper pronoun usage:**\n- Male: \"John has 10 years of experience in logistics. He previously worked at Amazon, where he led supply chain optimization.\"\n- Female: \"Sarah brings deep expertise in fintech. She spent 8 years at Goldman Sachs, where she managed trading operations.\"\n- They/them: \"Alex shows strong technical capabilities. They have built several SaaS products and have deep understanding of B2B sales.\"\n\n\n### CRITICAL WRITING REQUIREMENT - COMPLETE SENTENCES WITH NAMES AND PRONOUNS (FOR FOUNDER-THESIS FIT SECTION):\n**In the \"✅ Founder-Thesis Fit\" section, you must write in complete, flowing sentences that reference the founder by name or use appropriate pronouns (he, she, him, her, his, their).**\n\n- BAD (Abrupt, no subject): \"Worked in supply chain for 10 years. Has deep domain expertise.\"\n- GOOD (Complete sentence with name/pronoun): \"Sarah worked in supply chain for 10 years and has deep domain expertise.\"\n- GOOD (Complete sentence with pronoun): \"She worked in supply chain for 10 years and has deep domain expertise.\"\n\n- BAD: \"Strong technical background. Previously at Google.\"\n- GOOD: \"He has a strong technical background, having previously worked at Google.\"\n\n- BAD: \"Clear problem validation. Interviewed 25 potential customers.\"\n- GOOD: \"John has validated the problem clearly by interviewing 25 potential customers.\"\n\nEvery bullet point in the Founder-Thesis Fit section should read like a natural sentence about the founder, not a fragmented list of attributes. Start sentences with the founder's name, or use pronouns like \"she,\" \"he,\" \"they,\" \"her,\" \"his,\" or \"their\" to maintain a conversational, human tone.\n\n**However, in the \"🔍 Initial Risk Hypotheses\" section, DO NOT force this structure.** Write about the business risks and what needs validation, not about the founder.\n\n### EXAMPLES FOR RISK HYPOTHESES SECTION:\n\n✅ **GOOD - Business-Focused:**\n\"Pricing validation is critical—while enterprises acknowledge the compliance burden, budget allocation and decision-making authority for this category remain unclear. We need to test price anchoring in the $5K-$15K range through pilot proposals.\"\n\n✅ **GOOD - Business-Focused:**\n\"Service delivery capability requires validation. The proposed 10-day turnaround assumes access to specialized equipment and expertise that may not be readily available at launch. Explore Stage should test manual delivery workflows with 2-3 pilot customers.\"\n\n✅ **GOOD - Business-Focused:**\n\"Target customer segmentation needs refinement. The application identifies 'mid-market manufacturers' broadly, but we need to narrow this to specific sub-verticals where the pain is most acute and budgets exist. Customer discovery interviews should identify the highest-propensity segment.\"\n\n❌ **BAD - Founder-Focused:**\n\"John needs to validate whether customers will pay.\"\n\n❌ **BAD - Founder-Focused:**\n\"Sarah should test if she can deliver the service at scale.\"\n\n❌ **BAD - Founder-Focused:**\n\"He must prove that the problem is urgent enough for customers to act.\"\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1904,
+        848
+      ],
+      "id": "130bed20-bf58-4b7c-9799-a76e2eae88f6",
+      "name": "AI Agent - Generate Note1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"entity\": {\n    \"id\": \"{{ $('Search User ID1').item.json.data.items[0].id }}\"\n  },\n  \"visibility\": \"public\",\n  \"content\": {{ JSON.stringify($('AI Agent - Generate Note1').item.json.output) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1392,
+        848
+      ],
+      "id": "7019d4ce-7bd1-476d-bd4b-1d99493433bd",
+      "name": "Add Note2",
+      "notesInFlow": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter[emails][eq]",
+              "value": "={{ $('Set Person Email').item.json.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1616,
+        848
+      ],
+      "id": "65643150-0e71-477b-a3d1-766c0c5a2381",
+      "name": "Search User ID1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.folk.app/v1/people",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"firstName\": \"{{ String($('Fillout Trigger').item.json.questions.xpbS.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n  \"lastName\": \"{{ String($('Fillout Trigger').item.json.questions['4ma5'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n  \"emails\": [\"{{ String($('Fillout Trigger').item.json.questions['8Etk'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\"],\n  \"phones\": [\"{{ String($('Fillout Trigger').item.json.questions.dk67.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\"],\n  \"groups\": [\n    { \"id\": \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\" }\n  ],\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Why do you want to become an entrepreneur?\": \"{{ String($('Fillout Trigger').item.json.questions['3jkv'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Why now, and what has stopped you starting a business already?\": \"{{ String($('Fillout Trigger').item.json.questions.mFMG.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What are your strongest skills / specific things you want to be doing in the early stages of your new business?\": \"{{ String($('Fillout Trigger').item.json.questions['9po8'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What are your main skill gaps where you'll need help?\": \"{{ String($('Fillout Trigger').item.json.questions['5HJE'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Which industry do you want to build a business in, and why?\": \"{{ String($('Fillout Trigger').item.json.questions.qG1G.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you have any notable connections, insights, expertise or advantages in this industry? Tell us more about that.\": \"{{ String($('Fillout Trigger').item.json.questions.hN3D.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What trends or shifts in your industry are you most excited about? Why?\": \"{{ String($('Fillout Trigger').item.json.questions.rJ3u.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What is the specific problem in your industry that you want to solve?\": \"{{ String($('Fillout Trigger').item.json.questions.tZ42.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Who is experiencing this problem?\": \"{{ String($('Fillout Trigger').item.json.questions['7wHz'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How are people getting around this problem at the moment?\": \"{{ String($('Fillout Trigger').item.json.questions.hKVV.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Will solving this problem save people time or money (or both)? How much time or money?\": \"{{ String($('Fillout Trigger').item.json.questions.qFLN.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Approximately how many people are affected by this problem?\": \"{{ String($('Fillout Trigger').item.json.questions.mymB.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you already an idea in mind for what could solve this problem?\": \"{{ String($('Fillout Trigger').item.json.questions['9CiT'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How do you think you'll get your first 1 - 10 customers?\": \"{{ String($('Fillout Trigger').item.json.questions.dNQ5.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How much do you think people will pay for this? And why do you think that number?\": \"{{ String($('Fillout Trigger').item.json.questions.chXn.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Who is your main competition, and what are they getting wrong?\": \"{{ String($('Fillout Trigger').item.json.questions.wFSJ.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How many hours / days a week are you able to commit to working on your business now while still part time?\": \"{{ String($('Fillout Trigger').item.json.questions['8iZG'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What does success look like for you?\": \"{{ String($('Fillout Trigger').item.json.questions.mRvX.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"If things go well, would you be comfortable raising external capital for your business?\": \"{{ String($('Fillout Trigger').item.json.questions['9iJC'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Are there people in your network you could pitch to for some early startup funding?\": \"{{ String($('Fillout Trigger').item.json.questions.v8MM.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you consider yourself to be someone that is “hands-on” or you prefer to hire people to do the work?\": \"{{ String($('Fillout Trigger').item.json.questions.gYjH.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Imagine one year from now, the business is showing signs of success and you’ve quit your job to go full time on this. What does your typical day-to-day look like?\": \"{{ String($('Fillout Trigger').item.json.questions.nCYJ.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '')}}\",\n      \"As a founder coming from the corporate world, it’s typical to take a salary cut in the early stages of building your business so more money can be used on growing the business, which in turn grows your long-term wealth.\": \"{{ String($('Fillout Trigger').item.json.questions.mJME.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What is the minimum annual salary you would need to support yourself while working full-time on your business?\": \"{{ String($('Fillout Trigger').item.json.questions['3BFW'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Why do you want DQventures to work with you on your new business?\": \"{{ String($('Fillout Trigger').item.json.questions['7rP9'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Is there anything else you'd like us to know about you and your goals?\": \"{{ String($('Fillout Trigger').item.json.questions.vGqM.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Which country are you currently located in?\": \"{{ String($('Fillout Trigger').item.json.questions.umgN.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How did you hear about DQventures?\": \"{{ String($('Fillout Trigger').item.json.questions['8fKT'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Walk us through your idea\": \"{{ String($('Fillout Trigger').item.json.questions.tcTa.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Are you aware of the $20k / 20% terms?\": \"{{ String($('Fillout Trigger').item.json.questions.v4TV.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Referral URL\": \"{{ String($('Fillout Trigger').item.json.urlParameters?.ref?.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Fillout ID\": \"{{ $('Fillout Trigger').item.json.submissionId ?? '' }}\",\n      \"Date of Application\": \"{{ $('Fillout Trigger').item.json.lastUpdatedAt ? new Date($('Fillout Trigger').item.json.lastUpdatedAt).toISOString().split('T')[0] : '' }}\",\n     \"Would you like to proceed?\": \"{{ $('Fillout Trigger').item.json.questions['7civ'].value }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2912,
+        1248
+      ],
+      "id": "e8a5beab-c881-4565-b1b3-ca50f9edab03",
+      "name": "Create New User"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f3a5f312-c8e8-4bc6-8b28-0a1c338febf2",
+              "leftValue": "={{ $json.isWithdrawn }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2528,
+        1248
+      ],
+      "id": "246af43b-7ac7-4a2f-bbdf-6799ffbc40c2",
+      "name": "If Withdrawn"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// n8n Code Node: Check Withdrawal Status\n// ============================================\n// This code checks if the applicant selected the withdrawal option\n// in either of two specific questions from the Fillout form\n\n// Get the questions object from the form submission\nconst questions = $('Fillout Trigger').first().json.questions;\n\n// Check question v4TV: \"Before we move forward, please confirm...\"\nconst programStructureAnswer = questions?.['v4TV']?.value;\nconsole.log('programStructureAnswer', programStructureAnswer);\n\n// Check question 7civ: \"Would you like to proceed?\"\nconst proceedAnswer = questions?.['7civ']?.value;\nconsole.log('proceedAnswer', proceedAnswer);\n\n// Define the exact withdrawal text we're looking for\nconst withdrawalText = \"This won't be possible for me, please withdraw my application\";\n\n// Check if either question has the withdrawal response\nconst isWithdrawn = \n  programStructureAnswer === withdrawalText || \n  proceedAnswer === withdrawalText;\n\n// Determine which question triggered the withdrawal (if any)\nlet withdrawalReason = null;\nif (isWithdrawn) {\n  if (programStructureAnswer === withdrawalText) {\n    withdrawalReason = 'Program Structure Question (v4TV)';\n  } else if (proceedAnswer === withdrawalText) {\n    withdrawalReason = 'Proceed Question (7civ)';\n  }\n}\n\n// Return the result with the withdrawal flag\nreturn {\n  json: {\n    //...$input.item.json,\n    isWithdrawn: isWithdrawn,\n    withdrawalReason: withdrawalReason\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2720,
+        1248
+      ],
+      "id": "8e42ac03-e323-4a7d-a53e-8e51ce55caa9",
+      "name": "Check Withdrawn Status"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1904,
+        720
+      ],
+      "id": "b6da5bf4-84b4-4885-9c22-eeb938c05cfe",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "EZZfCATEPoGEysRj",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e01d2ba1-4b1f-4b72-a100-8a1e12c71a97",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3776,
+        1104
+      ],
+      "id": "fabb8e99-008d-42a5-a2d2-17d3e8431aaa",
+      "name": "Email exists?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -3568,
+        1248
+      ],
+      "id": "301eaa56-2422-4e54-b7d9-b28999188f4d",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// n8n Code Node: Check Withdrawal Status\n// ============================================\n// This code checks if the applicant selected the withdrawal option\n// in either of two specific questions from the Fillout form\n\n// Get the questions object from the form submission\nconst questions = $('Fillout Trigger').first().json.questions;\n\n// Check question v4TV: \"Before we move forward, please confirm...\"\nconst programStructureAnswer = questions?.['v4TV']?.value;\nconsole.log('programStructureAnswer', programStructureAnswer);\n\n// Check question 7civ: \"Would you like to proceed?\"\nconst proceedAnswer = questions?.['7civ']?.value;\nconsole.log('proceedAnswer', proceedAnswer);\n\n// Define the exact withdrawal text we're looking for\nconst withdrawalText = \"This won't be possible for me, please withdraw my application\";\n\n// Check if either question has the withdrawal response\nconst isWithdrawn = \n  programStructureAnswer === withdrawalText || \n  proceedAnswer === withdrawalText;\n\n// Determine which question triggered the withdrawal (if any)\nlet withdrawalReason = null;\nif (isWithdrawn) {\n  if (programStructureAnswer === withdrawalText) {\n    withdrawalReason = 'Program Structure Question (v4TV)';\n  } else if (proceedAnswer === withdrawalText) {\n    withdrawalReason = 'Proceed Question (7civ)';\n  }\n}\n\n// Return the result with the withdrawal flag\nreturn {\n  json: {\n    //...$input.item.json,\n    isWithdrawn: isWithdrawn,\n    withdrawalReason: withdrawalReason\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3040,
+        896
+      ],
+      "id": "9fe3585f-cb8d-4e11-a95b-e5bcc988f70f",
+      "name": "Check Withdrawn Status (Existing User)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f3a5f312-c8e8-4bc6-8b28-0a1c338febf2",
+              "leftValue": "={{ $json.isWithdrawn }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2864,
+        896
+      ],
+      "id": "38266ee5-0787-4f72-aeb3-c5504baa87e1",
+      "name": "If Withdrawn1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('If person exists').item.json.data.items[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"firstName\": \"{{ String($('Fillout Trigger').item.json.questions.xpbS.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n  \"lastName\": \"{{ String($('Fillout Trigger').item.json.questions['4ma5'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n  \"emails\": [\"{{ String($('Fillout Trigger').item.json.questions['8Etk'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\"],\n  \"phones\": [\"{{ String($('Fillout Trigger').item.json.questions.dk67.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\"],\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Why do you want to become an entrepreneur?\": \"{{ String($('Fillout Trigger').item.json.questions['3jkv'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Why now, and what has stopped you starting a business already?\": \"{{ String($('Fillout Trigger').item.json.questions.mFMG.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What are your strongest skills / specific things you want to be doing in the early stages of your new business?\": \"{{ String($('Fillout Trigger').item.json.questions['9po8'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What are your main skill gaps where you'll need help?\": \"{{ String($('Fillout Trigger').item.json.questions['5HJE'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Which industry do you want to build a business in, and why?\": \"{{ String($('Fillout Trigger').item.json.questions.qG1G.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you have any notable connections, insights, expertise or advantages in this industry? Tell us more about that.\": \"{{ String($('Fillout Trigger').item.json.questions.hN3D.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What trends or shifts in your industry are you most excited about? Why?\": \"{{ String($('Fillout Trigger').item.json.questions.rJ3u.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What is the specific problem in your industry that you want to solve?\": \"{{ String($('Fillout Trigger').item.json.questions.tZ42.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Who is experiencing this problem?\": \"{{ String($('Fillout Trigger').item.json.questions['7wHz'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How are people getting around this problem at the moment?\": \"{{ String($('Fillout Trigger').item.json.questions.hKVV.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Will solving this problem save people time or money (or both)? How much time or money?\": \"{{ String($('Fillout Trigger').item.json.questions.qFLN.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Approximately how many people are affected by this problem?\": \"{{ String($('Fillout Trigger').item.json.questions.mymB.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you already an idea in mind for what could solve this problem?\": \"{{ String($('Fillout Trigger').item.json.questions['9CiT'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How do you think you'll get your first 1 - 10 customers?\": \"{{ String($('Fillout Trigger').item.json.questions.dNQ5.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How much do you think people will pay for this? And why do you think that number?\": \"{{ String($('Fillout Trigger').item.json.questions.chXn.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Who is your main competition, and what are they getting wrong?\": \"{{ String($('Fillout Trigger').item.json.questions.wFSJ.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How many hours / days a week are you able to commit to working on your business now while still part time?\": \"{{ String($('Fillout Trigger').item.json.questions['8iZG'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What does success look like for you?\": \"{{ String($('Fillout Trigger').item.json.questions.mRvX.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"If things go well, would you be comfortable raising external capital for your business?\": \"{{ String($('Fillout Trigger').item.json.questions['9iJC'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Are there people in your network you could pitch to for some early startup funding?\": \"{{ String($('Fillout Trigger').item.json.questions.v8MM.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you consider yourself to be someone that is “hands-on” or you prefer to hire people to do the work?\": \"{{ String($('Fillout Trigger').item.json.questions.gYjH.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Imagine one year from now, the business is showing signs of success and you’ve quit your job to go full time on this. What does your typical day-to-day look like?\": \"{{ String($('Fillout Trigger').item.json.questions.nCYJ.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '')}}\",\n      \"As a founder coming from the corporate world, it’s typical to take a salary cut in the early stages of building your business so more money can be used on growing the business, which in turn grows your long-term wealth.\": \"{{ String($('Fillout Trigger').item.json.questions.mJME.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What is the minimum annual salary you would need to support yourself while working full-time on your business?\": \"{{ String($('Fillout Trigger').item.json.questions['3BFW'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Why do you want DQventures to work with you on your new business?\": \"{{ String($('Fillout Trigger').item.json.questions['7rP9'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Is there anything else you'd like us to know about you and your goals?\": \"{{ String($('Fillout Trigger').item.json.questions.vGqM.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Which country are you currently located in?\": \"{{ String($('Fillout Trigger').item.json.questions.umgN.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How did you hear about DQventures?\": \"{{ String($('Fillout Trigger').item.json.questions['8fKT'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Walk us through your idea\": \"{{ String($('Fillout Trigger').item.json.questions.tcTa.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Are you aware of the $20k / 20% terms?\": \"{{ String($('Fillout Trigger').item.json.questions.v4TV.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Referral URL\": \"{{ String($('Fillout Trigger').item.json.urlParameters?.ref?.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Fillout ID\": \"{{ $('Fillout Trigger').item.json.submissionId ?? '' }}\",\n      \"Date of Application\": \"{{ $('Fillout Trigger').item.json.lastUpdatedAt ? new Date($('Fillout Trigger').item.json.lastUpdatedAt).toISOString().split('T')[0] : '' }}\",\n     \"Would you like to proceed?\": \"{{ $('Fillout Trigger').item.json.questions['7civ'].value }}\",\n    \"Status\": \"Withdrawn\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2608,
+        800
+      ],
+      "id": "60268105-4eef-49ad-a2b9-623720fa850e",
+      "name": "Update Fillout Content to Existing User1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('Folk Person Id').item.json.personId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"firstName\": \"{{ String($('Fillout Trigger').item.json.questions.xpbS.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n  \"lastName\": \"{{ String($('Fillout Trigger').item.json.questions['4ma5'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n  \"emails\": [\"{{ String($('Fillout Trigger').item.json.questions['8Etk'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\"],\n  \"phones\": [\"{{ String($('Fillout Trigger').item.json.questions.dk67.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\"],\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Why do you want to become an entrepreneur?\": \"{{ String($('Fillout Trigger').item.json.questions['3jkv'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Why now, and what has stopped you starting a business already?\": \"{{ String($('Fillout Trigger').item.json.questions.mFMG.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What are your strongest skills / specific things you want to be doing in the early stages of your new business?\": \"{{ String($('Fillout Trigger').item.json.questions['9po8'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What are your main skill gaps where you'll need help?\": \"{{ String($('Fillout Trigger').item.json.questions['5HJE'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Which industry do you want to build a business in, and why?\": \"{{ String($('Fillout Trigger').item.json.questions.qG1G.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you have any notable connections, insights, expertise or advantages in this industry? Tell us more about that.\": \"{{ String($('Fillout Trigger').item.json.questions.hN3D.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What trends or shifts in your industry are you most excited about? Why?\": \"{{ String($('Fillout Trigger').item.json.questions.rJ3u.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What is the specific problem in your industry that you want to solve?\": \"{{ String($('Fillout Trigger').item.json.questions.tZ42.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Who is experiencing this problem?\": \"{{ String($('Fillout Trigger').item.json.questions['7wHz'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How are people getting around this problem at the moment?\": \"{{ String($('Fillout Trigger').item.json.questions.hKVV.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Will solving this problem save people time or money (or both)? How much time or money?\": \"{{ String($('Fillout Trigger').item.json.questions.qFLN.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Approximately how many people are affected by this problem?\": \"{{ String($('Fillout Trigger').item.json.questions.mymB.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you already an idea in mind for what could solve this problem?\": \"{{ String($('Fillout Trigger').item.json.questions['9CiT'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How do you think you'll get your first 1 - 10 customers?\": \"{{ String($('Fillout Trigger').item.json.questions.dNQ5.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How much do you think people will pay for this? And why do you think that number?\": \"{{ String($('Fillout Trigger').item.json.questions.chXn.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Who is your main competition, and what are they getting wrong?\": \"{{ String($('Fillout Trigger').item.json.questions.wFSJ.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How many hours / days a week are you able to commit to working on your business now while still part time?\": \"{{ String($('Fillout Trigger').item.json.questions['8iZG'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What does success look like for you?\": \"{{ String($('Fillout Trigger').item.json.questions.mRvX.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"If things go well, would you be comfortable raising external capital for your business?\": \"{{ String($('Fillout Trigger').item.json.questions['9iJC'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Are there people in your network you could pitch to for some early startup funding?\": \"{{ String($('Fillout Trigger').item.json.questions.v8MM.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Do you consider yourself to be someone that is “hands-on” or you prefer to hire people to do the work?\": \"{{ String($('Fillout Trigger').item.json.questions.gYjH.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Imagine one year from now, the business is showing signs of success and you’ve quit your job to go full time on this. What does your typical day-to-day look like?\": \"{{ String($('Fillout Trigger').item.json.questions.nCYJ.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '')}}\",\n      \"As a founder coming from the corporate world, it’s typical to take a salary cut in the early stages of building your business so more money can be used on growing the business, which in turn grows your long-term wealth.\": \"{{ String($('Fillout Trigger').item.json.questions.mJME.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"What is the minimum annual salary you would need to support yourself while working full-time on your business?\": \"{{ String($('Fillout Trigger').item.json.questions['3BFW'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Why do you want DQventures to work with you on your new business?\": \"{{ String($('Fillout Trigger').item.json.questions['7rP9'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Is there anything else you'd like us to know about you and your goals?\": \"{{ String($('Fillout Trigger').item.json.questions.vGqM.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Which country are you currently located in?\": \"{{ String($('Fillout Trigger').item.json.questions.umgN.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"How did you hear about DQventures?\": \"{{ String($('Fillout Trigger').item.json.questions['8fKT'].value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Walk us through your idea\": \"{{ String($('Fillout Trigger').item.json.questions.tcTa.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '').slice(0,5000) }}\",\n      \"Are you aware of the $20k / 20% terms?\": \"{{ String($('Fillout Trigger').item.json.questions.v4TV.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Referral URL\": \"{{ String($('Fillout Trigger').item.json.urlParameters?.ref?.value ?? '').replace(/\\r?\\n/g, ' ').replace(/\\\\/g, '\\\\\\\\').replace(/\\\"/g, '\\\\\\\"').replace(/[\\u0000-\\u001F\\u007F-\\u009F]/g, '') }}\",\n      \"Fillout ID\": \"{{ $('Fillout Trigger').item.json.submissionId ?? '' }}\",\n      \"Date of Application\": \"{{ $('Fillout Trigger').item.json.lastUpdatedAt ? new Date($('Fillout Trigger').item.json.lastUpdatedAt).toISOString().split('T')[0] : '' }}\",\n     \"Would you like to proceed?\": \"{{ $('Fillout Trigger').item.json.questions['7civ'].value }}\",\n    \"Status\": \"Applied\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2608,
+        976
+      ],
+      "id": "71b9aeef-8074-43f5-890d-317c9cdd44e9",
+      "name": "Update Fillout Content to Existing User"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('Create New User').item.json.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\":{ \n      \"Status\": \"Withdrawn\",\n      \"Time of Withdrawal\": \"Within Application\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1920,
+        208
+      ],
+      "id": "ec8b085a-13cf-4029-8f2d-8b21a83e1370",
+      "name": "Set Withdrawn Status"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "= {{ \n            JSON.stringify(\n              (()=>{\n                const founder_first_name = $node[\"Fillout Trigger\"].json.questions[\"xpbS\"][\"value\"];\n                const founder_last_name = $node[\"Fillout Trigger\"].json.questions[\"4ma5\"][\"value\"];\n                const q = $node[\"Fillout Trigger\"].json.questions;\n                const ids = [\n                  \"3jkv\",\"mFMG\",\"9po8\",\"5HJE\",\"qG1G\",\"hN3D\",\"rJ3u\",\"tZ42\",\"7wHz\",\"hKVV\",\n                  \"qFLN\",\"mymB\",\"9CiT\",\"tcTa\",\"dNQ5\",\"chXn\",\"wFSJ\",\"8iZG\",\"mRvX\",\"9iJC\",\n                  \"v8MM\",\"gYjH\",\"nCYJ\",\"mJME\",\"3BFW\",\"7rP9\",\"vGqM\",\"umgN\",\"8fKT\"\n                ];\n\n                const lines = [`Following are the questions and their answers: \\n\\n Founder: ${founder_first_name} ${founder_last_name}`];\n                for (const id of ids) {\n                  if (!q || !q[id]) continue;\n                  const name = q[id].name ?? id;\n                  let val = q[id].value;\n                  if (Array.isArray(val)) val = val.join(\", \");\n                  if (val === undefined || val === null) val = \"\";\n                  lines.push(name);\n                  lines.push(String(val));\n                }\n                return lines.join(\"\\n\\n\");\n              })()\n            ) \n}}",
+        "options": {
+          "systemMessage": "=You are a senior venture analyst at DQventures. Your role is to evaluate founder applications for investment potential and fit with DQ's co-creation model.\n\nWrite like a confident professional — structured, analytical, but natural. Sound like a human analyst briefing partners, not an AI summarizing data. Be concise and use full, readable sentences.\n\nUse balanced judgment: highlight both strengths and risks, but avoid over-using phrases like \"unclear,\" \"not stated,\" or \"lacks data.\" If information is missing, note it briefly and move on.\nPrioritize clarity, flow, and decisiveness. End each section with a short verdict that sounds like your professional conclusion — not a hedge.\nYour tone should reflect confidence, fairness, and human understanding, while keeping a clean professional voice.\n\nYour analysis must embody DQ's core value: **\"Tell it like it is.\"** Be analytical, candid, and insightful.\nUse a MECE (Mutually Exclusive, Collectively Exhaustive) structure to avoid duplication or overlap.\nBase your assessment strictly on the facts presented in the application — never speculate or infer unstated motivations.\nYour primary goal is to assess **talent potential first**, as DQ invests in good people solving real problems, not just ideas.\n\n---\n\n### DQVENTURES INVESTMENT THESIS & MODEL:\nWe de-risk entrepreneurship for experienced professionals (typically 8–10+ years) transitioning out of corporate careers.\nWe act as 0-to-1 cofounders for domain experts solving problems they have personally experienced.\nOur model allows founders to stay in their corporate roles while we work through the **Explore** and **Validate** stages to build a Minimum Viable Business (MVB).\nOnly after validation do we expect \"The Transition\" — where the founder commits to going all-in as a full-time CEO.\nWe focus on building capital-efficient, asset-light businesses with potential to reach $10M+ valuations.\nWe prefer B2B solutions. We do not chase unicorns; we build scalable, investable, and valuable companies.\n\n\n### OUTPUT STRUCTURE:\nAlways use this exact format for Partner Review.\nUse bold headers, emoji markers (✅ 📈 🔍 🚩 ⚖️ 📌 🔄), short bullet points, and clear spacing between sections.\nKeep each bullet concise — max two lines where possible.\n\n\n**Summary**  \n• A brief, neutral summary of the founder's background and what they aim to build.  \n• Mention their name and location in the first line.\n\n\n\n**✅ Founder-Thesis Fit (Talent Potential Assessment)**  \n• **Experience & Domain Expertise:** Do they fit DQ's profile (8+ years)? Is their experience relevant to the problem they want to solve?  \n\n• **Problem Connection:** Is this a \"real problem\" they've personally lived or observed deeply? Does their insight feel authentic?  \n\n• **Entrepreneurial Motivation:** What drives their transition — intrinsic (independence, impact, passion) or extrinsic (money, power, fame)?  \n\n• **Entrepreneurial Commitment:** Are they ready to eventually go all-in as a full-time CEO once validated? (Staying employed initially aligns with DQ's model.)  \n\n• **Character & Integrity:** Are they a \"good person\" with evidence of grit, integrity, and good judgment? Do they seem coachable and trustworthy?  \n\n• **Verdict:** A decisive one-line summary of the founder's talent potential and alignment with DQ's thesis.\n\n---\n\n**📈 Opportunity-Thesis Fit (Business Potential Assessment)**  \n• **Model & DQ Alignment:** Is the model simple, B2B, and asset-light? Can it start service-led?  \n• **Value Potential:** Does it have a credible path to a $10M+ business?  \n\n• **Verdict:** Short summary on how well the opportunity fits DQ's investment thesis.\n\n---\n\n**🔍 Initial Risk Hypotheses for Explore Stage Validation**  \nIdentify which of the 8 key risks need testing in the Explore Stage.\n\n**Founder Capability Hypotheses:**  \n1. [Domain expertise or execution ability risks]  \n2. [Character, grit, or judgment risks]\n\n**Market Validation Hypotheses:**  \n3. [Customer discovery or interview risk]  \n4. [Problem urgency or pain validation risk]\n\n**Solution Delivery Hypotheses:**  \n5. [Delivery capability or value delivery risk]  \n6. [Solution–problem fit risk]\n\n**Business Model Hypotheses:**  \n7. [Pricing or willingness-to-pay risk]  \n8. [Scalability or asset-light model risk]\n\n---\n\n**🚩 Red Flags & Risks**  \n• List any critical concerns that challenge DQ's model fit — such as character issues, weak motivation, poor communication, unrealistic expectations, or low commitment.\n\n---\n\n**⚖️ Recommendation**  \n• **Conviction:** [✅ Advance to Interview / ⚠️ Additional Information Needed / ❌ Decline]  \n• **Justification:** One sentence explaining your recommendation, grounded in the talent potential and thesis fit.\n\n\n\n**📌 Interview Focus Areas**  \nFour areas to explore during interview to validate talent and refine risks:  \n1. [Character Deep-Dive: assess grit, resilience, or integrity]  \n2. [Risk Validation: explore any key uncertainty from the application]  \n3. [DQ Model Understanding: test comprehension of hands-on cofounder model]  \n4. [Payment Readiness: gauge willingness and readiness for $2,000 Explore Stage commitment]\n\n\n\n**🔄 Handoff to Interview Stage**  \n• Summarize key insights, risk areas, and talent potential indicators to guide interview focus and hypothesis refinement.\n\n\n### VOICE & TONE BY SECTION:\n\n**For \"✅ Founder-Thesis Fit (Talent Potential Assessment)\" ONLY:**\n- Direct and conversational: Write as if speaking to a colleague who trusts your judgment\n- Person-focused: Always refer to the founder by name after the first mention (use \"Sarah\" not \"the applicant\")\n- Connected narrative: Link ideas within and across sections to show how pieces of evidence connect\n- Analytical but human: Balance data-driven assessment with recognition that you're evaluating a real person\n- Example: \"Sarah's 15 years leading procurement operations means she's felt this invoicing pain firsthand—she's not guessing at the problem.\"\n\n**For \"🔍 Initial Risk Hypotheses for Explore Stage Validation\":**\n- Business-focused analysis: Focus on the risks, opportunities, and validation needs—NOT the founder's narrative\n- Structured assessment: Each hypothesis should analyze what needs to be tested and why it matters\n- Forward-looking: Frame as \"What do WE need to validate?\" not \"What does the founder need to prove?\"\n- Example structure: \"Customer willingness to pay remains unvalidated. While the problem appears urgent, we need pricing experiments to confirm budget availability and procurement processes in target accounts.\"\n- DO NOT start every sentence with \"He\" or \"She\" or the founder's name in this section\n- Write about the BUSINESS RISKS and VALIDATION WORK, not about the founder\n\n**For all other sections (Summary, Opportunity Fit, Red Flags, etc.):**\n- Balanced: Mix founder references with business analysis as appropriate\n- Clear and direct: State observations without excessive hedging\n- Evidence-based: Support claims with specific details from the application\n\n### Style Guidelines\n- Keep writing sharp, human, and confident.  \n- Use bullets and spacing exactly as structured above.  \n- Avoid filler or redundant language.  \n- Sound like a seasoned partner communicating insights to other partners.  \n- When writing your final output, imagine you are briefing DQ partners directly. Write with warmth, natural phrasing, and readability — like a confident colleague, not a machine. Keep it human, use natural transitions, and avoid stiff or academic tone. Keep all bullets and structure exactly as required, but let the language flow smoothly.\n\nUse natural, flowing phrasing as if you're speaking to a partner in conversation — confident, brief, and human. Avoid stiff or academic phrasing; prefer clarity and warmth over corporate formality.\n\n\n### GENDER IDENTIFICATION AND PRONOUN USAGE:\n**Before writing your assessment, you must first determine the founder's gender to use appropriate pronouns consistently throughout.**\n\n**How to identify gender:**\n1. **Check the first name** against common gender associations (e.g., \"Sarah\" = female, \"John\" = male, \"Alex\" = ambiguous)\n2. **Look for gender indicators in the application** such as:\n   - Titles (Mr./Ms./Mrs.)\n   - Self-identification in open-ended responses\n   - References to gender-specific roles or experiences\n3. **For ambiguous names** (Jan, Alex, Jordan, etc.), carefully review the application context for clues\n4. **If truly uncertain after review**, default to \"they/them/their\" pronouns\n\n**Once gender is determined:**\n- **Male founders**: Use \"he,\" \"him,\" \"his\" consistently\n- **Female founders**: Use \"she,\" \"her,\" \"hers\" consistently  \n- **Non-binary or uncertain**: Use \"they,\" \"them,\" \"their\" consistently\n\n**Critical rule**: Be CONSISTENT with pronoun usage throughout the entire assessment. Never mix pronouns (don't switch between \"he\" and \"they\" for the same person).\n\n**Examples of proper pronoun usage:**\n- Male: \"John has 10 years of experience in logistics. He previously worked at Amazon, where he led supply chain optimization.\"\n- Female: \"Sarah brings deep expertise in fintech. She spent 8 years at Goldman Sachs, where she managed trading operations.\"\n- They/them: \"Alex shows strong technical capabilities. They have built several SaaS products and have deep understanding of B2B sales.\"\n\n\n### CRITICAL WRITING REQUIREMENT - COMPLETE SENTENCES WITH NAMES AND PRONOUNS (FOR FOUNDER-THESIS FIT SECTION):\n**In the \"✅ Founder-Thesis Fit\" section, you must write in complete, flowing sentences that reference the founder by name or use appropriate pronouns (he, she, him, her, his, their).**\n\n- BAD (Abrupt, no subject): \"Worked in supply chain for 10 years. Has deep domain expertise.\"\n- GOOD (Complete sentence with name/pronoun): \"Sarah worked in supply chain for 10 years and has deep domain expertise.\"\n- GOOD (Complete sentence with pronoun): \"She worked in supply chain for 10 years and has deep domain expertise.\"\n\n- BAD: \"Strong technical background. Previously at Google.\"\n- GOOD: \"He has a strong technical background, having previously worked at Google.\"\n\n- BAD: \"Clear problem validation. Interviewed 25 potential customers.\"\n- GOOD: \"John has validated the problem clearly by interviewing 25 potential customers.\"\n\nEvery bullet point in the Founder-Thesis Fit section should read like a natural sentence about the founder, not a fragmented list of attributes. Start sentences with the founder's name, or use pronouns like \"she,\" \"he,\" \"they,\" \"her,\" \"his,\" or \"their\" to maintain a conversational, human tone.\n\n**However, in the \"🔍 Initial Risk Hypotheses\" section, DO NOT force this structure.** Write about the business risks and what needs validation, not about the founder.\n\n### EXAMPLES FOR RISK HYPOTHESES SECTION:\n\n✅ **GOOD - Business-Focused:**\n\"Pricing validation is critical—while enterprises acknowledge the compliance burden, budget allocation and decision-making authority for this category remain unclear. We need to test price anchoring in the $5K-$15K range through pilot proposals.\"\n\n✅ **GOOD - Business-Focused:**\n\"Service delivery capability requires validation. The proposed 10-day turnaround assumes access to specialized equipment and expertise that may not be readily available at launch. Explore Stage should test manual delivery workflows with 2-3 pilot customers.\"\n\n✅ **GOOD - Business-Focused:**\n\"Target customer segmentation needs refinement. The application identifies 'mid-market manufacturers' broadly, but we need to narrow this to specific sub-verticals where the pain is most acute and budgets exist. Customer discovery interviews should identify the highest-propensity segment.\"\n\n❌ **BAD - Founder-Focused:**\n\"John needs to validate whether customers will pay.\"\n\n❌ **BAD - Founder-Focused:**\n\"Sarah should test if she can deliver the service at scale.\"\n\n❌ **BAD - Founder-Focused:**\n\"He must prove that the problem is urgent enough for customers to act.\"\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1920,
+        512
+      ],
+      "id": "9edcc677-0ba6-42ff-965d-7547391d31cc",
+      "name": "AI Agent - Generate Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $('AI Agent - Generate Note').item.json.output }}"
+            },
+            {
+              "name": "entity.id",
+              "value": "={{ $('Search User ID2').item.json.data.items[0].id }}"
+            },
+            {
+              "name": "visibility",
+              "value": "public"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1424,
+        512
+      ],
+      "id": "3a8f4581-eade-4ab3-acce-eeabae6f6c45",
+      "name": "Add Note",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter[emails][eq]",
+              "value": "={{ $('Set Person Email').item.json.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1632,
+        512
+      ],
+      "id": "c4370249-e80f-4b81-831a-375d92a9d793",
+      "name": "Search User ID2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1920,
+        384
+      ],
+      "id": "786da221-a98a-488d-b3a7-04b9028a39fd",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "EZZfCATEPoGEysRj",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/lists/SvE7vD/relationships/profiles",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "Revision",
+              "value": "2025-10-15"
+            },
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": [\n    {\n      \"type\": \"profile\",\n      \"id\": \"{{ $json.id }}\"\n    }\n  ]\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2512,
+        608
+      ],
+      "id": "bc94840c-8041-409b-82d3-d3ed893c6ad5",
+      "name": "create Profile in klaviyo1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "revision",
+              "value": "2025-10-15"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"profile-subscription-bulk-create-job\",\n    \"attributes\": {\n      \"custom_source\": \"Application Form\",\n      \"profiles\": {\n        \"data\": [\n          {\n            \"type\": \"profile\",\n            \"attributes\": {\n              \"email\": \"{{ $('Extract Profile ID').item.json.email }}\",\n              \"subscriptions\": {\n                \"email\": {\n                  \"marketing\": {\n                    \"consent\": \"SUBSCRIBED\"\n                  }\n                }\n              }\n            }\n          }\n        ]\n      },\n      \"historical_import\": false\n    },\n    \"relationships\": {\n      \"list\": {\n        \"data\": {\n          \"type\": \"list\",\n          \"id\": \"SvE7vD\"\n        }\n      }\n    }\n  }\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2304,
+        608
+      ],
+      "id": "85aa06a9-6050-435e-bb34-645786579333",
+      "name": "Subscribe to Email List"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the raw JSON string returned by Klaviyo\nconst raw = JSON.parse($json.data);\n\n// Extract the profile ID and email\nreturn [\n  {\n    id: raw.data.id,\n    email: raw.data.attributes.email\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2688,
+        608
+      ],
+      "id": "37ae8870-6355-4004-9f44-2f925428d7b5",
+      "name": "Extract Profile ID"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/profile-import",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "revision",
+              "value": "2025-10-15"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"profile\",\n    \"attributes\": {\n      \"email\": \"{{ $json.data.emails[0] }}\",\n      \"first_name\": \"{{ $json.data.firstName }}\",\n      \"last_name\": \"{{ $json.data.lastName }}\",\n      \"properties\": {\n        \"Type\": \"Applied\"\n      }\n    }\n  }\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2864,
+        608
+      ],
+      "id": "92668570-f0dd-4a98-9f28-6c2573377fe1",
+      "name": "Create Profile in Klaviyo"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('Create New User').item.json.data.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Status\": \"Applied\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1920,
+        1600
+      ],
+      "id": "8e11c761-29e2-4057-9a9e-567eda8a5fd8",
+      "name": "Set Applied Status"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/profiles",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "revision",
+              "value": "2025-10-15"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"profile\",\n    \"attributes\": {\n      \"email\": \"{{ $('Fillout Trigger').item.json.questions[\"8Etk\"].value }}\",\n      \"first_name\": \"{{ $('Fillout Trigger').item.json.questions.xpbS.value }}\",\n      \"last_name\": \"{{ $('Fillout Trigger').item.json.questions[\"4ma5\"].value }}\",\n      \"properties\": {\n        \"Type\": \"Applied\"\n      }\n    }\n  }\n}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1280,
+        1408
+      ],
+      "id": "f36d80ac-9118-469d-b851-800653509dd0",
+      "name": "Create Profile in Klaviyo1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the raw JSON string returned by Klaviyo\nconst raw = JSON.parse($json.data);\n\n// Extract the profile ID and email\nreturn [\n  {\n    id: raw.data.id,\n    email: raw.data.attributes.email\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1072,
+        1408
+      ],
+      "id": "5eabe37a-a7d4-4f0e-a54c-4a5d6f71a3f7",
+      "name": "Extract Profile ID1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "revision",
+              "value": "2025-10-15"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"profile-subscription-bulk-create-job\",\n    \"attributes\": {\n      \"custom_source\": \"Application Form\",\n      \"profiles\": {\n        \"data\": [\n          {\n            \"type\": \"profile\",\n            \"attributes\": {\n              \"email\": \"{{ $('Extract Profile ID1').item.json.email }}\",\n              \"subscriptions\": {\n                \"email\": {\n                  \"marketing\": {\n                    \"consent\": \"SUBSCRIBED\"\n                  }\n                }\n              }\n            }\n          }\n        ]\n      },\n      \"historical_import\": false\n    },\n    \"relationships\": {\n      \"list\": {\n        \"data\": {\n          \"type\": \"list\",\n          \"id\": \"SvE7vD\"\n        }\n      }\n    }\n  }\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -688,
+        1408
+      ],
+      "id": "b443eb81-f679-4954-bcc5-86e1faefc6f8",
+      "name": "Subscribe to Email List1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://a.klaviyo.com/api/lists/SvE7vD/relationships/profiles",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "Revision",
+              "value": "2025-10-15"
+            },
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": [\n    {\n      \"type\": \"profile\",\n      \"id\": \"{{ $json.id }}\"\n    }\n  ]\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        1408
+      ],
+      "id": "9ede2b1e-edd8-4b08-91bc-4f49fc322aec",
+      "name": "create Profile in klaviyo"
+    },
+    {
+      "parameters": {
+        "url": "https://a.klaviyo.com/api/profiles",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter",
+              "value": "=equals(email,\"{{ $('Fillout Trigger').item.json.questions[\"8Etk\"].value }}\")"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "revision",
+              "value": "2025-10-15"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1920,
+        1424
+      ],
+      "id": "8d73d5f5-f579-4271-b215-efbf975c3f7d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const parsed = JSON.parse(item.json.data);\n  return parsed;\n})\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1712,
+        1424
+      ],
+      "id": "227b9f35-ad9b-456b-af07-f5b63a90ee27",
+      "name": "Parse the JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba2311c5-47da-4316-ad17-6d0391844677",
+              "leftValue": "={{ $json.data[0].attributes.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1520,
+        1424
+      ],
+      "id": "4f6946da-17a1-41b6-8e45-e856e216c1d9",
+      "name": "Check if Email exists"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('Search User ID').item.json.data.items[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customFieldValues\": {\n    \"{{ $('Search User ID').item.json.data.items[0].groups[0].id }}\": {\n      \"Investment Memo 1\": \"https://docs.google.com/document/d/{{ $json.documentId }}/edit\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -128,
+        1104
+      ],
+      "id": "9aed84b9-a5de-493c-8671-ad09c0d0de80",
+      "name": "Update Folk - New User - URL"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get document ID\nconst documentId = $('Get a document1').item.json.documentId;\n\n// Get data\nconst formatData = $('Format Investment Memo1').item.json;\nconst firstName = formatData.firstName || '';\nconst lastName = formatData.lastName || '';\nconst email = formatData.email || '';\nconst documentTitle = formatData.documentTitle || '';\nconst documentDate = formatData.documentDate || '';\n\n// Get memo content and strip markdown ** markers\nlet memoContent = formatData.memoContent || '';\nmemoContent = memoContent.replace(/\\*\\*/g, '');  // Remove ** markers\nmemoContent = memoContent.replace(/---\\n/g, '\\n');  // Remove --- separators\n\n// Build text replacements\nconst replacements = [\n  {\n    replaceAllText: {\n      containsText: { text: \"{{first name}}\", matchCase: true },\n      replaceText: firstName\n    }\n  },\n  {\n    replaceAllText: {\n      containsText: { text: \"{{last name}}\", matchCase: true },\n      replaceText: lastName\n    }\n  },\n  {\n    replaceAllText: {\n      containsText: { text: \"{{current month}}, {{current year}}\", matchCase: true },\n      replaceText: documentDate\n    }\n  },\n  {\n    replaceAllText: {\n      containsText: { text: \"{{user's email}}\", matchCase: true },\n      replaceText: email\n    }\n  },\n  {\n    replaceAllText: {\n      containsText: { text: \"{{document title}}\", matchCase: true },\n      replaceText: documentTitle\n    }\n  },\n  {\n    replaceAllText: {\n      containsText: { text: \"{{CONTENT}}\", matchCase: true },\n      replaceText: memoContent\n    }\n  }\n];\n\nreturn {\n  json: {\n    documentId: documentId,\n    requests: replacements\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        1104
+      ],
+      "id": "17611989-c566-4575-8fd9-49a4d47c2108",
+      "name": "Doc Ready Content1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL CODE2 - Three Font Size Levels\n// 14pt Bold: Problem Understanding only\n// 13pt Bold: Other main section headings (Initial Customer Profile, Proposed Solution, etc.)\n// 11pt Bold: All sub-headings\n\nconst doc = $json;\nlet documentId;\nlet bodyContent;\n\n// Extract document info\nif (doc.documentId) {\n  documentId = doc.documentId;\n} else if ($json.json && $json.json.documentId) {\n  documentId = $json.json.documentId;\n} else {\n  throw new Error('Could not find documentId');\n}\n\n// Extract body content\nif (doc.body && doc.body.content) {\n  bodyContent = doc.body.content;\n} else if ($json.json && $json.json.body && $json.json.body.content) {\n  bodyContent = $json.json.body.content;\n} else if ($json.body && $json.body.content) {\n  bodyContent = $json.body.content;\n} else {\n  return {\n    json: {\n      error: 'Could not find body.content',\n      availableKeys: Object.keys($json)\n    }\n  };\n}\n\n// Helper function to find all occurrences\nfunction findAllTextOccurrences(content, searchText) {\n  const occurrences = [];\n  \n  if (!content || !Array.isArray(content)) {\n    return occurrences;\n  }\n  \n  for (let element of content) {\n    if (element.paragraph && element.paragraph.elements) {\n      for (let textElement of element.paragraph.elements) {\n        if (textElement.textRun && textElement.textRun.content) {\n          const text = textElement.textRun.content;\n          const startIndex = textElement.startIndex;\n          \n          let index = text.indexOf(searchText);\n          while (index !== -1) {\n            occurrences.push({\n              startIndex: startIndex + index,\n              endIndex: startIndex + index + searchText.length\n            });\n            index = text.indexOf(searchText, index + 1);\n          }\n        }\n      }\n    }\n  }\n  \n  return occurrences;\n}\n\n// Main section headings (Bold + 14pt) - ONLY Problem Understanding\nconst mainHeadings14pt = [\n  \"Problem Understanding\"\n];\n\n// Secondary main headings (Bold + 13pt)\nconst mainHeadings13pt = [\n  \"Initial Customer Profile Understanding\",\n  \"Proposed Solution\",\n  \"Rationale for Solution\",\n  \"Key Risks\",\n  \"Why We Think This Can Succeed\",\n  \"Conclusion / Recommendation\"\n];\n\n// All sub-headings (Bold + 11pt)\nconst subHeadings11pt = [\n  \"Market problem description:\",\n  \"Problem validation evidence:\",\n  \"Problem significance:\",\n  \"Target primary customer profile:\",\n  \"Pain points:\",\n  \"Customer journey today:\",\n  \"Recommended solution overview:\",\n  \"Competitive advantage:\",\n  \"Founder-market fit:\",\n  \"Technical feasibility:\",\n  \"Business model viability:\",\n  \"Market opportunity:\",\n  \"Product risk:\",\n  \"Go-to-market risk:\",\n  \"Unit economics:\",\n  \"Founder capacity / timing:\",\n  \"Competition / market positioning:\",\n  \"Funding / cash flow risk:\",\n  \"Founder strengths:\",\n  \"Plausible commercial model:\",\n  \"Comparable validation:\",\n  \"Path to de-risking in Explore:\",\n  \"Clear path forward:\"\n];\n\nconst formattingRequests = [];\n\n// Format 14pt headings\nfor (let heading of mainHeadings14pt) {\n  const occurrences = findAllTextOccurrences(bodyContent, heading);\n  \n  for (let range of occurrences) {\n    formattingRequests.push({\n      updateTextStyle: {\n        range: {\n          startIndex: range.startIndex,\n          endIndex: range.endIndex\n        },\n        textStyle: {\n          bold: true,\n          fontSize: {\n            magnitude: 14,\n            unit: \"PT\"\n          },\n          foregroundColor: {\n            color: {\n              rgbColor: {\n                red: 0.984,\n                green: 0.027,\n                blue: 0.024\n              }\n            }\n          }\n        },\n        fields: \"bold,fontSize,foregroundColor\"\n      }\n    });\n  }\n}\n\n// Format 13pt headings\nfor (let heading of mainHeadings13pt) {\n  const occurrences = findAllTextOccurrences(bodyContent, heading);\n  \n  for (let range of occurrences) {\n    formattingRequests.push({\n      updateTextStyle: {\n        range: {\n          startIndex: range.startIndex,\n          endIndex: range.endIndex\n        },\n        textStyle: {\n          bold: true,\n          fontSize: {\n            magnitude: 13,\n            unit: \"PT\"\n          },\n          foregroundColor: {\n            color: {\n              rgbColor: {\n                red: 0.984,\n                green: 0.027,\n                blue: 0.024\n              }\n            }\n          }\n        },\n        fields: \"bold,fontSize,foregroundColor\"\n      }\n    });\n  }\n}\n\n// Format 11pt sub-headings\nfor (let heading of subHeadings11pt) {\n  const occurrences = findAllTextOccurrences(bodyContent, heading);\n  \n  for (let range of occurrences) {\n    formattingRequests.push({\n      updateTextStyle: {\n        range: {\n          startIndex: range.startIndex,\n          endIndex: range.endIndex\n        },\n        textStyle: {\n          bold: true,\n          fontSize: {\n            magnitude: 11,\n            unit: \"PT\"\n          }\n        },\n        fields: \"bold,fontSize\"\n      }\n    });\n  }\n}\n\nreturn {\n  json: {\n    documentId: documentId,\n    requests: formattingRequests,\n    debug: {\n      totalFormattingRequests: formattingRequests.length,\n      headings14pt: formattingRequests.filter(r => \n        r.updateTextStyle.textStyle.fontSize.magnitude === 14\n      ).length,\n      headings13pt: formattingRequests.filter(r => \n        r.updateTextStyle.textStyle.fontSize.magnitude === 13\n      ).length,\n      subHeadings11pt: formattingRequests.filter(r => \n        r.updateTextStyle.textStyle.fontSize.magnitude === 11\n      ).length\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        1104
+      ],
+      "id": "87dc1d55-a0d2-4568-a7f4-407de0e51f04",
+      "name": "Doc Formatting1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{$json.documentId}}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"requests\": {{ JSON.stringify($json.requests) }} }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -288,
+        1104
+      ],
+      "id": "69ac53ae-c9cd-4286-8ca6-caa565ff9ed3",
+      "name": "Update Doc1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "h2Imz8jyFEC9cJir",
+          "name": "Google Docs: futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -592,
+        1104
+      ],
+      "id": "f381deaf-1b59-4b8c-be9a-e2653ab03120",
+      "name": "Get Document1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "h2Imz8jyFEC9cJir",
+          "name": "Google Docs: futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -1136,
+        1104
+      ],
+      "id": "87e2295b-c38c-4ac5-8155-5b50a86f80e4",
+      "name": "Get a document1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "h2Imz8jyFEC9cJir",
+          "name": "Google Docs: futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1tb9Ixjfo8k5F1kN3Ugrb59eIyao8-tfRMZpFOe8hhL4",
+          "mode": "list",
+          "cachedResultName": "Investment Memo 1 Template",
+          "cachedResultUrl": "https://docs.google.com/document/d/1tb9Ixjfo8k5F1kN3Ugrb59eIyao8-tfRMZpFOe8hhL4/edit?usp=drivesdk"
+        },
+        "name": "={{ $json.documentTitle }}\n",
+        "sameFolder": false,
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1W97DZWE1CA24_DyWC71lU7Ax_lypPoR2",
+          "mode": "list",
+          "cachedResultName": "Investment Memo 1",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1W97DZWE1CA24_DyWC71lU7Ax_lypPoR2"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1296,
+        1104
+      ],
+      "id": "073077a5-4abc-4ab4-9509-008772b3f85a",
+      "name": "Copy file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zjAq5JyJp2sFbXFn",
+          "name": "Google Drive : futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.documentId }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "={{ $json.requests[0].replaceAllText.containsText.text }}",
+              "replaceText": "={{ $json.requests[0].replaceAllText.replaceText }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "={{ $json.requests[1].replaceAllText.containsText.text }}",
+              "replaceText": "={{ $json.requests[1].replaceAllText.replaceText }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "={{ $json.requests[2].replaceAllText.containsText.text }}",
+              "replaceText": "={{ $json.requests[2].replaceAllText.replaceText }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "={{ $json.requests[3].replaceAllText.containsText.text }}",
+              "replaceText": "={{ $json.requests[3].replaceAllText.replaceText }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "={{ $json.requests[4].replaceAllText.containsText.text }}",
+              "replaceText": "={{ $json.requests[4].replaceAllText.replaceText }}"
+            },
+            {
+              "action": "insert",
+              "text": "={{ $json.requests[5].replaceAllText.replaceText }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        1104
+      ],
+      "id": "3c2b89c1-843a-4f70-967e-08e2735728b2",
+      "name": "Update a document1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "h2Imz8jyFEC9cJir",
+          "name": "Google Docs: futurefounders"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get founder details from Fillout Trigger\nconst firstName = $node[\"Fillout Trigger\"].json.questions[\"xpbS\"][\"value\"];\nconst lastName = $node[\"Fillout Trigger\"].json.questions[\"4ma5\"][\"value\"];\nconst email = $node[\"Fillout Trigger\"].json.questions[\"8Etk\"][\"value\"];\n\n// Get current date\nconst now = new Date();\nconst months = [\"January\", \"February\", \"March\", \"April\", \"May\", \"June\",\n  \"July\", \"August\", \"September\", \"October\", \"November\", \"December\"];\nconst currentMonth = months[now.getMonth()];\nconst currentYear = now.getFullYear();\n\n\nlet memo = $('AI Agent - Generate Investment Memo1').first().json.output || \"\";\n\n// Convert **bold** to <b>...</b> for Docs\nmemo = memo.replace(/\\*\\*(.*?)\\*\\*/g, \"<b>$1</b>\");\n\n// Convert bullet points and lists to readable Docs format\nmemo = memo\n  .replace(/\\n•/g, \"\\n•\")        // Keep bullets consistent\n  .replace(/\\n\\d\\./g, \"\\n\\n$&\")  // Add spacing before numbered lists\n  .replace(/\\n{2,}/g, \"\\n\\n\")    // Normalize double line breaks\n  .trim();\n\n// Return structured object\nreturn {\n  json: {\n    memoContent: memo,\n    firstName: firstName,\n    lastName: lastName,\n    email: email,\n    documentTitle: `${firstName} ${lastName} - Investment Memo`,\n    documentDate: `${currentMonth}, ${currentYear}`\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1472,
+        1104
+      ],
+      "id": "16fc163b-ef2f-4364-9125-6e11c8f847e1",
+      "name": "Format Investment Memo1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1920,
+        1280
+      ],
+      "id": "baeb7318-b041-4eec-87bc-5cc1f2d1f025",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "EZZfCATEPoGEysRj",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ \n            JSON.stringify(\n              (()=>{\n                const founder_first_name = $node[\"Fillout Trigger\"].json.questions[\"xpbS\"][\"value\"];\n                const founder_last_name = $node[\"Fillout Trigger\"].json.questions[\"4ma5\"][\"value\"];\n                const q = $node[\"Fillout Trigger\"].json.questions;\n                const ids = [\n                  \"3jkv\",\"mFMG\",\"9po8\",\"5HJE\",\"qG1G\",\"hN3D\",\"rJ3u\",\"tZ42\",\"7wHz\",\"hKVV\",\n                  \"qFLN\",\"mymB\",\"9CiT\",\"tcTa\",\"dNQ5\",\"chXn\",\"wFSJ\",\"8iZG\",\"mRvX\",\"9iJC\",\n                  \"v8MM\",\"gYjH\",\"nCYJ\",\"mJME\",\"3BFW\",\"7rP9\",\"vGqM\",\"umgN\",\"8fKT\"\n                ];\n\n                const lines = [`Following are the questions and their answers: \\n\\n Founder: ${founder_first_name} ${founder_last_name}`];\n                for (const id of ids) {\n                  if (!q || !q[id]) continue;\n                  const name = q[id].name ?? id;\n                  let val = q[id].value;\n                  if (Array.isArray(val)) val = val.join(\", \");\n                  if (val === undefined || val === null) val = \"\";\n                  lines.push(name);\n                  lines.push(String(val));\n                }\n                return lines.join(\"\\n\\n\");\n              })()\n            ) \n          }}\n",
+        "options": {
+          "systemMessage": "=You are a senior venture analyst at DQventures. Your role is to create an Investment Memo for a founder being considered for the DQventures Explore Stage.\n\nWrite like a confident professional — structured, analytical, but natural. Sound like a human analyst briefing the full DQ team, not an AI summarizing data. Be succinct and specific without losing important nuance.\n\nYour tone should be analytical but positive and friendly. Operate like a positive, data-driven GP. Some hype is okay — you're making the case for why this founder can succeed, while remaining grounded in evidence and honest about risks.\n\nUse balanced judgment: highlight both potential and risks clearly. Embody DQventures' core values to \"do what's in the founder's best interests, but to always tell it like it is.\"\n\nUse plain English and avoid jargon. Prioritize clarity, flow, and decisiveness.\n\nUse first-principles reasoning, back-of-the-envelope math, and industry benchmarks where relevant to ground your analysis in tangible data.\n\nUse a MECE (Mutually Exclusive, Collectively Exhaustive) structure to avoid duplication or overlap.\n\nBase your analysis strictly on the facts presented in the application — never speculate or infer unstated motivations.\n\n**Output must be founder-ready:** This memo should be shareable with the founder. Limit to a two-page executive summary format.\n\n---\n\n### DQVENTURES INVESTMENT THESIS & MODEL:\nWe de-risk entrepreneurship for experienced professionals (typically 8–10+ years) transitioning out of corporate careers.\nWe act as 0-to-1 cofounders for domain experts solving problems they have personally experienced.\nOur model allows founders to stay in their corporate roles while we work through the **Explore** and **Validate** stages to build a Minimum Viable Business (MVB).\nOnly after validation do we expect \"The Transition\" — where the founder commits to going all-in as a full-time CEO.\nWe focus on building capital-efficient, asset-light businesses with potential to reach $10M+ valuations.\nWe prefer B2B solutions. We do not chase unicorns; we build scalable, investable, and valuable companies.\n\n---\n\n### OUTPUT STRUCTURE:\nApply this structure strictly. Keep the memo concise and focused — aim for two pages.\n\n**Problem Understanding**\nWrite this section with the following sub-headings, each followed by a short paragraph (2-4 sentences):\n• Market problem description:\n• Problem validation evidence:\n• Problem significance:\n\n**Initial Customer Profile Understanding**\nWrite this section with the following sub-headings:\n• Target primary customer profile:\n• Pain points:\n• Customer journey today:\n\n**Proposed Solution**\nWrite this section with the following sub-headings:\n• Recommended solution overview:\n• Competitive advantage:\n\n**Rationale for Solution**\nWrite this section with the following sub-headings:\n• Founder-market fit:\n• Technical feasibility:\n• Business model viability:\n• Market opportunity:\n\n**Key Risks**\nWrite this as a series of short paragraphs. Each paragraph should start with a risk category sub-heading followed by a colon (e.g., \"Product risk:\", \"Go-to-market risk:\", \"Unit economics:\"), then continue with 1-2 sentences explaining that risk on the same line.\n\nCommon risk categories to consider:\n• Product risk:\n• Go-to-market risk:\n• Unit economics:\n• Founder capacity / timing:\n• Competition / market positioning:\n• Funding / cash flow risk:\n\n**IMPORTANT: Do NOT mention that the founder is working part-time or staying in their corporate role as a risk. This is DQventures' standard model and is expected during Explore and Validate stages. Only mention founder capacity/timing risks if there are specific concerns about availability, commitment level, or timing constraints beyond the normal part-time arrangement.**\n\nFormat example: \"Product risk: Jan lacks software development expertise; delivering a reliable dashboard and AI controls will require hiring or contracting senior software/ML talent.\"\n\n**Why We Think This Can Succeed**\nWrite this as a series of short paragraphs with sub-headings like:\n• Founder strengths:\n• Plausible commercial model:\n• Comparable validation:\n• Clear path forward:\n\n*Do not suggest specific validation activities, pilot programs, or testing that will happen in Explore. Focus on why the founder and opportunity are promising based on existing evidence and strengths.*\n\n**Conclusion / Recommendation**\nWrite a single flowing paragraph (4-6 sentences) that:\n• Summarizes the founder's key strengths and fit\n• Acknowledges the main risks as open questions that need answers\n• Provides a clear recommendation (e.g., \"Recommend inviting [Name] into the Explore Stage\")\n• Briefly notes what key questions need to be resolved (e.g., \"pricing model, customer acquisition cost, technical feasibility\")\n• Ends with the potential outcome if those questions are answered favorably (e.g., \"this could scale regionally to reach the $10M+ outcome we target\")\n\n*Do not prescribe specific validation steps, pilot customer targets, hiring plans, or timeline commitments. The Conclusion should recommend entry into Explore and identify key open questions, not dictate how Explore will be conducted.*\n\n**CRITICAL: DO NOT include a separate \"Next-step checklist,\" \"Next steps for Explore,\" or numbered validation steps section. DO NOT suggest specific activities like \"focus on 3 pilot customers,\" \"hire software leadership,\" or \"validate POC-to-paid conversion\" in either the \"Why We Think This Can Succeed\" or \"Conclusion / Recommendation\" sections. These sections should assess the opportunity and recommend entry into Explore based on current strengths, not prescribe what will happen during Explore. All next steps should be integrated into the Conclusion / Recommendation paragraph only as open questions to be resolved, not as prescribed activities.**\n\n---\n\n### VOICE & TONE GUIDELINES:\n\n**Throughout the memo:**\n- Direct and conversational: Write as if briefing the DQ team in person\n- Person-focused when discussing the founder: Use the founder's first name frequently after initial mention, and use appropriate pronouns (he/she/they, him/her/them, his/her/their) naturally throughout. Avoid repetitive phrases like \"the founder\" or \"the applicant.\" Create a connected narrative about the person, not a list of disconnected facts.\n- Data-driven when discussing opportunity: Ground claims in numbers, benchmarks, and evidence\n- Balanced perspective: Show both upside potential and honest assessment of risks\n- Positive but not promotional: Build excitement while staying analytical and truthful\n- Natural narrative flow: Link ideas about the founder using their name and pronouns to tell a coherent story\n\n**Example of good tone:**\n\"Sarah brings 12 years of supply chain experience at Fortune 500 companies, giving her firsthand knowledge of the procurement inefficiencies she's targeting. Her approach to start service-led—manual invoice processing for 5-10 pilot customers—shows strong operational judgment. She plans to validate pricing through these early engagements. The market opportunity is substantial: if we can capture just 0.5% of the $2B mid-market procurement software market, we're looking at a $10M+ business. The risk? Pricing remains unvalidated, and manual delivery may not scale. But comparable companies like Coupa (acquired for $8B) and Zip (raised $190M) validate that solving procurement pain creates real value. Sarah's domain expertise and practical go-to-market approach position her well to capture this opportunity.\"\n\n**Avoid:**\n- Stiff corporate language (\"leverage synergies,\" \"paradigm shift\")\n- Excessive hedging (\"might possibly perhaps\")\n- Empty superlatives without evidence (\"revolutionary,\" \"game-changing\")\n- Academic tone or jargon\n- Overly critical or negative framing (be honest about risks, but maintain constructive tone)\n\n### STYLE GUIDELINES:\n\n**Use concrete details and evidence:**\n- Instead of: \"Has significant experience\"\n- Write: \"Spent 8 years at Microsoft leading cloud infrastructure teams\"\n\n**Use back-of-envelope math:**\n- Instead of: \"Large market opportunity\"\n- Write: \"If 10,000 small businesses pay $500/month, that's a $60M annual run rate\"\n\n**Reference industry benchmarks:**\n- Instead of: \"This type of business can be valuable\"\n- Write: \"Similar companies like [CompanyX] raised $50M at a $200M valuation\"\n\n**Write in complete, flowing sentences:**\n- Use natural transitions between ideas\n- Write 1-3 short paragraphs under each sub-heading (keep each paragraph 2-5 sentences)\n- Make it readable and scannable\n- Reference the founder naturally using their first name or pronouns to create flow\n\n**Keep it concise:**\n- Two-page limit means every sentence must carry weight\n- Remove redundant phrases\n- Get to the point quickly\n- Use sub-headings to organize information clearly\n\n---\n\n### GENDER IDENTIFICATION AND PRONOUN USAGE:\n\n**Before writing, determine the founder's gender to use appropriate pronouns consistently:**\n\n1. **Check the first name** against common gender associations\n2. **Look for gender indicators in the application** (titles, self-identification, etc.)\n3. **For ambiguous names**, carefully review the application context for clues\n4. **If truly uncertain**, default to \"they/them/their\" pronouns\n\n**Once gender is determined:**\n- **Male founders**: Use \"he,\" \"him,\" \"his\" consistently\n- **Female founders**: Use \"she,\" \"her,\" \"hers\" consistently\n- **Non-binary or uncertain**: Use \"they,\" \"them,\" \"their\" consistently\n\n**Critical rule**: Be CONSISTENT with pronoun usage throughout the entire memo. Never mix pronouns.\n\n**Examples:**\n- Male: \"John brings 10 years of logistics experience. He previously led supply chain operations at Amazon, where he reduced costs by 15%.\"\n- Female: \"Sarah has deep fintech expertise. She spent 8 years at Goldman Sachs managing trading operations and building automated risk systems.\"\n- They/them: \"Alex has strong technical capabilities. They built three SaaS products and understand B2B sales deeply.\"\n\n---\n\n### CRITICAL REMINDERS:\n\n**This memo should be founder-ready:**\n- Maintain a positive, encouraging tone while being honest\n- Frame risks as challenges to validate, not dealbreakers\n- Build confidence while staying grounded in reality\n\n**Keep it to two pages:**\n- Be concise and focused\n- Every sentence must add value\n- Remove unnecessary words and repetition\n\n**Use MECE structure:**\n- Each section should cover distinct topics\n- No overlap between sections\n- Comprehensive coverage of all key areas\n\n**Ground analysis in evidence:**\n- Use specific numbers and examples\n- Reference comparable companies\n- Include back-of-envelope calculations\n- Cite industry benchmarks\n\n**Sound human:**\n- Write like you're talking to colleagues\n- Use natural phrasing\n- Show enthusiasm where appropriate\n- Maintain warmth and confidence\n\n**Part-time founders are the norm:**\n- DO NOT treat the founder working part-time or staying in their corporate role as a risk or limitation\n- This is DQventures' standard operating model during Explore and Validate\n- Only mention founder capacity/timing if there are exceptional concerns beyond normal part-time work\n\n---\n\nWhen you write this Investment Memo, imagine you're presenting it to the full DQ team at a weekly meeting. Your goal is to help everyone understand why this founder and opportunity deserve serious consideration for the Explore Stage, while being transparent about what still needs to be validated. Make the team excited about the potential while respecting their intelligence with honest risk assessment and data-driven reasoning.\n\n### OUTPUT FORMAT:\nWrite the memo in plain text format with NO markup, NO HTML tags, NO markdown symbols.\n\nCRITICAL FORMATTING AND LINE BREAK RULES:\n- Main section headings: Plain text on their own line (e.g., \"Problem Understanding\")\n- ALWAYS add ONE blank line immediately after each main section heading\n- Sub-headings within sections: Plain text followed by colon on their own line (e.g., \"Problem validation evidence:\")\n- ALWAYS add ONE blank line immediately after each sub-heading before writing content\n- After finishing content for a sub-heading: Add ONE blank line before the next sub-heading\n- Between main sections: Add ONE blank line before starting the next main section heading\n- DO NOT use **bold**, <b>, bullet points (•), or any other formatting symbols within the body text\n- The bold formatting will be applied automatically to headings only\n\nExample structure (notice the blank lines):\n\nProblem Understanding\n\nMarket problem description:\n\nJan targets avoidable inefficiency across buildings, industrial sites and municipal systems: energy losses, wasted resources/time, and reactive (fire-fighting) operations instead of predictive optimization. His solution centers on sensor + solar-powered data logging, dashboarding and AI-driven controls to reduce losses.\n\nProblem validation evidence:\n\nJan reports >10 years delivering automation solutions and that similar systems already exist at his current employer. He estimates solving these problems yields 10–25% savings. He notes current local software vendors are poorly priced/packaged for the Philippines.\n\nProblem significance:\n\nEnergy, water, maintenance and process inefficiencies translate directly into operating cost and carbon footprint for nearly every building and industrial operator. Even single-digit percentage savings scale to meaningful dollars for mid-market and enterprise customers; this creates a clear value-exchange for performance-based fees or OPEX-friendly hardware financing.\n\n\nInitial Customer Profile Understanding\n\nTarget primary customer profile:\n\nMid-market and enterprise owners/operators of buildings, light manufacturing units, municipal services (waste/flood management), healthcare facilities and utilities in the Philippines region initially — customers who buy automation/controls and face measurable utility and maintenance spend.\n\nPain points:\n\nUnplanned downtime, high energy bills, manual monitoring, lack of localized/affordable software, up-front hardware costs, and limited predictive maintenance capability. Price sensitivity in the Philippines is a recurring constraint.\n\n\nConclusion / Recommendation\n\nJan is a strong domain founder with the right technical-sales blend and a clearly stated solution that addresses a broadly felt problem. The core risks around software capability, unit economics, and customer acquisition remain open questions that need answers. Recommend inviting Jan into the Explore Stage. Key questions to resolve include software development resourcing, POC-to-paid conversion rates, performance-based fee structure, and hardware financing impact on working capital. If these questions are answered favorably, this could scale regionally to reach the $10M+ outcome we target."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1920,
+        1104
+      ],
+      "id": "8953763f-c2b7-444d-bf21-b35c47ad7ed5",
+      "name": "AI Agent - Generate Investment Memo1"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people?filter[emails][eq]={{ $node[\"Fillout Trigger\"].json.questions['8Etk'].value }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1632,
+        1104
+      ],
+      "id": "25a7542e-57e8-4f2a-bdfd-e52fbb82eef3",
+      "name": "Search User ID"
+    },
+    {
+      "parameters": {
+        "form": "w33FCgM7yqus"
+      },
+      "type": "n8n-nodes-fillout.filloutTrigger",
+      "typeVersion": 1,
+      "position": [
+        -4208,
+        1104
+      ],
+      "id": "11418f2f-619b-4f36-8ba5-9e411d373c92",
+      "name": "Fillout Trigger",
+      "webhookId": "1b654d8d-dd6a-467f-87f2-bcf414d28870",
+      "credentials": {
+        "filloutApi": {
+          "id": "aTSoEZ6SFq5VQPFf",
+          "name": "Fillout account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Fillout Trigger": [
+      {
+        "json": {
+          "submissionId": "21eb464e-ab59-4a5e-8d94-188db550189b",
+          "submissionTime": "2026-03-11T04:34:18.175Z",
+          "lastUpdatedAt": "2026-03-11T04:34:18.175Z",
+          "questions": {
+            "4ma5": {
+              "name": "Last name",
+              "value": "Nirmala"
+            },
+            "xpbS": {
+              "name": "First name",
+              "value": "Beatrice "
+            },
+            "8Etk": {
+              "name": "Email",
+              "value": "beatrice@ibrasiagroup.com"
+            },
+            "dk67": {
+              "name": "Phone number",
+              "value": "+60122989126"
+            },
+            "9t7Y": {
+              "name": "Referral",
+              "value": null
+            },
+            "3jkv": {
+              "name": "Why do you want to become an entrepreneur?",
+              "value": "I am an enterpreuner already"
+            },
+            "mFMG": {
+              "name": "Why now, and what has stopped you starting a business already?",
+              "value": "I started a business 20 years ago, after being lecturer of Physics and Maths in a university, with absolutely no idea of how to do business, coming from a lower middle income family , so having no mentors or even a clue how business is run. It started as a magazine business and I have grown it to a public relations house today that is fairly decent. you can check out my website at www.ibrasiagroup.com. I have started on the side a platform, VOICE OF ASIA, and I am struggling to monetise it - it performs more of a content creation reservoir, but I need expertise and guidance on how to make it the huge success it can be, which I know instinctively that it can be. I have grown my current business organically, through blood, sweat and tears and I am not very adept at finding finance, or investors, or having that right kind of automation technology to scale subscription up to the millions. So this is where I need hand holding from the best there is, and your ad caught my eye.  So yes, perhaps I am a little different - because I already have proof of concept , go to www.voiceofasean.com and I already have 6 customers who have signed up, but I need professional help to be my partners in making this an international best seller in its field. So if you think my project is workable we shoudl be able to speed track the Explore part and become partners faster . My video, my detailed profile and my network accross ASEAN and my calculation of the business model and its profitability has all been included in the initial application form. So please do give it a read. "
+            },
+            "9po8": {
+              "name": "What are your strongest skills / specific things you want to be doing in the early stages of your new business?",
+              "value": "Marketing it to as wide and audience as possible, in the most alluring and seductive way possible, ensuring that we have the technical automation to employ minimal workers and maximise AI to give a professional yet quality product to those seeking our service. "
+            },
+            "5HJE": {
+              "name": "What are your main skill gaps where you'll need help?",
+              "value": "Knowing what it takes to make it investor savvy, Financing the technical and automation scale ups, marketing it globally. "
+            },
+            "qG1G": {
+              "name": "Which industry do you want to build a business in, and why?",
+              "value": "positioning and profiling businesses, and individuals. It's an area we are experts at, though we started as print natives and are in Public relations. I feel with VOICE OF ASIA, we will be the centerpiece of business and investment communication between the US, Europe, Middle East,Africa and APAC for those wanting to do business in this part of the world - where we business match ideas, personalities , podcasts and more by having businesses pay for publicity."
+            },
+            "hN3D": {
+              "name": "Do you have any notable connections, insights, expertise or advantages in this industry? Tell us more about that.",
+              "value": "Oh very much so. I am a veteran at public relations, media management, creative content, design elements, podcasts, event management and I am super good at networking. If you look at my visual profile you will see me doing interviews with Prime Minsters, Ministers, politicians, and corporate giants. I work very well with both private sector and government agencies . I have even been roped in to help with election campaigns for the state of Sabah and we have a case study done on how successful it was. In fact, the Chief Minister has asked me to now write his autobiography. "
+            },
+            "rJ3u": {
+              "name": "What trends or shifts in your industry are you most excited about? Why?",
+              "value": "AI has been a gamechanger whihc is why I feel that incorporating AI into my VOICE OF ASIA enables us to offer editorial services to millions and get them published is very doable and scalable to infinity and beyond. I want savvy partners who can help me do that. I know I will get there eventually at some point, but it will be slow and tedious if I do that on my own. I rather work with partners who see what I cannot, who fill the gaps that I cannot and we work together to conquer this space. Because it is so easily conquerable. If I had partners who know the assignment, we visualise bigger, stronger , better and we take risks together and we pool our networks conversantly to create a dent in the universe, as Steve Jobs so aptly put it. And did you know that Steve Jobs and I share the same birthday ? 24th February . It has to be a sign LOL . "
+            },
+            "tZ42": {
+              "name": "What is the specific problem in your industry that you want to solve?",
+              "value": "When I run The IBR Asia Group, the public relations house, we cater to the big boys. They have the money to spend on advertising the way the smaller guys don't. The SME market , which is about 90% of the businesses.   But there are many enterpreuners , start-ups who want to have their story heard, they want to talk about their expertise , they are excited about where they are going but they don't have the luxury of an advertising budget. With VOICE OF ASIA, we change that but offering a 1 year campaign of writing about them and publishing it in a platform that has a good enough reach . They stop being invisible and now are visible, and the SEO on their stories helps drive more business to their websites. They are now seen in a wider platform, that can help funnel potential back to them "
+            },
+            "7wHz": {
+              "name": "Who is experiencing this problem?",
+              "value": "SMEs, MSMEs, medium to large companies who shy away from the big bucks that expensive PR agencies charge. Anyone who thinks paying peanuts to get great exposure is a fabulous idea  "
+            },
+            "hKVV": {
+              "name": "How are people getting around this problem at the moment?",
+              "value": "They use social media. But social media is more for selling products that are mass market. and it requires dedication to build an audience and when you pay to boost, you get rubbish responses or audience from bots or random ppl from Bangladesh who are there to make the numbers  (we have been there, so speaking from experience) But what if you are in the scrap metal business for example ? or you are a start -up who wants a great story told but need guidance on how to position it ? Who cannot afford to hire pr companies to do press releases to send to media ? VOA is your one stop solution. "
+            },
+            "qFLN": {
+              "name": "Will solving this problem save people time or money (or both)? How much time or money?",
+              "value": "Oh most definately. Saves them lots of money trying to figure out a campaign, and being consistent at it every month with different stories  and it is so affordable that even start ups won't blink and yee. "
+            },
+            "mymB": {
+              "name": "Approximately how many people are affected by this problem?",
+              "value": "Let's see. There are about 400 million SMEs globally, accounting for 90% of businesses. MSMEs account for two-thirds of business employment in advanced economies—and almost four-fifths in emerging economies—as well as half of all value added. So we have a huge market of businesses that want cheaper, affordable visibility that what is currently available . "
+            },
+            "9CiT": {
+              "name": "Do you already an idea in mind for what could solve this problem?",
+              "value": "Yes"
+            },
+            "tcTa": {
+              "name": "Walk us through this idea:What your solution actuallydoesWhy it’s a smart way to solve the problemHow it compares to what people use nowWhat makes your approach different or better",
+              "value": "/Users/beatricenirmala/Desktop/DQventure Cover Letter + CV v2 (1).pdf\n\nHere you go, I am attaching here the entire blueprint that I sent via the initial application . But I am also copy pasting it here if that helps.\nCover Letter\n \nDear DQventure Team,\n \nAbout Me & The Project\n \nI have attached my CV and a short video outlining the project I am proposing in partnership with DQventures at the end of this cover letter.\n \nhttps://www.youtube.com/watch?v=ufCLmMo37tg\n \nYou will come to realise I tick all the right boxes and then some. I have more than 20 years experience as a Managing Director. I have domain expertise in the field that I want to partner with you – media, awards, digital portals, content creation, regional storytelling, and a strong and enviable ability to network with the who’s who not just in ASEAN but across the world.\n \nI understand sales and business development very well, as I had to build a business from scratch and manage it with minimal funds while maximising profits. Hard work and rejections don’t deter me, as I have lived through them constantly and have made a success out of whatever I could stitch together. I am very at ease in pitching for tenders, securing them, executing them, and finding business.\n \nMost importantly, I have proof of concept. www.voiceofasean.com\n \nAnd better still, I have 6 clients who have signed up last month. All this through word of mouth and referrals only. We have not even started advertising this yet. Attached at the end of this letter are links to some of the stories we have done for clients in this past month.\n \nI have:\n• 6 paying SME customers\n• Referral-based acquisition (zero marketing spend)\n• A repeatable offer (12 articles/year)\n• A defined price point\n• A clear scale model\n• A regional expansion vision\n• Platform already built\n \nA Founder Mentality\n \nTo work with someone and build something big together, you need to understand the psyche of that person, so let me give you context on what drives me, and what I am made up of.\n \nI come from a lower middle income family where my father was a clerk and my mother was a housewife. I had no mentors in business. My destiny was to grow up, get married, have kids and do a job that was appropriate for a girl (business was certainly not considered appropriate). So I flowed with it, majored in Physics, taught Mathematics in the university, got married, got pregnant and that would have been my fate, but I felt I was stagnating. For me, stagnation is death. Life was easy but I wanted adventures, I wanted to live the fullest life. So I did not choose easy, I chose to try something I had never done before. And that became the story of my life.\n \nFast forward to today, I am the Managing Director of The IBR Asia Group, a Strategic Communications house that has served many government agencies and private entities. I oversee all elements of business developments, creative processes, trouble shooting, client relationships, vendor management, financial prudence and growth. I work with lots of high level corporations and I know how to seamlessly traverse the worlds of both government and corporate entities.\n \nIt's a skill I bring to VOICE OF ASIA.\n \nAbout VOICE OF ASIA\n \nVOICE OF ASIA is not just a concept, it’s a proven existing business. I have been building it with my own resources bit by bit over the last 5 years, but I have never monetised it until this year.\n \nI started VOICE OF ASIA as a digital portal with a vision that I would one day scale to dizzying heights that would be cross borders. A marketplace of information that all businesses would turn to, and want to be a part of. But I kept searching  for the elusive ‘what’ to make it happen. Then this year, 2026, I found it - The B2B Visibility Infrastructure for SMEs.\n \nASEAN & Global SME Authority Engine\n \nCore Product:\nAnnual B2B visibility subscription.\n \nCurrent Offer:\n12 professionally written authority articles per year.\n \nFuture Version:\nHybrid model:\n• AI-assisted content automation\n• Editorial oversight\n• SEO optimisation\n• Regional distribution\n• Awards credibility layer\n• Cross-border exposure\n \nWhy We Target SMEs\n \nMedium to Large SMEs have the funds to market themselves but the smaller ones struggle to find visibility to potential clients although they do really good work. There is an affordability issue for paid media, and they cannot afford PR companies.\nI already have a platform that I have funded myself. Why not give them a one year campaign at a price they can very much afford,?\n \nThe Business Model\n \nAnnual Subscription\nIncludes:\n \n• 12 authority articles per year\n• SEO optimisation\n• Profile page\n• Digital credibility archive\n• AI-assisted production to reduce manpower cost\n \n \nExample of 5 Year Geographic Expansion Strategy\n \nYear\n\nExpansion phase\n\nFocus countries / markets\n\nSME target (total)\n\nAverage price (RM)\n\nRevenue (RM, annual)\n\nEstimated margin\n\nNotes\n\n1\n\nSoutheast Asia (SEA)\n\nMalaysia, Singapore, Indonesia, Philippines, Thailand\n\n1,000\n\n2,000\n\n2,000,000\n\n45–55 percent\n\nExpenses: Automation stack setup, platform optimisation, funnel architecture, paid acquisition scaling, international go to market strategy, subscription retention optimisation, small editorial and sales team\n\n2\n\nBroader Asia expansion\n\nVietnam, India, Hong Kong, UAE (gateway to Middle East)\n\n3,000\n\n2,500\n\n7,500,000\n\n~60 percent\n\nAdvantage:\n\nContent production cost per SME drops significantly due to automation\n\n3\n\nMiddle East & Africa entry\n\nUAE, Saudi Arabia, South Africa, Nigeria, Kenya\n\n7,000\n\n2,800 (blended)\n\n19,600,000\n\n65–70 percent\n\nMargin grows because the platform and automation is already built; incremental onboarding cost low\n\n4\n\nEurope + Australia\n\nEurope and Australia\n\n15,000\n\n3,000 (blended)\n\n45,000,000\n\n70 percent+\n\nAI content workflow, template-driven authority building, centralised editorial oversight\n\n5\n\nGlobal platform\n\nGlobal\n\n30,000\n\n3,200 (blended)\n\n96,000,000\n\nHigh (implied)\n\nCategory-defining SME authority infrastructure; high-margin subscription engine; global B2B credibility marketplace\n\n \n \nWhy I Am All In\n \nIt was fate that made me open the page that led me straight to DQventures. I don’t know if you believe in how the universe brings everything together at the right time, but I do. I started VOICE OF ASIA 5 years ago, but it was always a side project. I did not have a partner to think with me, hold my hand, support me. So I just grew it on my own, slowly , steadily, always having an idea at the back of my mind that someday the right partner will come along. I have already invested into the project and have breathed life into it. It has views, impressions, interviews with Ministers, influential people, traction is growing…and now I have seen the opportunity to monetise it. I so strongly believe it could be so so so much better, but I needed someone like you to help us get there.\n \nAnd there you were.\n \nA colleague asked me to open up LinkedIn to point something out to me. I opened up the page to look for something else, and DQventures pitch popped out. I kept reading what you wrote, what you were looking for again and again like I could not believe it.\n \nThe Sufi mystic Rumi said this – ‘Whatever you are seeking is seeking you.’\n \nAnd today I felt this in my soul.\n \nSo pick me. Work with me. I am all in.\n\nP.S. The next page will showcase links to some of the articles we have written and published for the 6 SME clients this past month.\n \nThank you.\n \n \n \n \n \n \nBeatrice Nirmala\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \nThe VOICE OF ASIA Project Ideology: https://www.youtube.com/watch?v=ufCLmMo37tg\n \nVOICE OF ASIA: SME B2B Visibility Infrastructure –\n \n1. Artificial Intelligence:\nhttps://voiceofasean.com/stories/training-evolved-how-crypken-is-redefining-ai-one-cxo-at-a-time/\n \n2. Machinery and Manufacturing:\nhttps://voiceofasean.com/stories/from-local-visionary-to-global-entrepreneur-the-rise-of-loganathan-muniandy-and-metal-dot-machinery/\n \n\n3. Holistic Wellness:\nhttps://voiceofasean.com/stories/arc-holistic-wellness/\n \n4. Mind Wellness:\nhttps://voiceofasean.com/stories/when-a-woman-has-no-space-to-fall-apart/\n \n5. Aeronautical:\nhttps://voiceofasean.com/stories/galaxy-aerospace-and-the-responsibility-of-keeping-aircraft-ready/\n \n6. Pet Wellness:\nhttps://voiceofasean.com/stories/healing-the-buddy-why-i-built-shvanas-and-why-healing-must-begin-from-within/\n \n \n "
+            },
+            "dNQ5": {
+              "name": "How do you think you'll get your first 1 - 10 customers?",
+              "value": "I already have gotten 6 customers, just by speaking to them. "
+            },
+            "chXn": {
+              "name": "How much do you think people will pay for this? And why do you think that number?",
+              "value": "They are currently paying USD500 for this"
+            },
+            "wFSJ": {
+              "name": "Who is your main competition, and what are they getting wrong?",
+              "value": "I don't think I have a main competition, because this idea (at least as far as I know) is pretty unique "
+            },
+            "8iZG": {
+              "name": "How many hours / days a week are you able to commit to working on your business now while still part time?",
+              "value": "As much as it needs so 12 hours a week is fine, as you had advised "
+            },
+            "mRvX": {
+              "name": "What does success look like for you?",
+              "value": [
+                "Building the next unicorn "
+              ]
+            },
+            "9iJC": {
+              "name": "If things go well, would you be comfortable raising external capital for your business?",
+              "value": "Yes"
+            },
+            "v8MM": {
+              "name": "Are there people in your network you could pitch to for some early startup funding?",
+              "value": "Yes, but I wouldn’t be comfortable approaching my own network"
+            },
+            "gYjH": {
+              "name": "Do you consider yourself to be someone that is “hands-on” or you prefer to hire people to do the work?",
+              "value": "Both"
+            },
+            "nCYJ": {
+              "name": "Imagine one year from now, the business is showing signs of success and you’ve quit your job to go full time on this. What does your typical day-to-day look like?",
+              "value": "I oversee a very capable team working to make this successful. I will have various divisions reporting to me on financial matters, technical matters, business development matters, editorial and production matters, government affairs matters, cross border events and more. I will have a Chief of Staff who will represent me most of the time when I am out networking and talking to investors. I see growth every single year. No complacency, just aggressive growth."
+            },
+            "mJME": {
+              "name": "As a founder coming from the corporate world, it’s typical to take a salary cut in the early stages of building your business - or even working for a period without pay - so more money can be used on growing the business, which in turn grows your long-term wealth.",
+              "value": "Yes, I understand and am prepared to take a reduced salary in the short term."
+            },
+            "3BFW": {
+              "name": "What is the minimum annual salary you would need to support yourself while working full-time on your business?",
+              "value": "USD96,000 per annum"
+            },
+            "7rP9": {
+              "name": "Why do you want DQventures to work with you on your new business?",
+              "value": "I don't want to be my now wise counsel always. I want to learn from the best on how to automate, scale up, get international market buy-in and get international investors to come in and turn the company around into a multi-million dollar organisation that keeps growing. I hope you can do that for me. For us. I don't want  to do this alone, I want partners who don't just bring in funds, but also expertise, and expansion abilities."
+            },
+            "vGqM": {
+              "name": "Is there anything else you'd like us to know about you and your goals?",
+              "value": "I think I have pretty much summed it up in my Cover letter to you and in all my answers to you. "
+            },
+            "umgN": {
+              "name": "Which country are you currently located in?",
+              "value": "Malaysia"
+            },
+            "8fKT": {
+              "name": "How did you hear about DQventures?",
+              "value": "In Linked in"
+            },
+            "v4TV": {
+              "name": "Before we move forward, please confirm you're aware of the DQventures program structure:We charge a $2000 / month fee to work with our team, and 20% equity in the new company if we enter a full partnership.",
+              "value": "Yes, I’m already aware"
+            },
+            "7civ": {
+              "name": "Would you like to proceed?",
+              "value": null
+            }
+          },
+          "calculations": {},
+          "urlParameters": {
+            "ref": {
+              "name": "ref",
+              "value": null
+            }
+          },
+          "quiz": {},
+          "documents": {
+            "eb35580e-2a43-4f27-8135-b0e5d0d0302a": {
+              "name": "Untitled document (2).pdf",
+              "url": "https://api.fillout.com/v1/files/<REDACTED_JWT_FILE_TOKEN>"
+            }
+          },
+          "scheduling": {},
+          "payments": {}
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Set Person Email": {
+      "main": [
+        [
+          {
+            "node": "Email exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search User in Folk": {
+      "main": [
+        [
+          {
+            "node": "Folk Person Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If person exists": {
+      "main": [
+        [
+          {
+            "node": "Check Withdrawn Status (Existing User)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folk Person Id": {
+      "main": [
+        [
+          {
+            "node": "If person exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Generate Note1": {
+      "main": [
+        [
+          {
+            "node": "Search User ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Note2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent - Generate Note1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search User ID1": {
+      "main": [
+        [
+          {
+            "node": "Add Note2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New User": {
+      "main": [
+        [
+          {
+            "node": "Check Withdrawn Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Withdrawn": {
+      "main": [
+        [
+          {
+            "node": "Set Withdrawn Status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent - Generate Note",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent - Generate Investment Memo1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent - Generate Note1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Applied Status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent - Generate Investment Memo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Withdrawn Status": {
+      "main": [
+        [
+          {
+            "node": "If Withdrawn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Generate Note1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email exists?": {
+      "main": [
+        [
+          {
+            "node": "Search User in Folk",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Withdrawn Status (Existing User)": {
+      "main": [
+        [
+          {
+            "node": "If Withdrawn1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Withdrawn1": {
+      "main": [
+        [
+          {
+            "node": "Update Fillout Content to Existing User1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Fillout Content to Existing User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Fillout Content to Existing User": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Generate Note1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Profile in Klaviyo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent - Generate Investment Memo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Generate Note": {
+      "main": [
+        [
+          {
+            "node": "Search User ID2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search User ID2": {
+      "main": [
+        [
+          {
+            "node": "Add Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Generate Note",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create Profile in klaviyo1": {
+      "main": [
+        [
+          {
+            "node": "Subscribe to Email List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Profile ID": {
+      "main": [
+        [
+          {
+            "node": "create Profile in klaviyo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Profile in Klaviyo": {
+      "main": [
+        [
+          {
+            "node": "Extract Profile ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Profile in Klaviyo1": {
+      "main": [
+        [
+          {
+            "node": "Extract Profile ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Profile ID1": {
+      "main": [
+        [
+          {
+            "node": "create Profile in klaviyo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create Profile in klaviyo": {
+      "main": [
+        [
+          {
+            "node": "Subscribe to Email List1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Parse the JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse the JSON": {
+      "main": [
+        [
+          {
+            "node": "Check if Email exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Email exists": {
+      "main": [
+        [
+          {
+            "node": "Create Profile in Klaviyo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc Ready Content1": {
+      "main": [
+        [
+          {
+            "node": "Update a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc Formatting1": {
+      "main": [
+        [
+          {
+            "node": "Update Doc1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Doc1": {
+      "main": [
+        [
+          {
+            "node": "Update Folk - New User - URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document1": {
+      "main": [
+        [
+          {
+            "node": "Doc Formatting1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document1": {
+      "main": [
+        [
+          {
+            "node": "Doc Ready Content1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy file1": {
+      "main": [
+        [
+          {
+            "node": "Get a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document1": {
+      "main": [
+        [
+          {
+            "node": "Get Document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Investment Memo1": {
+      "main": [
+        [
+          {
+            "node": "Copy file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Generate Investment Memo1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Generate Investment Memo1": {
+      "main": [
+        [
+          {
+            "node": "Search User ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search User ID": {
+      "main": [
+        [
+          {
+            "node": "Format Investment Memo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fillout Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Person Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "GaBIkTJyHgyw25SQ"
+  },
+  "versionId": "2451d109-9024-4c73-8411-59ca8792e2f9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "RO9qkHINzzKx3DKq",
+  "tags": []
+}

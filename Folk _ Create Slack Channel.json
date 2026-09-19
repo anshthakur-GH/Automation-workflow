@@ -1,0 +1,1036 @@
+{
+  "name": "Folk > Create Slack Channel",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people/{{$json.body.data.id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -352,
+        128
+      ],
+      "id": "fc4d5f9e-0c6d-42ce-a3de-578d3549c760",
+      "name": "GET Person Details"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('GET Person Details1').item.json.data.customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Investment Memo 1\"].replace(\"/edit\", \"/export?format=txt\").replace(\"?usp=sharing\",'') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        576
+      ],
+      "id": "9d19b175-52b7-40ce-bf1f-5d0628cc826a",
+      "name": "Fetch Google Doc as Text"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "confirmed-explore-slack-channel",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -736,
+        144
+      ],
+      "id": "7fd43b93-d7da-4c71-8bba-9011f7fadcdb",
+      "name": "Webhook1",
+      "webhookId": "f4bbc32a-0800-4ba4-b492-4b5e152fe206"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get Folk person data from the \"GET Person Details\" node\nconst personData = $node[\"GET Person Details\"].json;\n\n// Extract GP Lead\nconst gpLead = personData.data?.customFieldValues?.[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"]?.[\"GP Lead - Explore\"];\n\nconst emailMap = {\n  \"James\": \"redacted-staff-1@dqventures.com\",\n  \"Sam\": \"redacted-staff-2@dqventures.com\",\n  \"Oliver\": \"redacted-staff-3@dqventures.com\",\n  \"Arjun\": \"redacted-staff-4@dqventures.com\"\n};\n\n// Get channel ID from either the Code node (existing) or Create a channel node (new)\nconst channelId = $json.channelId || $json.id;\n\nreturn {\n  ...items[0].json,\n  channelId: channelId,  // Pass channel ID forward\n  gp_email: emailMap[gpLead] || null,\n  personData: personData.data\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        144
+      ],
+      "id": "121318b5-e80c-411c-84be-98a1dbdb0f5a",
+      "name": "Set GP Lead Email"
+    },
+    {
+      "parameters": {
+        "url": "https://slack.com/api/users.lookupByEmail",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.gp_email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_SLACK_BOT_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        144
+      ],
+      "id": "a920110e-ec12-42c5-9428-c52a416eb83c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Create a channel').item.json.id }}",
+          "mode": "id"
+        },
+        "text": "=Welcome aboard, {{ $('GET Person Details1').item.json.data.firstName }}!\n\nThis channel is for you to communicate with your DQ team (currently <@{{ $('Extract User Id').item.json.userId }}>) who will be working with you throughout the Explore Stage — the place for updates, questions, quick check-ins, and anything else needed between weekly calls.\n\nAt the top of this channel you'll find a file that links to your Founder Portal, Google Drive folder, and your personal AI assistant — those will be your go-to tools throughout the process.\n\nLooking forward to getting started working with you!\n\nLeanne & the DQ team",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "sendAsUser": "redacted-staff-5@dqventures.com"
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        576
+      ],
+      "id": "70be65e9-2c52-4b85-8efb-2ce63b32aa94",
+      "name": "Slack → Post Message",
+      "webhookId": "579ba2f7-c07d-473d-b0c8-4bcb99dc2df1",
+      "credentials": {
+        "slackApi": {
+          "id": "KgxLdLdH6tlcI6tK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const folk = $('GET Person Details1').first().json.data;\nconst memoText = $input.item.json.data;\nconst channelId = $('Create a channel').item.json.id;\n\n// Fetch URLs safely\nconst portal = folk.customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Portal Link\"] || \"\";\nconst drive = folk.customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Explore Google Drive Link\"] || \"\";\nconst customGPT = \"Your DQventures Strategy & AI Research Assistant (GPT)\";\n\n// Clean memo text\nlet cleanMemo = memoText\n  .replace(/\\r/g, '')\n  .trim();\n\n// Convert main section titles to medium headings (##)\ncleanMemo = cleanMemo\n  .replace(/^(Problem Understanding)\\s*$/gm, '## $1')\n  .replace(/^(Initial Customer Profile Understanding)\\s*$/gm, '## $1')\n  .replace(/^(Initial Solution)\\s*$/gm, '## $1')\n  .replace(/^(Rationale for Solution)\\s*$/gm, '## $1')\n  .replace(/^(Why We Think This Can Succeed)\\s*$/gm, '## $1')\n  .replace(/^(Key Risks)\\s*$/gm, '## $1');\n\n// Convert sub-headings to small headings (###)\ncleanMemo = cleanMemo\n  .replace(/^(Market Problem Description:)\\s*$/gmi, '### $1')\n  .replace(/^(Validation & Significance:)\\s*$/gmi, '### $1')\n  .replace(/^(Primary Customer Segment:)\\s*$/gmi, '### $1')\n  .replace(/^(Pain Points:)\\s*$/gmi, '### $1')\n  .replace(/^(Customer Journey Insight:)\\s*$/gmi, '### $1')\n  .replace(/^(Solution Overview:)\\s*$/gmi, '### $1')\n  .replace(/^(Competitive Advantage:)\\s*$/gmi, '### $1')\n  .replace(/^(Market Opportunity:)\\s*$/gmi, '### $1')\n  .replace(/^(Founder-Market Fit:)\\s*$/gmi, '### $1')\n  .replace(/^(Technical Feasibility:)\\s*$/gmi, '### $1')\n  .replace(/^(Business Model Viability:)\\s*$/gmi, '### $1')\n  .replace(/^(Market Signals:)\\s*$/gmi, '### $1')\n  .replace(/^(Strategic Advantage:)\\s*$/gmi, '### $1')\n  .replace(/^(Founder Strength:)\\s*$/gmi, '### $1');\n\n// Normalize bullet point indentation (remove excessive leading spaces)\n// This prevents them from being rendered as code blocks\ncleanMemo = cleanMemo.replace(/^\\s+\\*/gm, '* ');\n\n// Build the canvas content with proper spacing\nconst canvasContent = `${portal ? `[Your DQventures Portal](${portal})\\n\\n` : 'Your DQventures Portal\\n\\n'}${drive ? `[Your Google Drive Folder](${drive})\\n\\n` : 'Your Google Drive Folder\\n\\n'}${customGPT}\\n\\n# Investment Memo\\n\\n${cleanMemo}`;\n\n// Slack request payload\nreturn [{\n  json: {\n    request_payload: {\n      title: `Quick Links`,\n      document_content: {\n        type: \"markdown\",\n        markdown: canvasContent\n      },\n      channel_id: channelId\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        576
+      ],
+      "id": "cab08c3f-ca46-406e-9271-d71499d3e909",
+      "name": "Build Canvas Content"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/canvases.create",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_SLACK_BOT_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.request_payload) }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        576
+      ],
+      "id": "78174bdc-f02e-49aa-affa-c1cbb4b28e5c",
+      "name": "Create Canvas"
+    },
+    {
+      "parameters": {
+        "resource": "channel",
+        "operation": "invite",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Create a channel').item.json.id }}",
+          "mode": "id"
+        },
+        "userIds": "={{ [$json.userId, 'U056RRGSBPD'] }}"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        368
+      ],
+      "id": "28605803-3a16-4ac4-856f-6e5dad567dd7",
+      "name": "Invite GP Lead Into the Slack Channel",
+      "webhookId": "7b014f06-d2ef-47fc-8a58-7c16f5a0394d",
+      "credentials": {
+        "slackApi": {
+          "id": "KgxLdLdH6tlcI6tK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.item.json;\n\nreturn [{\n  json: {\n    userId: input.user.id,\n    channelId: input.channelId,\n    investmentMemoUrl: input.investmentMemoUrl,\n    personData: input.personData,\n    gp_email: input.gp_email\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        128
+      ],
+      "id": "d033de11-0d76-4ebd-97e4-88502c4b7f2b",
+      "name": "Extract User Id"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "018db771-ba9e-4a5c-9d6e-f1507538a5d6",
+              "leftValue": "={{ JSON.stringify($json.body.data.changes[0].value) }}",
+              "rightValue": "=\"Confirmed: Explore\"",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        144
+      ],
+      "id": "bd272d99-2b9f-43cd-bc8c-ef0706b07e47",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1232,
+        352
+      ],
+      "id": "e92e8fda-c87a-4a4f-bc42-7c1df4a50f88",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        400
+      ],
+      "id": "dc51fd73-cb78-400c-8f02-8cec882d29ba",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get Folk person data\nconst personData = $('GET Person Details').item.json.data;\n\n// Normalize name (same logic as \"Create a channel\" node)\nconst firstName = (personData.firstName || \"user\")\n  .normalize(\"NFD\")\n  .replace(/[^\\u0000-\\u007F]/g, \"\")\n  .toLowerCase()\n  .replace(/[^a-z0-9]/g, \"\")\n  .slice(0, 35);\n\nconst lastName = (personData.lastName || \"unknown\")\n  .normalize(\"NFD\")\n  .replace(/[^\\u0000-\\u007F]/g, \"\")\n  .toLowerCase()\n  .replace(/[^a-z0-9]/g, \"\")\n  .slice(0, 35);\n\nconst expectedChannelName = `e--${firstName}--${lastName}`.slice(0, 80);\n\nconsole.log('expectedchannel name', expectedChannelName)\n// Get all channels from \"Get many channels\"\nconst channels = $input.all();\n\n// Check if channel exists\nconst existingChannel = channels.find(item => item.json.name === expectedChannelName);\n\nconsole.log('existing channel', existingChannel);\n\n// Prepare output data\nconst outputData = {\n  channelExists: !!existingChannel,\n  expectedChannelName: expectedChannelName,\n  personData: personData,\n  data: personData  // Add this so \"Create a channel\" can access it via $json.data\n};\n\n// Add channel info if it exists\nif (existingChannel) {\n  outputData.channelId = existingChannel.json.id;  // This is the key field!\n  outputData.channelName = existingChannel.json.name;\n  outputData.id = existingChannel.json.id;  // Also add as 'id' for consistency\n}\n\n// Return single output\nreturn [{\n  json: outputData\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        128
+      ],
+      "id": "da426e09-9ad8-4b99-9782-ece9dc5109b0",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ae79bcad-514b-4ca1-b608-7227d96abdc5",
+              "leftValue": "={{ $json.channelExists }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        128
+      ],
+      "id": "e5b89d35-1e08-4eab-9438-62808710aaad",
+      "name": "If channel exists?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "27855b18-2738-4dcc-9517-9528c227b2d7",
+              "leftValue": "=={{ $('GET Person Details').first().json.data.customFieldValues[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"][\"Investment Memo 1\"] }}",
+              "rightValue": "https://chatgpt.com",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -160,
+        368
+      ],
+      "id": "c0382e8a-a252-4971-868c-6d3f26ed4722",
+      "name": "Is chatgpt url ?"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Build Canvas Content1').item.json.request_payload.channel_id }}",
+          "mode": "id"
+        },
+        "text": "=Welcome aboard, {{ $('Extract User Id').item.json.personData.fullName }}!\n\nThis channel is for you to communicate with your DQ team (currently <@{{ $('Extract User Id').item.json.userId }}>) who will be working with you throughout the Explore Stage — the place for updates, questions, quick check-ins, and anything else needed between weekly calls.\n\nAt the top of this channel you'll find a file that links to your Founder Portal, Google Drive folder, and your personal AI assistant — those will be your go-to tools throughout the process.\n\nLooking forward to getting started working with you!\n\nLeanne & the DQ team",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "sendAsUser": "redacted-staff-5@dqventures.com"
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        496,
+        352
+      ],
+      "id": "eaf16116-2341-46a5-9a66-baee795e5216",
+      "name": "Slack → Post Message1",
+      "webhookId": "579ba2f7-c07d-473d-b0c8-4bcb99dc2df1",
+      "credentials": {
+        "slackApi": {
+          "id": "KgxLdLdH6tlcI6tK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/canvases.create",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_SLACK_BOT_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.request_payload) }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        352
+      ],
+      "id": "0b02ecb7-1ca2-4d5f-bfc9-c59652019916",
+      "name": "Create Canvas1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const channelId = $('Create a channel').item.json.id;\n\n// Get person data directly from GET Person Details node\nconst personDetails = $('GET Person Details').first().json.data;\n\n// Get all custom field values for this group\nconst customFields = personDetails?.customFieldValues?.[\"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\"];\n\n// Get the Investment Memo URL\nconst investmentMemoUrl = customFields?.[\"Investment Memo 1\"];\n\nconsole.log(\"Investment Memo URL:\", investmentMemoUrl);\nconsole.log(\"Channel ID:\", channelId);\n\n// Fetch other URLs safely\nconst portal = customFields?.[\"Portal Link\"] || \"\";\nconst drive = customFields?.[\"Explore Google Drive Link\"] || \"\";\nconst customGPT = \"Your DQventures Strategy & AI Research Assistant (GPT)\";\n\n// Build canvas content with just the link (no memo text)\nconst canvasContent = `${portal ? `[Your DQventures Portal](${portal})\\n\\n` : 'Your DQventures Portal\\n\\n'}${drive ? `[Your Google Drive Folder](${drive})\\n\\n` : 'Your Google Drive Folder\\n\\n'}${customGPT}\\n\\n# Investment Memo\\n\\n${investmentMemoUrl ? `[View Investment Memo](${investmentMemoUrl})` : 'Investment Memo link not available'}`;\n\n// Slack request payload\nreturn [{\n  json: {\n    channelId: channelId,\n    request_payload: {\n      title: `Quick Links`,\n      document_content: {\n        type: \"markdown\",\n        markdown: canvasContent\n      },\n      channel_id: channelId\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        352
+      ],
+      "id": "0d0c1f45-0003-48d5-a1bb-33d3a2d7a6ed",
+      "name": "Build Canvas Content1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0b8200d1-5588-4304-a1da-54231343ceee",
+              "leftValue": "={{ $json.user.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        144
+      ],
+      "id": "0d5ebef9-0b9c-4ecb-875f-0304bd9079dc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const httpResponse = $input.item.json;\nconst previousData = $('Set GP Lead Email').item.json;\n\nreturn [{\n  json: {\n    ...httpResponse,\n    channelId: previousData.channelId,\n    investmentMemoUrl: previousData.investmentMemoUrl,\n    personData: previousData.personData,\n    gp_email: previousData.gp_email\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        144
+      ],
+      "id": "5b7fddc8-41e6-4327-88eb-d1fb707db2ef",
+      "name": "Extract Slack user details"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"message\": \"User does not exist in slack\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1472,
+        352
+      ],
+      "id": "de9b1e98-92ac-4a08-928a-35fded56de21",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people/{{ $('Extract User Id').item.json.personData.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        576
+      ],
+      "id": "b81558e6-c49e-4cf7-9053-2261d0ef2b1f",
+      "name": "GET Person Details1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        384,
+        -16
+      ],
+      "id": "ee400b76-4f95-43b7-aa25-7d21aa973911",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $('Code').item.json.personData.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Slack Channel\": \"https://app.slack.com/client/T0574JGC72M/{{ $('Create a channel').item.json.id }}\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        144
+      ],
+      "id": "52848d51-628c-4b5c-9e63-26657aef00c8",
+      "name": "Update url in folk"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/webhooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"Folk Drive Creation: (Status = Confirmed: Explore)\",\n  \"targetUrl\": \"<REDACTED_N8N_WEBHOOK_URL>\",\n  \"subscribedEvents\": [\n    {\n      \"eventType\": \"person.updated\",\n      \"filter\": {\n        \"path\": [\n          \"customFieldValues\",\n          \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\",\n          \"Status\"\n        ],\n        \"value\": \"Confirmed: Explore\"\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -720,
+        -160
+      ],
+      "id": "3d57475b-019d-4b95-aaf3-114cd1996403",
+      "name": "Filter webhook (Status = Confirmed : Explore)"
+    },
+    {
+      "parameters": {
+        "resource": "channel",
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "excludeArchived": true,
+          "types": [
+            "private_channel"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        128
+      ],
+      "id": "e6f7a11b-746b-4ed8-985d-6ff0a748fa13",
+      "name": "Get many channels",
+      "webhookId": "3e0e8671-85cd-4613-9a51-6e3c85ea6992",
+      "credentials": {
+        "slackApi": {
+          "id": "KgxLdLdH6tlcI6tK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "channel",
+        "channelId": "={{ `e--${($json.data.firstName || \"user\").normalize(\"NFD\").replace(/[^\\u0000-\\u007F]/g, \"\").toLowerCase().replace(/[^a-z0-9]/g, \"\").slice(0, 35)}--${($json.data.lastName || \"unknown\").normalize(\"NFD\").replace(/[^\\u0000-\\u007F]/g, \"\").toLowerCase().replace(/[^a-z0-9]/g, \"\").slice(0, 35)}`.slice(0, 80) }}",
+        "channelVisibility": "private"
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        144
+      ],
+      "id": "cd401bf2-0a84-4749-b1bd-1d4abfcceff6",
+      "name": "Create a channel",
+      "webhookId": "684f2a64-f910-4051-a1a2-61ed704de243",
+      "credentials": {
+        "slackApi": {
+          "id": "KgxLdLdH6tlcI6tK",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://slack.com/api/users.lookupByEmail",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "=redacted-staff-5@dqventures.com"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_SLACK_BOT_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        -144
+      ],
+      "id": "abe9ee41-3381-47dc-9a70-9df972dbe097",
+      "name": "Get"
+    }
+  ],
+  "pinData": {
+    "Webhook1": [
+      {
+        "json": {
+          "headers": {
+            "host": "<REDACTED_N8N_HOST>",
+            "user-agent": "node",
+            "content-length": "476",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "44.205.221.8",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9d613412df0705b9-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "traceparent": "00-69a5a2d70000000051c7ec9d063d04ba-319c0fd16b45a63f-00",
+            "tracestate": "dd=t.tid:69a5a2d700000000;t.dm:-1;s:0;p:319c0fd16b45a63f",
+            "webhook-id": "evt_d5303654-8caf-4d6c-85fc-a6ccf718c4eb",
+            "webhook-signature": "v1,fxpNGZsrvJmK9xfB29Ukdit+jtx2/a5dkbDNAbhkjMQ=",
+            "webhook-timestamp": "1772462807",
+            "x-datadog-parent-id": "3574749596347639359",
+            "x-datadog-sampling-priority": "0",
+            "x-datadog-tags": "_dd.p.tid=69a5a2d700000000",
+            "x-datadog-trace-id": "5892938796596266170",
+            "x-forwarded-for": "44.205.221.8, 172.70.43.160",
+            "x-forwarded-host": "<REDACTED_N8N_HOST>",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-70-6d8d5988f7-lb5lj",
+            "x-is-trusted": "yes",
+            "x-real-ip": "44.205.221.8"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "evt_d5303654-8caf-4d6c-85fc-a6ccf718c4eb",
+            "type": "person.updated",
+            "createdAt": "2026-03-02T14:46:47.548Z",
+            "source": "https://api.folk.app/v1/webhooks/wbk_391f5b6e-09ae-4114-ae35-13ac9152291f",
+            "data": {
+              "id": "per_1a15927f-ce31-4087-bde7-4dcb4dcf3af2",
+              "url": "https://api.folk.app/v1/people/per_1a15927f-ce31-4087-bde7-4dcb4dcf3af2",
+              "changes": [
+                {
+                  "type": "set",
+                  "path": [
+                    "groupCustomFieldValues",
+                    "grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f",
+                    "Status"
+                  ],
+                  "value": "Confirmed: Explore"
+                }
+              ]
+            }
+          },
+          "webhookUrl": "<REDACTED_N8N_WEBHOOK_URL>",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "GET Person Details": {
+      "main": [
+        [
+          {
+            "node": "Get many channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Google Doc as Text": {
+      "main": [
+        [
+          {
+            "node": "Build Canvas Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set GP Lead Email": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Extract Slack user details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack → Post Message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Canvas Content": {
+      "main": [
+        [
+          {
+            "node": "Create Canvas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Canvas": {
+      "main": [
+        [
+          {
+            "node": "Slack → Post Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invite GP Lead Into the Slack Channel": {
+      "main": [
+        [
+          {
+            "node": "Is chatgpt url ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract User Id": {
+      "main": [
+        [
+          {
+            "node": "Invite GP Lead Into the Slack Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "GET Person Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If channel exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If channel exists?": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is chatgpt url ?": {
+      "main": [
+        [
+          {
+            "node": "Build Canvas Content1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Person Details1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Canvas1": {
+      "main": [
+        [
+          {
+            "node": "Slack → Post Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack → Post Message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Canvas Content1": {
+      "main": [
+        [
+          {
+            "node": "Create Canvas1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract User Id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Slack user details": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Person Details1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Google Doc as Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update url in folk": {
+      "main": [
+        [
+          {
+            "node": "Set GP Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many channels": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a channel": {
+      "main": [
+        [
+          {
+            "node": "Update url in folk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "GaBIkTJyHgyw25SQ"
+  },
+  "versionId": "b9303cbb-8e31-4fc3-8853-bbda4f8358ad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "0WexXFNa2kG73nyU",
+  "tags": []
+}

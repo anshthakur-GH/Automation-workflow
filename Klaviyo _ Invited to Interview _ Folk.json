@@ -1,0 +1,177 @@
+{
+  "name": "Klaviyo > Invited to Interview > Folk",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "interview-klaviyo-update",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        176,
+        32
+      ],
+      "id": "fc7dd262-67ff-48df-ada4-dfd42a84a579",
+      "name": "Webhook1",
+      "webhookId": "47f5afaf-2031-439e-80fb-32e02f5cbf4f"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.folk.app/v1/people/{{ $json.personId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"customFieldValues\": {\n    \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\": {\n      \"Status\": \"Invited to interview\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        960,
+        32
+      ],
+      "id": "b45e355a-da66-482d-8e1a-2d3439346977",
+      "name": "Update Folk Status"
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $json.body.email;\n\nreturn [{\n  email: email\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        32
+      ],
+      "id": "44bc02be-b035-4325-be4f-73f6744b9b27",
+      "name": "Extract Email from Klaviyo"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people?filter[emails][like]={{ $json.email }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type\t",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        32
+      ],
+      "id": "ad9b3ada-964b-4c4c-ba09-22d1b4209fe4",
+      "name": "Search Folk by Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "const person = $json.data.items[0];\n\nreturn [{\n  personId: person.id\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        32
+      ],
+      "id": "4f15ff99-85ed-461e-acf2-719a3f194dbc",
+      "name": "Extract Folk Person ID"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Extract Email from Klaviyo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email from Klaviyo": {
+      "main": [
+        [
+          {
+            "node": "Search Folk by Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Folk by Email": {
+      "main": [
+        [
+          {
+            "node": "Extract Folk Person ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Folk Person ID": {
+      "main": [
+        [
+          {
+            "node": "Update Folk Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "GaBIkTJyHgyw25SQ"
+  },
+  "versionId": "cf04d874-e40d-4e2c-999c-84cc6b9869c9",
+  "meta": {
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "hht0VvIdSweF34ao",
+  "tags": []
+}

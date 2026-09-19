@@ -1,0 +1,939 @@
+{
+  "name": "Folk > Klaviyo accept/reject update",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "klaviyo-update",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        32
+      ],
+      "id": "661b57e9-5677-474d-b310-2cbe4ffcc25d",
+      "name": "Webhook",
+      "webhookId": "47f5afaf-2031-439e-80fb-32e02f5cbf4f"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ JSON.stringify($json.body.data.changes[0].value) }}",
+                    "rightValue": "\"Applied : accept\"",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "66bdda07-844d-4cf9-a8c2-979269032e66"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "accept"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "08931536-1fef-45ee-bf19-363c33689f91",
+                    "leftValue": "={{ JSON.stringify($json.body.data.changes[0].value) }}",
+                    "rightValue": "\"Applied : reject\"",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reject"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -496,
+        32
+      ],
+      "id": "c136ca12-b7c6-4dfd-abcb-d39918f15bb1",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people/{{ $json.body.data.id }}\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type\t",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -304,
+        16
+      ],
+      "id": "65bc4efa-b37e-403d-8a48-688c81a4750e",
+      "name": "Get person Data - Folk"
+    },
+    {
+      "parameters": {
+        "url": "=https://a.klaviyo.com/api/profiles?filter=equals(email,\"{{$json.emails}}\")",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        784,
+        128
+      ],
+      "id": "27abe9f0-4eaf-4503-be7c-26ed190aed17",
+      "name": "SEARCH KLAVIO PROFILE BY EMAIL"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.folk.app/v1/people/{{ $json.body.data.id }}\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type\t",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        336
+      ],
+      "id": "fad74a28-59ff-45ff-a762-98dd9a25d835",
+      "name": "Get person Data - Folk1"
+    },
+    {
+      "parameters": {
+        "url": "=https://a.klaviyo.com/api/profiles?filter=equals(email,\"{{ $json.emails }}\")",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        528
+      ],
+      "id": "0562dd80-b3e6-45ba-8dc5-ccd2ec4c634c",
+      "name": "SEARCH KLAVIO PROFILE BY EMAIL1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://a.klaviyo.com/api/profiles/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "content-type",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "accept",
+              "value": "application/vnd.api+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"profile\",\n    \"id\": \"{{ $json.id }}\",\n    \"attributes\": {\n      \"properties\": {\n        \"Application Decision\": \"Accept\"\n      }\n    }\n  }\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        -16
+      ],
+      "id": "c9bcb101-0c08-4940-9e3f-526977c8b186",
+      "name": "UPDATE PROFILE -> Accepted"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://a.klaviyo.com/api/profiles/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Klaviyo-API-Key REDACTED_KLAVIYO_API_KEY"
+            },
+            {
+              "name": "revision",
+              "value": "2024-10-15"
+            },
+            {
+              "name": "content-type",
+              "value": "application/vnd.api+json"
+            },
+            {
+              "name": "accept",
+              "value": "application/vnd.api+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"profile\",\n    \"id\": \"{{ $json.id }}\",\n    \"attributes\": {\n      \"properties\": {\n        \"Application Decision\": \"Reject\"\n      }\n    }\n  }\n}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1088,
+        368
+      ],
+      "id": "1d7f412d-6f3b-4b55-87f4-4007c718e803",
+      "name": "UPDATE PROFILE -> Reject"
+    },
+    {
+      "parameters": {
+        "content": "[Part 2 Brief](https://docs.google.com/document/d/1WuOcty2A8dDKT5pUGYQulw29nxtrx8J_4MMIEEw2Vr8/edit?tab=t.0)",
+        "height": 256,
+        "width": 838
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -656,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "edf3d53d-12b5-4e0f-9493-5399b96ae1b8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://api.folk.app/v1/groups",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -16,
+        -192
+      ],
+      "id": "a5a1cc58-736d-4521-b746-08a11cb21b5f",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/webhooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"Klaviyo: accept (Status = Applied : accept)\",\n  \"targetUrl\": \"<REDACTED_N8N_WEBHOOK_URL>\",\n  \"subscribedEvents\": [\n    {\n      \"eventType\": \"person.updated\",\n      \"filter\": {\n        \"path\": [\n          \"customFieldValues\",\n          \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\",\n          \"Status\"\n        ],\n        \"value\": \"Applied : accept\"\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -528,
+        -208
+      ],
+      "id": "257f7e5d-fd88-4e69-9fc1-868230ca2089",
+      "name": "Filter webhook (Status = Applied : accept)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.folk.app/v1/webhooks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REDACTED_FOLK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"Klaviyo: reject (Status = Applied : reject)\",\n  \"targetUrl\": \"<REDACTED_N8N_WEBHOOK_URL>\",\n  \"subscribedEvents\": [\n    {\n      \"eventType\": \"person.updated\",\n      \"filter\": {\n        \"path\": [\n          \"customFieldValues\",\n          \"grp_323c561b-8741-4c14-9a6b-e72bc1dbeb9f\",\n          \"Status\"\n        ],\n        \"value\": \"Applied : reject\"\n      }\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -256,
+        -208
+      ],
+      "id": "9cb5cfa3-50f3-498c-b738-900a8ed5a782",
+      "name": "Filter Webhook (Status = Applied : reject)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c15b00cb-fcf5-47ff-8ac0-4fe9cb54df86",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        0
+      ],
+      "id": "99415b4d-92fc-4bc2-8671-f64bcf1d34d1",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        176
+      ],
+      "id": "2e5b6fee-9a41-4313-815a-85d6442ca877",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c15b00cb-fcf5-47ff-8ac0-4fe9cb54df86",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        864,
+        384
+      ],
+      "id": "e8e27c36-2af4-4bc2-b67d-90ed22602a91",
+      "name": "If1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        896,
+        608
+      ],
+      "id": "8521b4f9-a6aa-4f53-bcce-a776fe43d985",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "48f5e876-fb2c-4dc8-87b4-a57f3c2a0776",
+              "leftValue": "={{ $json.data.emails.length }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "81c165c4-c47c-4815-b219-25df6474e8a0",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        512,
+        16
+      ],
+      "id": "059fe33b-9ddf-434d-8cb3-6b9f0d6b4f6b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2ed8a77-ae00-4160-a34c-009d52847fa6",
+              "name": "emails",
+              "value": "={{ $json.data.emails }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        0
+      ],
+      "id": "f5d29502-971e-4eba-9cc1-0318afb3b74c",
+      "name": "Emails"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emails",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        288,
+        0
+      ],
+      "id": "23793b8c-02af-4767-970a-2c7f65fb6645",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of items) {\n  // Parse stringified Klaviyo response\n  let parsed;\n  try {\n    parsed = JSON.parse(item.json.data);\n  } catch (e) {\n    continue; // skip invalid JSON\n  }\n\n  // If profile exists, push it\n  if (parsed?.data && parsed.data.length > 0) {\n    for (const profile of parsed.data) {\n      results.push({\n        json: profile\n      });\n    }\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        0
+      ],
+      "id": "2370f323-712f-4b6b-9c54-057c6c17cf09",
+      "name": "Parse Klaviyo Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cd7b95c7-da01-4ca7-b9bf-d1e3bb3662b0",
+              "leftValue": "={{ $json.data.emails.length }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -272,
+        416
+      ],
+      "id": "2d1d5e5e-1e6d-4a70-bdc3-549d9802089a",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f32946a0-e116-49cf-89f6-074d3fd3d639",
+              "name": "emails",
+              "value": "={{ $json.data.emails }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        400
+      ],
+      "id": "ad3cc976-a4a1-476e-90e8-593b79179b09",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        368,
+        400
+      ],
+      "id": "c18c9195-ec33-4173-9bc7-c6abd941bc4a",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emails",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        176,
+        400
+      ],
+      "id": "533c3181-bf7e-4ba2-8bd8-08f06ac3d3e8",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of items) {\n  // Parse stringified Klaviyo response\n  let parsed;\n  try {\n    parsed = JSON.parse(item.json.data);\n  } catch (e) {\n    continue; // skip invalid JSON\n  }\n\n  // If profile exists, push it\n  if (parsed?.data && parsed.data.length > 0) {\n    for (const profile of parsed.data) {\n      results.push({\n        json: profile\n      });\n    }\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        384
+      ],
+      "id": "da08b27d-f6f6-4ebf-9c73-4f0a1af86ec3",
+      "name": "Parse Klaviyo Response1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get person Data - Folk",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get person Data - Folk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get person Data - Folk": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEARCH KLAVIO PROFILE BY EMAIL": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get person Data - Folk1": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEARCH KLAVIO PROFILE BY EMAIL1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "UPDATE PROFILE -> Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "UPDATE PROFILE -> Reject",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Parse Klaviyo Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SEARCH KLAVIO PROFILE BY EMAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emails": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Klaviyo Response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Parse Klaviyo Response1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SEARCH KLAVIO PROFILE BY EMAIL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Klaviyo Response1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "GaBIkTJyHgyw25SQ"
+  },
+  "versionId": "8196d629-bd01-49c7-a367-b668dd167f7a",
+  "meta": {
+    "instanceId": "a51fabe83a54bd57f34f2e85d6efbb606015798ffa5d463254f38a4ab1dbb3bf"
+  },
+  "nodeGroups": [],
+  "id": "ZZUBWgjY5OwCNiUH",
+  "tags": []
+}
