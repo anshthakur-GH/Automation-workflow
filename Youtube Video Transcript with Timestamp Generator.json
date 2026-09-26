@@ -1,5 +1,10 @@
 {
+  "updatedAt": "2025-10-10T06:27:07.000Z",
+  "createdAt": "2025-10-10T06:19:22.039Z",
+  "id": "mmK7mgCqZU4TrqNy",
   "name": "Youtube Video Transcript with Timestamp Generator",
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -311,7 +316,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "⏰ Schedule Trigger": {
       "main": [
@@ -381,14 +385,22 @@
       ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
   "versionId": "f0dd5c7e-91d8-404f-bd1a-2dabdaaf214e",
-  "meta": {
-    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
-  },
-  "id": "mmK7mgCqZU4TrqNy",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-10T06:19:22.046Z",
+      "createdAt": "2025-10-10T06:19:22.046Z",
+      "role": "workflow:owner",
+      "workflowId": "mmK7mgCqZU4TrqNy",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
   "tags": []
 }

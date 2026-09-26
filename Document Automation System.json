@@ -1,5 +1,10 @@
 {
+  "updatedAt": "2025-10-31T06:07:59.000Z",
+  "createdAt": "2025-09-12T10:06:03.113Z",
+  "id": "P7JJf7l48lcDjWul",
   "name": "Document Automation System",
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -34,13 +39,13 @@
     {
       "parameters": {
         "content": "# EMAIL & WHATSAPP CHANNEL PROCESSING",
-        "height": 1088,
-        "width": 2448,
-        "color": 5
+        "height": 1056,
+        "width": 2256,
+        "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -1680,
+        -1488,
         -320
       ],
       "typeVersion": 1,
@@ -51,13 +56,13 @@
       "parameters": {
         "content": "# UPLOAD FILE VIA UPLOAD BUTTON (UI) PROCESSING PIPELINE\n",
         "height": 672,
-        "width": 2432,
-        "color": 3
+        "width": 2256,
+        "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -1664,
-        816
+        -1488,
+        784
       ],
       "typeVersion": 1,
       "id": "1ca36c3a-73c1-4171-9805-cc9b0417b6fc",
@@ -68,7 +73,7 @@
         "content": "# CENTRAL DATABASE",
         "height": 272,
         "width": 384,
-        "color": 4
+        "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
@@ -88,8 +93,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -96,
-        848
+        -144,
+        816
       ],
       "typeVersion": 1,
       "id": "2d4dce84-718a-4fae-9c61-7fc7143b4f8d",
@@ -103,8 +108,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        0,
-        1136
+        -48,
+        1104
       ],
       "id": "0656efca-c735-4a2f-a187-6f12d0b828cd",
       "name": "Google Gemini Chat Model",
@@ -204,8 +209,8 @@
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.3,
       "position": [
-        -1376,
-        1120
+        -1424,
+        1088
       ],
       "id": "f4d49257-704f-4b27-a247-9d6fa2691bb5",
       "name": "On any File Upload",
@@ -262,8 +267,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -544,
-        960
+        -592,
+        928
       ],
       "id": "b1d74ed4-16ac-40a2-903a-3758a25af190",
       "name": "Edit Fields1"
@@ -277,8 +282,8 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        0,
-        960
+        -48,
+        928
       ],
       "id": "611a35c9-21f1-49bf-830e-0c582a0374de",
       "name": "AI Agent 1.0"
@@ -371,8 +376,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -784,
-        1280
+        -832,
+        1248
       ],
       "id": "051c9a6b-a280-4c47-b100-3d59d9e99b27",
       "name": "Upload via Upload Button(Website)",
@@ -400,8 +405,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -544,
-        1280
+        -592,
+        1248
       ],
       "id": "389fee78-0531-46ff-b376-afc771e366b3",
       "name": "Edit Fields3"
@@ -411,8 +416,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        480,
-        1264
+        432,
+        1232
       ],
       "id": "6a1ff899-a471-4c87-ac29-575ae5a4aeee",
       "name": "Merge1"
@@ -444,8 +449,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1104,
-        1120
+        -1152,
+        1088
       ],
       "id": "3e9a458f-01fc-492e-840a-0129dfa4de05",
       "name": "Filter"
@@ -563,8 +568,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        656,
-        1008
+        608,
+        976
       ],
       "id": "609283f1-e8a9-4f47-96dc-8f69507a16a2",
       "name": "Parse json"
@@ -615,8 +620,8 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        -784,
-        960
+        -832,
+        928
       ],
       "id": "9425d83a-04e9-4d1e-9d7e-98d01558314a",
       "name": "Ai Analysis ( Bilingual ) OCR",
@@ -680,8 +685,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -1104,
-        1312
+        -1152,
+        1280
       ],
       "id": "0095ce99-e4ea-424c-bed4-d74a93b2b3b3",
       "name": "Append row in sheet",
@@ -844,7 +849,6 @@
       "webhookId": "ec4958c9-6a86-4640-9005-1ba7ab87b539"
     }
   ],
-  "pinData": {},
   "connections": {
     "AI Agent": {
       "main": [
@@ -1126,15 +1130,79 @@
       ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "cc662dcd-4c5a-45fb-8731-18e3243887f5",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
+  "staticData": {
+    "node:Gmail Trigger": {
+      "Gmail Trigger": {
+        "lastTimeChecked": 1758561998,
+        "possibleDuplicates": [
+          "19972792637e52b1",
+          "1997272c524d4535",
+          "1997270ba523e099"
+        ]
+      }
+    },
+    "node:Gmail Trigger1": {
+      "Gmail Trigger1": {
+        "lastTimeChecked": 1757769254,
+        "possibleDuplicates": [
+          "19943364857ae1d1",
+          "19941c35f1025516",
+          "1993ee3b69631c9d"
+        ]
+      }
+    },
+    "node:Gmail Trigger2": {
+      "Gmail Trigger2": {
+        "lastTimeChecked": 1757828645,
+        "possibleDuplicates": [
+          "1993ee3b69631c9d",
+          "1993e852c8e0617a"
+        ]
+      }
+    },
+    "node:Gmail 3": {
+      "Gmail 3": {
+        "lastTimeChecked": 1758725714,
+        "possibleDuplicates": [
+          "1997c38b84110a54"
+        ]
+      }
+    },
+    "node:Gmail 2": {
+      "Gmail 2": {
+        "lastTimeChecked": 1758757717,
+        "possibleDuplicates": [
+          "1997c335948ed35e"
+        ]
+      }
+    },
+    "node:Gmail 1": {
+      "Gmail 1": {
+        "lastTimeChecked": 1758757676,
+        "possibleDuplicates": [
+          "1997e206e3f6e17a",
+          "1997cb4a7347b007"
+        ]
+      }
+    }
   },
-  "id": "P7JJf7l48lcDjWul",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "08c23079-fb35-4f6d-93e3-15fef980a880",
+  "triggerCount": 4,
+  "shared": [
+    {
+      "updatedAt": "2025-09-12T10:06:03.120Z",
+      "createdAt": "2025-09-12T10:06:03.120Z",
+      "role": "workflow:owner",
+      "workflowId": "P7JJf7l48lcDjWul",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
   "tags": []
 }

@@ -122,7 +122,7 @@
           "parameters": [
             {
               "name": "X-API-KEY",
-              "value": "YOUR_SERPER_API_KEY"
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
             }
           ]
         },
@@ -169,7 +169,7 @@
           "parameters": [
             {
               "name": "X-API-KEY",
-              "value": "YOUR_SERPER_API_KEY"
+              "value": "7c41f959a151d6c5f4ddab119389b780b0224573"
             }
           ]
         },

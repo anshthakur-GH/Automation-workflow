@@ -1,5 +1,10 @@
 {
+  "updatedAt": "2025-10-29T10:50:19.000Z",
+  "createdAt": "2025-10-08T10:59:39.291Z",
+  "id": "9Qq9ofxy4oUw7G5H",
   "name": "Upwork Proposal Generator",
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -844,7 +849,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Filters Fit Work": {
       "main": [
@@ -1039,15 +1043,24 @@
       ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3048a1e5-d460-49be-a202-44418785d49f",
+  "staticData": null,
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
+    "templateCredsSetupCompleted": true
   },
-  "id": "9Qq9ofxy4oUw7G5H",
+  "pinData": {},
+  "versionId": "3048a1e5-d460-49be-a202-44418785d49f",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-08T10:59:39.334Z",
+      "createdAt": "2025-10-08T10:59:39.334Z",
+      "role": "workflow:owner",
+      "workflowId": "9Qq9ofxy4oUw7G5H",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
   "tags": []
 }

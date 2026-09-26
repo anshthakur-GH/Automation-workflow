@@ -1,10 +1,5 @@
 {
-  "updatedAt": "2025-10-21T15:30:57.000Z",
-  "createdAt": "2025-10-17T06:21:41.796Z",
-  "id": "tnAtpBCR1TXOgPHW",
   "name": "Ad creative Image generator - Multiple Product ( Sub-Workflow)",
-  "active": false,
-  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -278,8 +273,7 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "product_image": "={{ $json.data }}",
-            "product_name": "={{ $('Download file1').item.json.name }}"
+            "product_image": "={{ $json.data }}"
           },
           "matchingColumns": [
             "product_image"
@@ -292,16 +286,6 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "product_name",
-              "displayName": "product_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
               "removed": false
             }
           ],
@@ -329,9 +313,6 @@
             {
               "name": "product_image",
               "type": "any"
-            },
-            {
-              "name": "product_name"
             }
           ]
         }
@@ -360,7 +341,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const runIndex = $runIndex;\nconst productImage = $('When Executed by Another Workflow').item.json.product_image;\nconst influencerImage = $node['influencer_image_to_base_64'].json.data;\n\nlet promptText;\n\nif (runIndex % 2 === 0) {\n  // Before/After prompt - ALWAYS FRONT FACING\n  promptText = 'Create a professional before/after split-screen comparison image. LEFT SIDE (BEFORE): Use the person from image 2 with their natural hair. RIGHT SIDE (AFTER): Show the EXACT SAME person wearing the EXACT hair extensions from image 1.\\n\\nCRITICAL PRODUCT ACCURACY REQUIREMENTS:\\n- The hair extensions MUST be IDENTICAL to image 1: exact color, exact texture, exact length, exact style\\n- DO NOT modify, reinterpret, or stylize the product - replicate it PRECISELY\\n- Match every detail: color tone, highlights, wave pattern, thickness, shine level\\n- The extensions should look like the ACTUAL product from image 1 is on the person from image 2\\n- NO artistic interpretation - this is product documentation\\n\\nPOSE REQUIREMENTS (CRITICAL):\\n- BOTH BEFORE and AFTER: Person MUST face directly forward toward camera\\n- BOTH sides: Straight-on front view, shoulders square to camera\\n- BOTH sides: Eyes looking directly at camera\\n- BOTH sides: Neutral to slight smile, professional portrait pose\\n- NO side angles, NO three-quarter views, NO back views\\n- Hair should be visible from front view (can cascade over shoulders)\\n- Same exact pose and angle on both BEFORE and AFTER sides\\n\\nOTHER REQUIREMENTS:\\n- Split canvas 50/50 vertically with thin white divider\\n- Add BEFORE (top left) and AFTER (top right) in elegant serif font\\n- BEFORE: person with natural shorter hair, front facing\\n- AFTER: same person, same face, same outfit, same front-facing pose, EXACT product from image 1\\n- Same background and lighting on both sides - soft, neutral backdrop\\n- Add small rectangular branding at bottom center: \"ZEN HAIR EXTENSIONS\" (black text on white background, English only)\\n- Professional beauty photography quality\\n\\nOutput only the final composite image.';\n} else {\n  // Lifestyle photo with VARIED ANGLES + ARABIC TEXT\n  const angleVariation = Math.floor(runIndex / 2) % 5;\n  const taglineIndex = Math.floor(runIndex / 2) % 6;\n  \n  const taglines = [\n    { arabic: 'سحر فوري، بلا جهد', transliteration: 'Effortless Glamour, Instantly' },\n    { arabic: 'شعرك المثالي، كل يوم', transliteration: 'Your Best Hair, Every Day' },\n    { arabic: 'طول. كثافة. ثقة', transliteration: 'Length. Volume. Confidence' },\n    { arabic: 'تحول في ثوانٍ', transliteration: 'Transform in Seconds' },\n    { arabic: 'شعر فاخر، بسهولة تامة', transliteration: 'Luxurious Hair, Made Easy' },\n    { arabic: 'سحر بلا حدود', transliteration: 'Glamour Without Limits' }\n  ];\n  \n  const angles = [\n    'front view facing camera with hair framing the face, confident smile',\n    'side profile view showing the full hair length and volume cascading down',\n    'back view showcasing the complete length, texture and flow of the hair',\n    'three-quarter angle showing both face and hair flowing naturally over shoulder',\n    'dynamic pose with hair in gentle motion, hand naturally touching or running through hair'\n  ];\n  \n  const selectedTagline = taglines[taglineIndex];\n  \n  promptText = 'Create a realistic lifestyle photograph showing the person from image 2 wearing the EXACT hair extensions from image 1.\\n\\nCRITICAL PRODUCT ACCURACY REQUIREMENTS:\\n- The hair extensions MUST be PIXEL-PERFECT replicas of image 1\\n- EXACT color match - including undertones, highlights, and color depth from image 1\\n- EXACT texture match - wave pattern, curl type, straightness from image 1\\n- EXACT length match - do not shorten or lengthen from image 1\\n- EXACT thickness/volume match from image 1\\n- EXACT shine/gloss level from image 1\\n- This is PRODUCT PHOTOGRAPHY - accuracy is more important than artistic beauty\\n- The person should look like they are wearing the ACTUAL physical product from image 1\\n- NO modifications, NO reinterpretation, NO stylization of the product\\n\\nSETTING:\\n- Elegant outdoor or upscale indoor location\\n- Person looks confident and naturally glamorous\\n- Hair clearly visible and well-lit\\n- Camera angle: ' + angles[angleVariation] + '\\n- Natural golden hour or soft diffused lighting\\n- Premium lifestyle aesthetic\\n\\nPERSON:\\n- Use exact facial features, skin tone, ethnicity from image 2\\n- Professional but authentic lifestyle feel\\n\\nARABIC TEXT OVERLAY (TOP CENTER) - CRITICAL:\\n- Display this ARABIC text prominently: \"' + selectedTagline.arabic + '\"\\n- Font: Elegant Arabic calligraphy font (like Diwani or modern Arabic display font)\\n- Style: White or light cream colored text with subtle shadow for readability\\n- Text MUST be RIGHT-TO-LEFT Arabic script\\n- Ensure proper Arabic character formation and letter joining\\n- Center-aligned, large and clearly readable\\n- Premium, sophisticated look matching luxury advertisement\\n- Place at top center of image with good contrast against background\\n- NO English text in the main tagline area\\n- ONLY add \"ZEN HAIR EXTENSIONS\" in small English text at bottom if space permits\\n- NO other watermarks or labels\\n\\nIMPORTANT: The Arabic text must be INTEGRATED into the image naturally, not looking like a separate overlay. It should feel like part of the advertisement design.\\n\\nOutput only the final image with Arabic tagline.';\n}\n\nconst requestBody = {\n  contents: [\n    {\n      parts: [\n        {\n          text: promptText\n        },\n        {\n          inline_data: {\n            mime_type: \"image/png\",\n            data: productImage\n          }\n        },\n        {\n          inline_data: {\n            mime_type: \"image/jpeg\",\n            data: influencerImage\n          }\n        }\n      ]\n    }\n  ]\n};\n\nreturn {\n  json: {\n    requestBody: JSON.stringify(requestBody)\n  }\n};"
+        "jsCode": "const runIndex = $runIndex;\nconst productImage = $('When Executed by Another Workflow').item.json.product_image;\nconst influencerImage = $node['influencer_image_to_base_64'].json.data;\n\n// Determine which prompt to use\nlet promptText;\n\nif (runIndex % 2 === 0) {\n  // Before/After prompt - ENGLISH ONLY LABEL\n  const poseVariation = Math.floor(runIndex / 2) % 4;\n  const poses = [\n    'front view with hands touching hair on AFTER side',\n    'slight side angle showing hair length',\n    'three-quarter view with hair flowing over shoulder',\n    'front view with hands running through hair on AFTER side'\n  ];\n  \n  promptText = 'Create a professional before/after split-screen comparison image showcasing hair extensions transformation. LEFT SIDE (BEFORE): Use the person from image 2 with their natural hair length and texture. RIGHT SIDE (AFTER): Transform the same person with luxurious, voluminous hair extensions matching the style and color from image 1.\\n\\nSPECIFIC REQUIREMENTS:\\n- Split the canvas exactly 50/50 vertically with a thin white divider line\\n- Add BEFORE text in elegant serif font (like Playfair Display) at top left\\n- Add AFTER text in same font at top right\\n- BEFORE side: Person with shorter/thinner natural hair, neutral expression, straight hair\\n- AFTER side: Same person with fuller, longer, voluminous hair, bright happy smile, styled with soft waves, confident pose touching hair\\n- Same person, same outfit, same background in both sides\\n- Background: Soft, blurred interior setting (salon or home) with warm neutral tones\\n- Lighting: Professional, soft, flattering light on face\\n- Hair color continuity: AFTER hair should seamlessly blend with natural color but add length/volume from image 1\\n- Pose variation: ' + poses[poseVariation] + '\\n- Professional beauty/salon advertisement quality\\n- Add a small, rectangular branding overlay at bottom center with text \"ZEN HAIR EXTENSIONS\" in elegant serif font (black text on a light white background, clearly visible and sharp, similar to a discreet product label). Ensure the label is unobtrusive yet prominent. ONLY ENGLISH TEXT - no Urdu translation in this label. This image should NOT include any additional text other than BEFORE/AFTER and the English branding label.\\n\\nSTYLE: High-end hair salon advertisement, professional beauty photography, Instagram-worthy, clean and polished. Output only the final composite before/after image.';\n} else {\n  // Lifestyle photo prompt with BILINGUAL taglines (English + Urdu)\n  const angleVariation = Math.floor(runIndex / 2) % 5;\n  const taglineIndex = Math.floor(runIndex / 2) % 6;\n  \n  const taglines = [\n{ english: 'Effortless Glamour, Instantly.', urdu: 'آسانی کے ساتھ گلیمر، فوری طور پر۔' },\n{ english: 'Your Best Hair, Every Day.', urdu: 'آپ کے بہترین بال، ہر روز۔' },\n{ english: 'Length. Volume. Confidence.', urdu: 'لمبائی۔ والیوم۔ اعتماد۔' },\n{ english: 'Transform in Seconds.', urdu: 'سیکنڈوں میں تبدیلی لائیں۔' },\n{ english: 'Luxurious Hair, Made Easy.', urdu: 'شاندار بال، آسانی سے حاصل کریں۔' },\n{ english: 'Glamour Without Limits.', urdu: 'بے حد گلیمر۔' }\n  ];\n  \n  const angles = [\n    'front view facing camera with hair framing the face, confident smile',\n    'side profile view showing the full hair length and volume cascading down',\n    'back view showcasing the complete length, texture and flow of the hair',\n    'three-quarter angle showing both face and hair flowing naturally over shoulder',\n    'dynamic pose with hair in gentle motion, hand naturally touching or running through hair'\n  ];\n  \n  const selectedTagline = taglines[taglineIndex];\n  \n  promptText = 'Create a realistic, high-quality lifestyle photograph showcasing luxurious hair extensions. The person should have beautiful, long, flowing hair similar in style, color, and texture to the hair extensions shown in image 1. Use the person' + String.fromCharCode(39) + 's facial features, skin tone, and overall appearance from image 2 as the model reference.\\n\\nSETTING & COMPOSITION:\\n- Location: Elegant outdoor or upscale indoor setting (rooftop terrace, modern balcony, luxury hotel, stylish cafe, or sophisticated urban backdrop)\\n- The person should look confident, happy, and naturally glamorous\\n- Hair should be clearly visible, well-lit, and the focal point of the image\\n- Camera angle: ' + angles[angleVariation] + '\\n- Professional photography quality but with authentic, lifestyle feel\\n\\nLIGHTING & STYLE:\\n- Natural, flattering golden hour or soft diffused lighting\\n- Hair should appear shiny, healthy, with visible texture and movement\\n- Color grading: Warm, elegant tones with professional polish\\n- Overall aesthetic: Premium lifestyle advertisement, Instagram-worthy\\n\\nBILINGUAL TEXT OVERLAY REQUIREMENTS (CRITICAL):\\n- Add a bilingual text overlay at the TOP CENTER of the image with TWO LINES\\n- FIRST LINE (English): \"' + selectedTagline.english + '\" in elegant serif font (like Playfair Display)\\n- SECOND LINE (Urdu): \"' + selectedTagline.urdu + '\" directly below the English text. The Urdu text must be rendered in a **clear, elegant, standard Urdu font (like Naskh)**, accurately written **right-to-left**, with **correct character formation and joining of letters**.\\n- Style: White or light cream colored text with subtle shadow for readability OR on a subtle semi-transparent overlay\\n- Both lines should be center-aligned, prominent, and clearly readable\\n- Text should have an ethereal, premium feel matching elegant advertisement aesthetics\\n- Maintain proper spacing between the English and Urdu lines\\n\\nIMPORTANT:\\n- Ensure the person' + String.fromCharCode(39) + 's ethnicity, facial features, and skin tone from image 2 are accurately represented\\n- Hair color and style should seamlessly match image 1 while looking natural on the person\\n- Create a cohesive, professional advertisement image\\n- **ABSOLUTELY NO OTHER TEXT, watermarks, or labels** should be present in the image, except for the specified bilingual tagline at the top.\\n\\nOutput only the final generated lifestyle image with the bilingual (English + Urdu) tagline overlay at the top.';\n}\n\n// Build the request body\nconst requestBody = {\n  contents: [\n    {\n      parts: [\n        {\n          text: promptText\n        },\n        {\n          inline_data: {\n            mime_type: \"image/png\",\n            data: productImage\n          }\n        },\n        {\n          inline_data: {\n            mime_type: \"image/jpeg\",\n            data: influencerImage\n          }\n        }\n      ]\n    }\n  ]\n};\n\nreturn {\n  json: {\n    requestBody: JSON.stringify(requestBody)\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -372,6 +353,7 @@
       "name": "Build Prompt"
     }
   ],
+  "pinData": {},
   "connections": {
     "list_influencer_images": {
       "main": [
@@ -559,24 +541,15 @@
       ]
     }
   },
+  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
+  "versionId": "1c8293dd-5348-458a-a0eb-de23b531433c",
   "meta": {
-    "templateCredsSetupCompleted": true
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
   },
-  "pinData": {},
-  "versionId": "5856b39e-f06f-40cf-971b-dea1cc0b4ddc",
-  "triggerCount": 0,
-  "shared": [
-    {
-      "updatedAt": "2025-10-17T06:21:41.803Z",
-      "createdAt": "2025-10-17T06:21:41.803Z",
-      "role": "workflow:owner",
-      "workflowId": "tnAtpBCR1TXOgPHW",
-      "projectId": "l3b4ESwlHu1SJi6q"
-    }
-  ],
+  "id": "tnAtpBCR1TXOgPHW",
   "tags": []
 }

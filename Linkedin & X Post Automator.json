@@ -1,5 +1,10 @@
 {
+  "updatedAt": "2025-11-08T10:08:35.000Z",
+  "createdAt": "2025-08-29T06:56:41.803Z",
+  "id": "jsbwAffscmGiZiFW",
   "name": "Linkedin & X Post Automator",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -421,7 +426,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "9am": {
       "main": [
@@ -540,16 +544,32 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "73961f3b-323c-487a-8b3a-714374faf401",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
+  "staticData": {
+    "node:9am": {
+      "recurrenceRules": []
+    },
+    "node:12pm": {
+      "recurrenceRules": []
+    }
   },
-  "id": "jsbwAffscmGiZiFW",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "73961f3b-323c-487a-8b3a-714374faf401",
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2025-08-29T06:56:41.846Z",
+      "createdAt": "2025-08-29T06:56:41.846Z",
+      "role": "workflow:owner",
+      "workflowId": "jsbwAffscmGiZiFW",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
   "tags": []
 }

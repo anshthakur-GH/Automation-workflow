@@ -1,0 +1,307 @@
+{
+  "name": "Subscribe_to_youtube_pubsubhubbub",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://pubsubhubbub.appspot.com/subscribe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hub.callback",
+              "value": "https://n8n.cognigenai.in/webhook/youtube-demo"
+            },
+            {
+              "name": "hub.topic",
+              "value": "https://www.youtube.com/feeds/videos.xml?channel_id=UCy6PzE-qeOKy-uDVZl_gfMg"
+            },
+            {
+              "name": "hub.verify",
+              "value": "async"
+            },
+            {
+              "name": "hub.mode",
+              "value": "subscribe"
+            },
+            {
+              "name": "hub.verify_token",
+              "value": "anurag"
+            },
+            {
+              "name": "hub.secret",
+              "value": "anurag"
+            },
+            {
+              "name": "hub.lease_numbers",
+              "value": "864000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        -48
+      ],
+      "id": "127f1bd5-ce78-4b29-a73b-b4e4800f0a83",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "youtube-demo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        240
+      ],
+      "id": "bb1bee43-5a71-4093-9a0e-73e1760aec33",
+      "name": "Webhook",
+      "webhookId": "09e5c33d-970b-4b1c-b4d1-0c55774afcba"
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        400,
+        224
+      ],
+      "id": "6aca4a5e-1e04-4682-b1c6-fd2a08be9fe1",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a0abd760-ae28-48b2-9e95-556d2b6db053",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $input.first().json.query;\nconst verifyToken = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\nconst mode = query['hub.mode'];\n\n// Verify the token matches what you sent (yours is \"lakshit\")\nif (verifyToken === 'anurag' && mode === 'subscribe') {\n  return [{\n    json: {\n      challenge: challenge,\n      status: 200,\n      message: 'Verification successful'\n    }\n  }];\n} else {\n  return [{\n    json: {\n      challenge: 'Forbidden',\n      status: 403,\n      message: 'Invalid verification'\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        224
+      ],
+      "id": "ad895782-f5bb-46a1-97e8-aef8f6ceb7d5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1QdzuRPpEX3FACHB19YrcdE6DIoOo6IY7JW_qjIQwFLY",
+          "mode": "list",
+          "cachedResultName": "Youtube to blog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QdzuRPpEX3FACHB19YrcdE6DIoOo6IY7JW_qjIQwFLY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QdzuRPpEX3FACHB19YrcdE6DIoOo6IY7JW_qjIQwFLY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "video id"
+          ],
+          "schema": [
+            {
+              "id": "Youtube Video Link",
+              "displayName": "Youtube Video Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Video Title",
+              "displayName": "Video Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Video Thumbnail",
+              "displayName": "Video Thumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Video Id",
+              "displayName": "Video Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Made?",
+              "displayName": "Post Made?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin Post Text",
+              "displayName": "Linkedin Post Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        128,
+        448
+      ],
+      "id": "764f6b8c-c1f4-47e0-949f-aeeaa7c0bdf4",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZG1MR4HwHasbUvb4",
+          "name": "Cognigenai Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "63a8b785-8fd6-44ce-8a1a-d2c7c5b71eef",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "42abd1b1c7df812105bbfd3bb50b2e1728db05a238f0d03e8ea5bcd929351fe0"
+  },
+  "id": "JgPH7aYu1kruq3OK",
+  "tags": []
+}

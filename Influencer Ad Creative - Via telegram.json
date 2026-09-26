@@ -1,5 +1,10 @@
 {
+  "updatedAt": "2025-11-08T08:12:26.000Z",
+  "createdAt": "2025-10-16T11:18:08.208Z",
+  "id": "vthjUIeV2OySM1AE",
   "name": "Influencer Ad Creative - Via telegram",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -209,7 +214,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "list_influencer_images": {
       "main": [
@@ -323,15 +327,24 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "9f9f0932-bb0e-46ea-8eb8-2fefcb2a1a92",
+  "staticData": null,
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "ee388fc0c35478cb0a74b319e1aa283053a548b883a06dc9a086ae33fbee2948"
+    "templateCredsSetupCompleted": true
   },
-  "id": "vthjUIeV2OySM1AE",
+  "pinData": {},
+  "versionId": "9f9f0932-bb0e-46ea-8eb8-2fefcb2a1a92",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-16T11:18:08.295Z",
+      "createdAt": "2025-10-16T11:18:08.295Z",
+      "role": "workflow:owner",
+      "workflowId": "vthjUIeV2OySM1AE",
+      "projectId": "l3b4ESwlHu1SJi6q"
+    }
+  ],
   "tags": []
 }
